@@ -28,5 +28,5 @@ jobs:
           dotnet-version: "10.0.x"
       - name: Instalar dotnet-ef
         run: dotnet tool install --global dotnet-ef
-      - name: Compilar standards/ en la matriz perfil × motor (migración + Release + analizadores + format)
-        run: python scripts/verify/verify-standards.py
+      - name: Matriz perfil × motor (migración + Release + analizadores + format) y tests con Testcontainers
+        run: python scripts/verify/verify-standards.py --run-tests

@@ -5,6 +5,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [2.1.0] - 2026-10-09
+### Verificado
+- PostgreSQL de punta a punta (contenedor PostgreSQL 18): 32/32 pruebas con seguridad y 8/8 en el perfil público, igual que SQL Server.
+- Tests de integración de `standards/12` ejecutados con Testcontainers (PostgreSQL): 3/3 con seguridad, 2/2 en el perfil público.
+
+### Añadido
+- `verify-standards.py --tests` / `--run-tests`: genera, compila y ejecuta el proyecto de tests de `standards/12`. La CI lo corre en cada push.
+
+### Corregido (encontrado al ejecutar los tests por primera vez)
+- `standards/12`:
+  - El ejemplo usaba `SeedParentAsync()` sin definirlo. Ahora `ApiFactory.SeedAsync<T>()` siembra con el DbContext real.
+  - Respawn para PostgreSQL estaba solo como nota. Ahora va en el código, con marcas por motor.
+  - Con seguridad, Respawn borraba el admin. `ResetDatabaseAsync` vuelve a sembrarlo.
+  - Imágenes de Testcontainers explícitas y configuración JWT de tests completa.
+- La plantilla `dotnet new xunit` de .NET 10 trae xUnit v2: pasos para cambiar a `xunit.v3` con `OutputType Exe`.
+- `dotnet test` con xUnit v3 en el SDK de .NET 10 exige `"test": { "runner": "Microsoft.Testing.Platform" }` en `global.json` (`standards/14`).
+- Comandos de filtro y cobertura actualizados a Microsoft.Testing.Platform (`--filter-class`, `--filter-method`, `--coverage`), también en la CI de `standards/13`.
+- `tests/.editorconfig`: `CA1707` y `CA1711` desactivadas en proyectos de tests (nombres `Metodo_Escenario_Resultado` y fixtures `*Collection` de xUnit).
+
 ## [2.0.0] - 2026-10-09
 ### Añadido
 - **Soporte para PostgreSQL** además de SQL Server: campo `Database` en el perfil, marcas `// [MSSQL]` / `// [PGSQL]`, clase `SqlDialect` (filtros de índices por motor), proveedor Npgsql + `EFCore.NamingConventions` (snake_case), búsquedas con `ILike`, Testcontainers/Respawn para PostgreSQL, docker-compose y Azure Database for PostgreSQL.

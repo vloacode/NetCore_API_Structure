@@ -9,6 +9,8 @@ Uso:
   python scripts/verify/verify-standards.py --smoke-sqlserver "Server=(localdb)\\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True"
   python scripts/verify/verify-standards.py --smoke-postgresql "Host=localhost;Port=5432;Username=postgres;Password=<tu-clave>"
       Además: migración, arranque contra la BD y pruebas de humo. La BD temporal se crea y se borra sola.
+  python scripts/verify/verify-standards.py --run-tests
+      Genera el proyecto de tests de standards/12 (xUnit v3 + Testcontainers + Respawn) y lo ejecuta. Requiere Docker.
 
 Requisitos: SDK de .NET del framework elegido y Python 3. Para las pruebas de humo, además: dotnet-ef.
 Trabaja en .verify/ (ignorada por git). Código de salida 1 si algo falla.
@@ -56,31 +58,69 @@ def write_build_files(root: pathlib.Path, framework: str):
     props = re.sub(r"<TargetFramework>[^<]+</TargetFramework>", f"<TargetFramework>{framework}</TargetFramework>", props)
     editorconfig = re.search(r"## `.editorconfig` \(base\)\n```ini\n(.*?)```", md, re.S).group(1)
     extra = re.search(r"Reglas ajustadas por el kit.*?```ini\n(.*?)```", md, re.S).group(1)
+    tests_editorconfig = re.search(r"`tests/.editorconfig`.*?```ini\n(.*?)```", md, re.S).group(1)
     (root / "Directory.Build.props").write_text(props, encoding="utf-8")
     (root / ".editorconfig").write_text(editorconfig + "\n" + extra, encoding="utf-8")
+    (root / "global.json").write_text('{\n  "test": { "runner": "Microsoft.Testing.Platform" }\n}\n', encoding="utf-8")
+    return tests_editorconfig
 
 
-def build(profile: str, database: str, framework: str, with_migration: bool) -> pathlib.Path:
+TEST_PACKAGES = ["xunit.v3", "Microsoft.AspNetCore.Mvc.Testing", "Microsoft.Testing.Extensions.CodeCoverage", "Respawn", "Shouldly"]
+TEST_DB_PACKAGES = {"sqlserver": ["Testcontainers.MsSql"], "postgresql": ["Testcontainers.PostgreSql"]}
+
+
+def create_tests_project(root: pathlib.Path, database: str, framework: str, editorconfig: str) -> pathlib.Path:
+    """Proyecto de tests de integración según standards/12 (xUnit v3 + Testcontainers + Respawn)."""
+    run(["dotnet", "new", "xunit", "-n", "KitVerify.IntegrationTests", "-f", framework, "-o", "KitVerify.IntegrationTests"], root)
+    tests = root / "KitVerify.IntegrationTests"
+    (tests / "UnitTest1.cs").unlink(missing_ok=True)
+    run(["dotnet", "remove", "package", "xunit"], tests)
+    run(["dotnet", "remove", "package", "coverlet.collector"], tests, check=False)
+    for package in TEST_PACKAGES + TEST_DB_PACKAGES[database]:
+        run(["dotnet", "add", "package", package], tests)
+    run(["dotnet", "add", "reference", "../KitVerify/KitVerify.csproj"], tests)
+    csproj = tests / "KitVerify.IntegrationTests.csproj"
+    csproj.write_text(csproj.read_text(encoding="utf-8").replace(
+        "<IsPackable>false</IsPackable>", "<IsPackable>false</IsPackable>\n    <OutputType>Exe</OutputType>", 1), encoding="utf-8")
+    (tests / ".editorconfig").write_text(editorconfig, encoding="utf-8")
+    return tests
+
+
+def build(profile: str, database: str, framework: str, with_migration: bool, with_tests: bool = False) -> pathlib.Path:
     root = WORK / f"{profile}-{database}"
     if root.exists():
         shutil.rmtree(root)
     root.mkdir(parents=True)
-    write_build_files(root, framework)
+    tests_editorconfig = write_build_files(root, framework)
     run(["dotnet", "new", "webapi", "-n", "KitVerify", "--use-controllers", "-f", framework, "-o", "KitVerify"], root)
     project = root / "KitVerify"
     for sample in ("Program.cs", "WeatherForecast.cs", "KitVerify.http", "Controllers/WeatherForecastController.cs"):
         (project / sample).unlink(missing_ok=True)
     for package in COMMON_PACKAGES + DB_PACKAGES[database] + (SECURE_PACKAGES if profile == "secure" else []):
         run(["dotnet", "add", "package", package], project)
-    print("  " + run([sys.executable, str(HERE / "materialize.py"), str(project), profile, database], project).stdout.strip())
+    tests = create_tests_project(root, database, framework, tests_editorconfig) if with_tests else None
+    materialize_args = [sys.executable, str(HERE / "materialize.py"), str(project), profile, database] + ([str(tests)] if tests else [])
+    print("  " + run(materialize_args, project).stdout.strip())
     if with_migration:
         run(["dotnet", "ef", "migrations", "add", "InitialCreate", "-o", "Infrastructure/Persistence/Migrations"], project)
         print("  migración InitialCreate generada")
-    run(["dotnet", "format"], project, check=False)
-    run(["dotnet", "format", "--verify-no-changes"], project)
-    run(["dotnet", "build", "-c", "Release", "-nologo"], project)
-    print("  dotnet format + build Release (analizadores, warnings como errores): OK")
+    for folder in [project] + ([tests] if tests else []):
+        run(["dotnet", "format"], folder, check=False)
+        run(["dotnet", "format", "--verify-no-changes"], folder)
+        run(["dotnet", "build", "-c", "Release", "-nologo"], folder)
+    print("  dotnet format + build Release (analizadores, warnings como errores): OK" + (" (API + tests)" if tests else ""))
     return project
+
+
+def run_tests(project: pathlib.Path):
+    """Ejecuta los tests de integración con Testcontainers (requiere Docker)."""
+    tests = project.parent / "KitVerify.IntegrationTests"
+    result = run(["dotnet", "test", "-c", "Release", "--no-build"], tests, check=False)
+    summary = [l.strip() for l in result.stdout.splitlines() if re.search(r"total:|succeeded:|failed:|Passed!|Failed!", l)]
+    print("  tests de integración (Testcontainers): " + " ".join(summary))
+    if result.returncode != 0:
+        tail = "\n".join((result.stdout + result.stderr).splitlines()[-30:])
+        raise RuntimeError(f"tests de integración con fallas\n{tail}")
 
 
 def drop_database(database: str, base: str, name: str, project: pathlib.Path):
@@ -147,6 +187,8 @@ def main():
     parser.add_argument("--framework", default="net10.0")
     parser.add_argument("--smoke-sqlserver", metavar="CONEXION_SIN_DATABASE")
     parser.add_argument("--smoke-postgresql", metavar="CONEXION_SIN_DATABASE")
+    parser.add_argument("--tests", action="store_true", help="genera y compila el proyecto de tests de standards/12")
+    parser.add_argument("--run-tests", action="store_true", help="además ejecuta los tests con Testcontainers (requiere Docker)")
     args = parser.parse_args()
     smoke_bases = {"sqlserver": args.smoke_sqlserver, "postgresql": args.smoke_postgresql}
 
@@ -157,7 +199,10 @@ def main():
             print(f"== {label}")
             try:
                 base = smoke_bases.get(database)
-                project = build(profile, database, args.framework, with_migration=True)
+                project = build(profile, database, args.framework, with_migration=True,
+                                with_tests=args.tests or args.run_tests)
+                if args.run_tests:
+                    run_tests(project)
                 if base:
                     smoke(profile, database, project, base)
             except RuntimeError as error:

@@ -18,9 +18,16 @@
 ```bash
 dotnet new xunit -n {Project}.UnitTests -o tests/{Project}.UnitTests
 dotnet new xunit -n {Project}.IntegrationTests -o tests/{Project}.IntegrationTests
+# La plantilla de .NET 10 trae xUnit v2: cambiar a xUnit v3 en ambos proyectos
+dotnet remove tests/{Project}.UnitTests package xunit
+dotnet remove tests/{Project}.IntegrationTests package xunit
+dotnet add tests/{Project}.UnitTests package xunit.v3
+dotnet add tests/{Project}.IntegrationTests package xunit.v3
+dotnet sln add tests/{Project}.UnitTests tests/{Project}.IntegrationTests
 dotnet add tests/{Project}.UnitTests reference src/{Project}.Api
 dotnet add tests/{Project}.IntegrationTests reference src/{Project}.Api
 dotnet add tests/{Project}.IntegrationTests package Microsoft.AspNetCore.Mvc.Testing
+dotnet add tests/{Project}.IntegrationTests package Microsoft.Testing.Extensions.CodeCoverage
 dotnet add tests/{Project}.IntegrationTests package Testcontainers.MsSql        # [MSSQL]
 dotnet add tests/{Project}.IntegrationTests package Testcontainers.PostgreSql   # [PGSQL]
 dotnet add tests/{Project}.IntegrationTests package Respawn
@@ -31,23 +38,30 @@ dotnet add tests/{Project}.UnitTests package Microsoft.Extensions.TimeProvider.T
 - Aserciones: **Shouldly** o las de xUnit. Evitar FluentAssertions 8+, que cambió a licencia comercial.
 - Dobles de prueba para dependencias externas (email, HTTP): **NSubstitute**. No se "mockean" `IRepository` ni `IUnitOfWork`; se usa la BD real.
 - Requiere **Docker** en la máquina y en CI para Testcontainers.
+- En cada `.csproj` de test: `<OutputType>Exe</OutputType>` (xUnit v3 genera un ejecutable) y quitar `coverlet.collector` (la cobertura la da `Microsoft.Testing.Extensions.CodeCoverage`).
+- `global.json` con `"test": { "runner": "Microsoft.Testing.Platform" }` y `tests/.editorconfig` con las reglas de tests (`standards/14`).
 
 ## Fixture de API — `tests/{Project}.IntegrationTests/ApiFactory.cs`
 ```csharp
+using System.Data.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.SqlClient;      // [MSSQL]
+using Microsoft.Extensions.DependencyInjection;
+using Npgsql;                        // [PGSQL]
 using Respawn;
 using Testcontainers.MsSql;          // [MSSQL]
 using Testcontainers.PostgreSql;     // [PGSQL]
-using Npgsql;                        // [PGSQL]
+using {Project}.Infrastructure.Persistence;
 
 namespace {Project}.IntegrationTests;
 
 /// <summary>Un contenedor del motor del perfil para toda la colección de tests. La BD se limpia con Respawn entre tests.</summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly MsSqlContainer _db = new MsSqlBuilder().Build();             // [MSSQL]
-    private readonly PostgreSqlContainer _db = new PostgreSqlBuilder().Build();   // [PGSQL]
+    // Imagen fija y explícita: misma versión mayor que producción (standards/13).
+    private readonly MsSqlContainer _db = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();   // [MSSQL]
+    private readonly PostgreSqlContainer _db = new PostgreSqlBuilder("postgres:17").Build();                         // [PGSQL]
     private Respawner _respawner = null!;
 
     public string ConnectionString => _db.GetConnectionString();
@@ -57,7 +71,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", ConnectionString);
         builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
+        builder.UseSetting("Jwt:Issuer", "{Project}.Tests");                // [SEC]
+        builder.UseSetting("Jwt:Audience", "{Project}.Tests");              // [SEC]
         builder.UseSetting("Jwt:SigningKey", new string('k', 64));          // [SEC]
+        builder.UseSetting("App:ClientUrl", "http://localhost");            // [SEC]
         builder.UseSetting("Seed:AdminEmail", TestUsers.AdminEmail);        // [SEC]
         builder.UseSetting("Seed:AdminPassword", TestUsers.AdminPassword);  // [SEC]
     }
@@ -66,41 +83,63 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         await _db.StartAsync();
         _ = Server;   // fuerza el arranque: migraciones + seed
-        _respawner = await Respawner.CreateAsync(ConnectionString, new RespawnerOptions
+
+        await using var connection = await OpenConnectionAsync();
+        _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
         {
-            TablesToIgnore = ["__EFMigrationsHistory", "AspNetRoles", "AspNetRoleClaims"]   // conserva roles del seed
+            DbAdapter = DbAdapter.SqlServer,   // [MSSQL]
+            DbAdapter = DbAdapter.Postgres,    // [PGSQL]
+            SchemasToInclude = ["public"],     // [PGSQL]
+            // No se borran: historial de migraciones y catálogos sembrados (roles y sus permisos).
+            TablesToIgnore = ["__EFMigrationsHistory", "AspNetRoles", "AspNetRoleClaims"]
         });
     }
 
-    public Task ResetDatabaseAsync() => _respawner.ResetAsync(ConnectionString);
+    /// <summary>Deja la BD como recién creada antes de cada test.</summary>
+    public async Task ResetDatabaseAsync()
+    {
+        await using var connection = await OpenConnectionAsync();
+        await _respawner.ResetAsync(connection);
+        await DatabaseSeeder.SeedAsync(Services);   // [SEC] recrea el admin (AspNetUsers se vació)
+    }
+
+    /// <summary>Inserta datos de prueba con el DbContext real (interceptor de auditoría incluido).</summary>
+    public async Task<TEntity> SeedAsync<TEntity>(TEntity entity) where TEntity : class
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Add(entity);
+        await db.SaveChangesAsync();
+        return entity;
+    }
 
     public override async ValueTask DisposeAsync()
     {
         await _db.DisposeAsync();
         await base.DisposeAsync();
     }
+
+    private async Task<DbConnection> OpenConnectionAsync()
+    {
+        DbConnection connection = new SqlConnection(ConnectionString);      // [MSSQL]
+        DbConnection connection = new NpgsqlConnection(ConnectionString);   // [PGSQL]
+        await connection.OpenAsync();
+        return connection;
+    }
 }
 
 [CollectionDefinition(nameof(ApiCollection))]
 public sealed class ApiCollection : ICollectionFixture<ApiFactory>;
 ```
-> **PostgreSQL**: Respawn necesita una conexión abierta y el adaptador de Postgres. Las tablas propias van en `snake_case`; las de Identity conservan su nombre (`AspNetRoles`…):
-> ```csharp
-> await using var connection = new NpgsqlConnection(ConnectionString);
-> await connection.OpenAsync();
-> _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
-> {
->     DbAdapter = DbAdapter.Postgres,
->     SchemasToInclude = ["public"],
->     TablesToIgnore = ["__EFMigrationsHistory", "AspNetRoles", "AspNetRoleClaims"]
-> });
-> // ResetDatabaseAsync: abrir otra NpgsqlConnection y llamar _respawner.ResetAsync(connection).
-> ```
-> Escrito para **xUnit v3** (`IAsyncLifetime` con `ValueTask`). En xUnit v2 los métodos devuelven `Task`. Si la API de Testcontainers o Respawn cambió, ajustar a la versión instalada.
-> `[SEC]`: si Respawn borra también `AspNetUsers`, recrear el admin con el seeder en `ResetDatabaseAsync`.
+> Escrito para **xUnit v3** (`IAsyncLifetime` con `ValueTask`). Si la API de Testcontainers o Respawn cambia en una versión nueva, ajustar a la versión instalada.
 
-## Helper de autenticación `[SEC]`
+## Helper de autenticación `[SEC]` — `tests/{Project}.IntegrationTests/TestUsers.cs`
 ```csharp
+using System.Net.Http.Json;
+using {Project}.Application.Features.Auth;
+
+namespace {Project}.IntegrationTests;
+
 public static class TestUsers
 {
     public const string AdminEmail = "admin@test.local";
@@ -119,26 +158,60 @@ public static class TestUsers
 ```
 Para probar permisos concretos, crear un usuario con un rol de prueba y loguearse con él.
 
-## Ejemplo de test de API
+## Ejemplo de tests de API — `tests/{Project}.IntegrationTests/{Entities}ApiTests.cs`
 ```csharp
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Shouldly;
+using {Project}.Domain.Entities;
+
+namespace {Project}.IntegrationTests;
+
 [Collection(nameof(ApiCollection))]
 public sealed class {Entities}ApiTests(ApiFactory factory) : IAsyncLifetime
 {
-    public ValueTask InitializeAsync() => new(factory.ResetDatabaseAsync());
+    public async ValueTask InitializeAsync() => await factory.ResetDatabaseAsync();
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task Create_WithDuplicateCode_Returns409WithCode()
     {
-        var client = await factory.CreateAdminClientAsync();
-        var request = new { name = "Uno", code = "A-1", {parent}Id = await SeedParentAsync() };
-        (await client.PostAsJsonAsync("/api/{entities}", request)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        var ct = TestContext.Current.CancellationToken;
+        var client = await factory.CreateAdminClientAsync();   // [SEC]
+        var client = factory.CreateClient();                   // [PUB]
+        var parent = await factory.SeedAsync(new {Parent} { Name = "Padre" });
+        var request = new { name = "Uno", code = "A-1", {parent}Id = parent.Id };
+        (await client.PostAsJsonAsync("/api/{entities}", request, ct)).StatusCode.ShouldBe(HttpStatusCode.Created);
 
-        var duplicate = await client.PostAsJsonAsync("/api/{entities}", request);
+        var duplicate = await client.PostAsJsonAsync("/api/{entities}", request, ct);
 
         duplicate.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        var problem = await duplicate.Content.ReadFromJsonAsync<JsonElement>();
+        var problem = await duplicate.Content.ReadFromJsonAsync<JsonElement>(ct);
         problem.GetProperty("code").GetString().ShouldBe("{Entity}.CodeAlreadyExists");
+    }
+
+    [Fact]
+    public async Task GetById_WhenMissing_Returns404WithCode()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var client = await factory.CreateAdminClientAsync();   // [SEC]
+        var client = factory.CreateClient();                   // [PUB]
+
+        var response = await client.GetAsync("/api/{entities}/999999", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+        problem.GetProperty("code").GetString().ShouldBe("{Entity}.NotFound");
+    }
+
+    // [SEC]
+    [Fact]
+    public async Task GetPaged_WithoutToken_Returns401()
+    {
+        var response = await factory.CreateClient().GetAsync("/api/{entities}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 }
 ```
@@ -172,6 +245,7 @@ public sealed class {Entities}ApiTests(ApiFactory factory) : IAsyncLifetime
 ## Comandos
 ```bash
 dotnet test
-dotnet test --filter "FullyQualifiedName~{Entities}"
-dotnet test --collect:"XPlat Code Coverage"
+dotnet test --filter-class "*{Entities}ApiTests"
+dotnet test --filter-method "*Returns401"
+dotnet test --coverage --coverage-output-format cobertura
 ```

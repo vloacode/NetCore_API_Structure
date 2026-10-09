@@ -1,35 +1,34 @@
-"""Arma un proyecto .NET con el código C# de standards/ para comprobar que compila.
+"""Arma un proyecto .NET con el código C# de standards/ para comprobar que compila (y, opcionalmente, su proyecto de tests).
 
-Uso: python scripts/verify/materialize.py <carpeta_proyecto> <secure|public> [sqlserver|postgresql]
+Uso: python scripts/verify/materialize.py <carpeta_api> <secure|public> <sqlserver|postgresql> [carpeta_tests]
 
 - Toma cada bloque ```csharp de standards/ que tenga una ruta de archivo (`Ruta/Archivo.cs`) en las 3 líneas previas.
-- Perfil `public`: omite standards 05* y 06, quita líneas/bloques `// [SEC]` y conserva `// [PUB]`.
-- Perfil `secure`: quita las líneas `// [PUB]`.
-- Motor: con `sqlserver` quita las líneas `// [PGSQL]`; con `postgresql`, las `// [MSSQL]`.
-- Reemplaza los marcadores con nombres de prueba (VerifyItem / VerifyParent) para compilar las plantillas de standards/07.
-  Estos nombres existen solo en la carpeta temporal de verificación, nunca en un proyecto real.
+  Los bloques con ruta `tests/{Project}.IntegrationTests/...` van a <carpeta_tests> (si se indica).
+- Marcas: `// [SEC]` (solo con seguridad), `// [PUB]` (solo sin seguridad), `// [MSSQL]` y `// [PGSQL]` (motor).
+  Una marca al final de una línea afecta a esa línea; una marca sola en su línea afecta al miembro o sentencia siguiente.
+- Bloques cuyo título (línea `#`) lleva `[SEC]`, o de standards 05*/06, se omiten en el perfil público.
+- Las plantillas de standards/07 se compilan con nombres de prueba (VerifyItem / VerifyParent) que solo existen
+  en la carpeta temporal de verificación, nunca en un proyecto real.
 """
 import pathlib
 import re
 import sys
 
 KIT = pathlib.Path(__file__).resolve().parents[2] / "standards"
-out = pathlib.Path(sys.argv[1])
+api_dir = pathlib.Path(sys.argv[1])
 secure = sys.argv[2] == "secure"
 database = sys.argv[3] if len(sys.argv) > 3 else "sqlserver"
-OTHER_DB_MARK = "// [PGSQL]" if database == "sqlserver" else "// [MSSQL]"
+tests_dir = pathlib.Path(sys.argv[4]) if len(sys.argv) > 4 else None
 
+REMOVE_MARKS = ["// [PUB]" if secure else "// [SEC]", "// [PGSQL]" if database == "sqlserver" else "// [MSSQL]"]
 REPL = {"{Project}": "KitVerify", "{Entities}": "VerifyItems", "{Entity}": "VerifyItem", "{entities}": "verifyitems",
         "{entity}": "verifyitem", "{Parent}": "VerifyParent", "{parent}": "verifyParent"}
 
-# Bloques sin ruta explícita en el texto previo.
+# Bloques sin ruta explícita en el texto previo: (archivo, primera línea) -> ruta
 MANUAL = {("06-authorization-permissions.md", "using Microsoft.AspNetCore.Authentication.JwtBearer;"): "Api/Authorization/PermissionAuthorization.cs"}
-
-SECURE_ONLY_PREFIXES = ("05", "06")
-SECURE_ONLY_FILES = {"Api/OpenApi/BearerSecuritySchemeTransformer.cs",
-                     "Infrastructure/Persistence/Configurations/IdentityConfigurations.cs"}
+SECURE_ONLY_FILES = {"Api/OpenApi/BearerSecuritySchemeTransformer.cs"}
 PUBLIC_ONLY_FILES = {"Infrastructure/Services/SystemCurrentUserService.cs"}
-OPTIONAL_FILES = {"Api/Authentication/ApiKeyAuthentication.cs"}   # se compila en ambos perfiles (no se registra)
+TESTS_PREFIX = "tests/{Project}.IntegrationTests/"
 
 
 def blocks():
@@ -45,33 +44,32 @@ def blocks():
                     j += 1
                 first = lines[i + 1].strip() if i + 1 < j else ""
                 path = MANUAL.get((md.name, first)) or (found[-1] if found else None)
-                if path and not path.startswith("tests/"):
-                    yield md.name, path, lines[i + 1:j]
+                if path:
+                    headings = [l for l in lines[max(0, i - 3):i] if l.lstrip().startswith("#")]
+                    yield md.name, path, any("[SEC]" in h for h in headings), lines[i + 1:j]
                 i = j
             i += 1
 
 
-def strip_sec(lines):
-    """Quita líneas y bloques marcados [SEC]: comentario `// [SEC]` sobre un método o sentencia, o marca al final de línea."""
+def strip_marked(lines, mark):
+    """Quita líneas con `mark` al final y el miembro/sentencia que sigue a una línea que es solo `mark`."""
     result, i = [], 0
     while i < len(lines):
         stripped = lines[i].strip()
-        if stripped.startswith("// [SEC]"):
-            nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
-            if nxt.startswith("public static"):
-                depth, started, i = 0, False, i + 1
-                while i < len(lines):
-                    depth += lines[i].count("{") - lines[i].count("}")
-                    started = started or "{" in lines[i]
-                    i += 1
-                    if started and depth == 0:
-                        break
-                continue
+        if stripped.startswith(mark):          # marca sola: afecta a lo siguiente
             i += 1
-            while i < len(lines) and not lines[i - 1].rstrip().endswith(";"):
+            depth, started = 0, False
+            while i < len(lines):
+                line = lines[i]
+                depth += line.count("{") - line.count("}")
+                started = started or "{" in line
                 i += 1
+                if started and depth == 0:
+                    break
+                if not started and line.rstrip().endswith(";"):
+                    break
             continue
-        if "[SEC]" in lines[i] and "//" in lines[i]:
+        if mark in lines[i]:
             i += 1
             continue
         result.append(lines[i])
@@ -79,15 +77,8 @@ def strip_sec(lines):
     return result
 
 
-written = []
-for md_name, rel, lines in blocks():
-    if not secure and (md_name.startswith(SECURE_ONLY_PREFIXES) or rel in SECURE_ONLY_FILES):
-        continue
-    if secure and rel in PUBLIC_ONLY_FILES:
-        continue
-    text = "\n".join(lines)
-
-    # Activar las líneas comentadas de "una por entidad" para compilar la plantilla.
+def transform(rel, text):
+    # Activar las líneas comentadas de "una por entidad" para compilar las plantillas.
     if rel == "DependencyInjection.cs":
         text = text.replace("// services.AddScoped<I{Entity}Service, {Entity}Service>();",
                             "services.AddScoped<I{Entity}Service, {Entity}Service>();")
@@ -105,23 +96,39 @@ for md_name, rel, lines in blocks():
         text = re.sub(r", HasPermission\([^)]*\)", "", text)
         text = text.replace("using {Project}.Api.Authorization;\n", "").replace("using {Project}.Application.Common.Security;\n", "")
 
-    text = "\n".join(l for l in text.splitlines() if OTHER_DB_MARK not in l)
-    if secure:
-        text = "\n".join(l for l in text.splitlines() if "// [PUB]" not in l)
-    else:
-        text = "\n".join(strip_sec(text.splitlines()))
-
+    lines = text.splitlines()
+    for mark in REMOVE_MARKS:
+        lines = strip_marked(lines, mark)
+    text = "\n".join(lines)
     for key, value in REPL.items():
         text = text.replace(key, value)
-    target = out / rel.replace("{Entities}", "VerifyItems").replace("{Entity}", "VerifyItem")
+    return text
+
+
+written = {"api": 0, "tests": 0}
+for md_name, rel, sec_heading, lines in blocks():
+    is_test = rel.startswith(TESTS_PREFIX)
+    if is_test and tests_dir is None:
+        continue
+    if not is_test and rel.startswith("tests/"):
+        continue
+    if not secure and (md_name.startswith(("05", "06")) or rel in SECURE_ONLY_FILES or sec_heading):
+        continue
+    if secure and rel in PUBLIC_ONLY_FILES:
+        continue
+    text = transform(rel, "\n".join(lines))
+    if is_test:
+        target = tests_dir / rel[len(TESTS_PREFIX):].replace("{Entities}", "VerifyItems")
+    else:
+        target = api_dir / rel.replace("{Entities}", "VerifyItems").replace("{Entity}", "VerifyItem")
     target.parent.mkdir(parents=True, exist_ok=True)
     if target.exists():
         raise SystemExit(f"Archivo duplicado: {target}")
     target.write_text(text + "\n", encoding="utf-8")
-    written.append(rel)
+    written["tests" if is_test else "api"] += 1
 
 # Entidad padre mínima de prueba (en un proyecto real la crea new-entity).
-(out / "Domain/Entities/VerifyParent.cs").write_text("""using KitVerify.Domain.Common;
+(api_dir / "Domain/Entities/VerifyParent.cs").write_text("""using KitVerify.Domain.Common;
 
 namespace KitVerify.Domain.Entities;
 
@@ -130,7 +137,7 @@ public class VerifyParent : BaseEntity
     public string Name { get; set; } = string.Empty;
 }
 """, encoding="utf-8")
-(out / "Infrastructure/Persistence/Configurations/VerifyParentConfiguration.cs").write_text("""using Microsoft.EntityFrameworkCore;
+(api_dir / "Infrastructure/Persistence/Configurations/VerifyParentConfiguration.cs").write_text("""using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using KitVerify.Domain.Entities;
 
@@ -146,15 +153,18 @@ public sealed class VerifyParentConfiguration : BaseEntityConfiguration<VerifyPa
 }
 """, encoding="utf-8")
 
-# Siembra de prueba: un VerifyParent al arrancar (evita depender de sqlcmd/psql).
-(out / "Infrastructure/Persistence/VerifyParentSeeder.cs").write_text("""using KitVerify.Domain.Entities;
+# Siembra de prueba para las pruebas de humo: un VerifyParent al arrancar (evita depender de sqlcmd/psql).
+(api_dir / "Infrastructure/Persistence/VerifyParentSeeder.cs").write_text("""using KitVerify.Domain.Entities;
 
 namespace KitVerify.Infrastructure.Persistence;
 
-public sealed class VerifyParentSeeder(IServiceProvider services) : IHostedService
+public sealed class VerifyParentSeeder(IServiceProvider services, IConfiguration configuration) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        if (!configuration.GetValue("Verify:SeedParent", true))
+            return;
+
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         if (!db.VerifyParents.Any())
@@ -167,10 +177,12 @@ public sealed class VerifyParentSeeder(IServiceProvider services) : IHostedServi
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
 """, encoding="utf-8")
-program = out / "Program.cs"
+program = api_dir / "Program.cs"
 program.write_text(program.read_text(encoding="utf-8").replace(
     "var app = builder.Build();",
     "builder.Services.AddHostedService<KitVerify.Infrastructure.Persistence.VerifyParentSeeder>();\n\nvar app = builder.Build();", 1),
     encoding="utf-8")
 
-print(f"{'secure' if secure else 'public'} / {database}: {len(written)} archivos desde standards/")
+profile = "secure" if secure else "public"
+extra = f" + {written['tests']} de tests" if tests_dir else ""
+print(f"{profile} / {database}: {written['api']} archivos desde standards/{extra}")

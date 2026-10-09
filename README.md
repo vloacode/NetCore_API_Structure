@@ -2,7 +2,7 @@
 
 Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-> Versión **2.0.0** (ver `CHANGELOG.md`). El código de `standards/` está verificado en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): compila en Release con analizadores y genera migraciones; pasa pruebas de punta a punta contra SQL Server (`scripts/verify/`).
+> Versión **2.1.0** (ver `CHANGELOG.md`). El código de `standards/` está verificado en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): compila en Release con analizadores, genera migraciones, pasa los tests de integración con Testcontainers y las pruebas de punta a punta contra bases reales (`scripts/verify/`).
 
 ## Qué incluye
 

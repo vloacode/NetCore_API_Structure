@@ -104,7 +104,7 @@ jobs:
       - run: dotnet restore
       - run: dotnet format --verify-no-changes --no-restore
       - run: dotnet build --no-restore -c Release
-      - run: dotnet test --no-build -c Release --collect:"XPlat Code Coverage"   # Testcontainers usa el Docker del runner
+      - run: dotnet test --no-build -c Release --coverage --coverage-output-format cobertura   # Testcontainers usa el Docker del runner
       - name: Paquetes vulnerables
         run: |
           dotnet list package --vulnerable --include-transitive | tee vuln.txt

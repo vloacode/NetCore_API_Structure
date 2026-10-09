@@ -11,15 +11,19 @@
 ├── Directory.Build.props          ← propiedades comunes a todos los proyectos
 ├── Directory.Packages.props       ← versiones de NuGet centralizadas
 ├── .editorconfig                  ← estilo y severidad de analizadores
-├── global.json                    ← fija el SDK de .NET 10
+├── global.json                    ← fija el SDK y activa Microsoft.Testing.Platform para dotnet test
 ├── src/{Project}.Api/
 └── tests/{Project}.UnitTests/, tests/{Project}.IntegrationTests/
 ```
 
 `global.json`:
 ```json
-{ "sdk": { "version": "10.0.100", "rollForward": "latestFeature" } }
+{
+  "sdk": { "version": "10.0.100", "rollForward": "latestFeature" },
+  "test": { "runner": "Microsoft.Testing.Platform" }
+}
 ```
+`test.runner` es obligatorio con xUnit v3 en el SDK de .NET 10: sin él, `dotnet test` falla ("Testing with VSTest target is no longer supported").
 
 ## `Directory.Build.props`
 ```xml
@@ -123,6 +127,14 @@ dotnet_diagnostic.CA1873.severity = suggestion
 dotnet_diagnostic.CA1716.severity = none
 # Convención del kit: 'ct' para CancellationToken; DbContext e IdentityDbContext nombran distinto el parámetro de OnModelCreating
 dotnet_diagnostic.CA1725.severity = suggestion
+```
+
+`tests/.editorconfig` (hereda del principal; solo para los proyectos de tests):
+```ini
+# Nombres de test Metodo_Escenario_Resultado y fixtures de xUnit con sufijo Collection
+[*.cs]
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1711.severity = none
 ```
 
 Si otro analizador choca con un patrón del kit, se baja su severidad en `.editorconfig` (`dotnet_diagnostic.CAxxxx.severity = suggestion`) con un comentario del porqué. Nunca con `#pragma` disperso.
