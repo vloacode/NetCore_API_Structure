@@ -12,8 +12,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - `ai/context-packs.md` (qué leer para cada tarea) y `ai/suggestions-catalog.md` (capacidades opcionales con referencias).
 - `standards/00`–`07a`, `12`, `13` y `99`, divididos de la guía única anterior, con soporte de perfiles con y sin seguridad (marca `[SEC]`).
 
+- Lote 2: standards `08` (códigos de error), `09` (baseline de seguridad, OWASP API Top 10, headers, API key), `10` (observabilidad: logging, OpenTelemetry, health checks, `X-Trace-Id`), `11` (rendimiento), `14` (estándares de código, `Directory.Build.props`, gestión central de paquetes, `.editorconfig`), `15` (integración con el frontend). `12` (testing con Testcontainers) y `13` (Docker, CI, migraciones, Azure/IIS) reescritos.
+- Ajustes transversales: `traceId` y `code` en todo ProblemDetails, claves de validación en camelCase, fechas UTC con `Z`, headers expuestos por CORS, `Retry-After` en 429, límites de Kestrel, health checks y estructura `src/` + `tests/` con `.slnx`.
+- `.gitattributes`.
+
+### Cambiado
+- `12-testing`: los services se prueban contra SQL Server real (Testcontainers); SQLite/InMemory no son compatibles con el modelo.
+
 ### Eliminado
 - `AI_GUIDE_API_ARCHITECTURE.md`: su contenido completo pasó a `standards/`.
 
 ### Pendiente (próximos lotes)
-- Standards `08`–`11`, `14`, `15`; plantillas de `docs/`; roles (`ai/roles/`) y flujos (`ai/workflows/`) con sus adaptadores de Claude Code; `settings.json`; plantilla ejecutable verificada.
+- Plantillas de `docs/`; roles (`ai/roles/`) y flujos (`ai/workflows/`) con sus adaptadores de Claude Code; `settings.json`; plantilla ejecutable verificada.

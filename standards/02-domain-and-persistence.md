@@ -170,6 +170,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     // Entidades de negocio (standards/07): una línea por entidad.
     // public DbSet<{Entity}> {Entities} => Set<{Entity}>();
 
+    // Todas las fechas se guardan y se leen como UTC (Kind = Utc): el JSON sale con "Z" (standards/15).
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        configurationBuilder.Properties<DateTime?>().HaveConversion<UtcDateTimeConverter>();
+    }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);   // primero (con seguridad crea el modelo de Identity)
@@ -190,6 +197,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     }
 }
 ```
+
+`Infrastructure/Persistence/Converters/UtcDateTimeConverter.cs`
+```csharp
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+namespace {Project}.Infrastructure.Persistence.Converters;
+
+/// <summary>SQL Server no guarda el Kind: al leer se marca como UTC para que se serialice con "Z".</summary>
+public sealed class UtcDateTimeConverter() : ValueConverter<DateTime, DateTime>(
+    v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
+    v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+```
+Agregar `using {Project}.Infrastructure.Persistence.Converters;` en `AppDbContext`.
 
 ### Configuración base y de Identity — `Infrastructure/Persistence/Configurations/`
 `RefreshTokenConfiguration`, `AppUserConfiguration` y `AppRoleConfiguration` son `[SEC]`: sin seguridad no existen.

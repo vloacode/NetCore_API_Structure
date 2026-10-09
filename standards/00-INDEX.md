@@ -31,12 +31,12 @@ Con seguridad, además: **ASP.NET Core Identity local + JWT + refresh tokens**. 
 | `06-authorization-permissions.md` | Roles, permisos, HasPermission, PermissionPolicyProvider | Seguridad |
 | `07-business-entity-templates.md` | Molde por entidad: entidad, config, contratos, specs, validadores, service, controller | Todos |
 | `07a-additional-patterns.md` | Transacciones, "solo uno activo", entidades similares, reportes, checklist por entidad | Todos |
-| `08-error-codes.md` | Formato de códigos de error y catálogo | Todos *(lote 2)* |
-| `09-security-baseline.md` | Baseline de seguridad (OWASP API Top 10), headers, secretos, API key | Todos *(lote 2)* |
-| `10-observability.md` | Logging, OpenTelemetry, health checks, correlation id | Todos *(lote 2)* |
-| `11-performance.md` | Consultas, índices, caché, compresión | Todos *(lote 2)* |
+| `08-error-codes.md` | Formato de códigos de error y catálogo | Todos |
+| `09-security-baseline.md` | Baseline de seguridad (OWASP API Top 10), headers, secretos, API key | Todos |
+| `10-observability.md` | Logging, OpenTelemetry, health checks, correlation id | Todos |
+| `11-performance.md` | Consultas, índices, caché, compresión | Todos |
 | `12-testing.md` | Estrategia de pruebas y casos mínimos | Todos |
 | `13-deployment.md` | Docker, CI, migraciones, Azure/IIS, checklist de producción | Todos |
-| `14-coding-standards.md` | .editorconfig, Directory.Build.props, analizadores, nullable | Todos *(lote 2)* |
-| `15-frontend-integration.md` | Lo que la API configura para que el frontend la consuma cómodo | Todos *(lote 2)* |
+| `14-coding-standards.md` | .editorconfig, Directory.Build.props, analizadores, nullable | Todos |
+| `15-frontend-integration.md` | Lo que la API configura para que el frontend la consuma cómodo | Todos |
 | `99-lessons-learned.md` | Errores de implementaciones anteriores y la regla que los evita | Todos |

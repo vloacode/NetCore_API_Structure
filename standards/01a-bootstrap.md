@@ -8,6 +8,7 @@
 Cuatro métodos: `AddApplication`, `AddPersistence`, `AddSecurity` `[SEC]` y `AddApi`.
 
 ```csharp
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -57,6 +58,9 @@ public static class DependencyInjection
             .UseSqlServer(configuration.GetConnectionString("Default"), sql => sql.EnableRetryOnFailure())
             .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>()));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Health checks (standards/10): /health/ready verifica la base de datos.
+        services.AddHealthChecks().AddDbContextCheck<AppDbContext>(tags: ["ready"]);
 
         // Email (reemplazar por SMTP/proveedor real en producción).
         services.AddScoped<IEmailSender, LoggingEmailSender>();
@@ -141,18 +145,27 @@ public static class DependencyInjection
             // JSON amigable para el frontend (standards/15): camelCase (default) + enums como texto.
             .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-        services.AddProblemDetails();
+        // Todo ProblemDetails (excepciones, 404/405 vacíos, etc.) lleva traceId para soporte (standards/08).
+        services.AddProblemDetails(o => o.CustomizeProblemDetails = ctx =>
+            ctx.ProblemDetails.Extensions.TryAdd("traceId", Activity.Current?.TraceId.ToString() ?? ctx.HttpContext.TraceIdentifier));
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddOpenApi(o => o.AddDocumentTransformer<BearerSecuritySchemeTransformer>());   // sin seguridad: AddOpenApi()
 
         services.AddCors(o => o.AddPolicy(CorsPolicy, p => p
             .WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
             .AllowAnyHeader()
-            .AllowAnyMethod()));
+            .AllowAnyMethod()
+            .WithExposedHeaders("X-Trace-Id", "Retry-After", "Content-Disposition")));   // legibles desde el navegador (standards/15)
 
         services.AddRateLimiter(o =>
         {
             o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            o.OnRejected = (context, _) =>
+            {
+                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                    context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+                return ValueTask.CompletedTask;
+            };
 
             // Límite global por IP para todos los endpoints (imprescindible en una API pública).
             o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx => RateLimitPartition.GetFixedWindowLimiter(
@@ -193,9 +206,17 @@ public sealed class SystemCurrentUserService(IHttpContextAccessor accessor) : IC
 ```csharp
 using Scalar.AspNetCore;
 using {Project};
+using {Project}.Api.Middleware;
 using {Project}.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Límites de Kestrel y sin header "Server" (standards/09).
+builder.WebHost.ConfigureKestrel(o =>
+{
+    o.AddServerHeader = false;
+    o.Limits.MaxRequestBodySize = 10 * 1024 * 1024;   // 10 MB; subir solo en endpoints de archivos con [RequestSizeLimit]
+});
 
 builder.Services
     .AddApplication()
@@ -207,6 +228,8 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseTraceIdHeader();                      // X-Trace-Id en cada respuesta (standards/10)
+app.UseSecurityHeaders();                    // nosniff, frame, referrer, CSP (standards/09)
 
 if (app.Environment.IsDevelopment())
 {
@@ -225,6 +248,8 @@ app.UseRateLimiter();
 app.UseAuthorization();                      // [SEC]
 
 app.MapControllers();
+app.MapHealthChecks("/health/live", new() { Predicate = _ => false });                      // proceso vivo
+app.MapHealthChecks("/health/ready", new() { Predicate = c => c.Tags.Contains("ready") });   // dependencias listas
 
 await DatabaseSeeder.SeedAsync(app.Services);   // [SEC] (sin seguridad: aplicar migraciones si se configuró)
 await app.RunAsync();

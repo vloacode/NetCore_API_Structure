@@ -42,7 +42,7 @@ En el código de este y otros standards, **las líneas o bloques marcados `// [S
 | `{Entity}` | Entidad de negocio, singular, PascalCase | `Invoice` |
 | `{Entities}` | Plural PascalCase (controller, permisos, tabla) | `Invoices` |
 | `{entity}` / `{entities}` | Singular y plural en minúsculas (rutas, claves de permiso) | `invoice` / `invoices` |
-| `{Parent}` | Entidad relacionada (FK) | `Customer` |
+| `{Parent}` / `{parent}` | Entidad relacionada (FK), PascalCase / camelCase | `Customer` / `customer` |
 | `{Flag}` | Propiedad booleana con regla "solo uno activo" | `IsPrimary` |
 | `Name`, `Code` | Campos **representativos** en las plantillas. Reemplazar por los reales. | — |
 
@@ -51,12 +51,17 @@ En el código de este y otros standards, **las líneas o bloques marcados `// [S
 ## Crear el proyecto y paquetes
 
 ```bash
-dotnet new webapi -n {Project}.Api --use-controllers -f net10.0
-cd {Project}.Api
+mkdir {Project} && cd {Project}
+dotnet new sln -n {Project}                                   # crea {Project}.slnx
+dotnet new webapi -n {Project}.Api -o src/{Project}.Api --use-controllers -f net10.0
+dotnet sln add src/{Project}.Api
+# Directory.Build.props, Directory.Packages.props, .editorconfig y global.json: standards/14
+cd src/{Project}.Api
 dotnet add package Microsoft.EntityFrameworkCore.SqlServer
 dotnet add package Microsoft.EntityFrameworkCore.Design
 dotnet add package Scalar.AspNetCore
 dotnet add package FluentValidation.DependencyInjectionExtensions
+dotnet add package Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore
 dotnet add package Microsoft.AspNetCore.Identity.EntityFrameworkCore   # [SEC]
 dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer       # [SEC]
 dotnet user-secrets init
@@ -64,10 +69,12 @@ dotnet user-secrets init
 
 Versiones de referencia (oct-2026): ASP.NET Core / EF Core **10.0.12**, FluentValidation **12.1.1**, Scalar.AspNetCore **2.17.x**. `dotnet add package` sin versión toma la última estable. Si hay acceso web, verificar la versión vigente en nuget.org.
 
-## Estructura (un solo proyecto, separado por carpetas)
+## Estructura (un proyecto de API separado por carpetas)
+
+Raíz de la solución (`{Project}.slnx`, `Directory.Build.props`, `tests/`…): `standards/14-coding-standards.md`.
 
 ```
-{Project}.Api/
+src/{Project}.Api/
 ├── Domain/
 │   ├── Common/BaseEntity.cs                  ← BaseEntity, IAuditable, ISoftDelete
 │   └── Entities/                             ← entidades de negocio (standards/07)
@@ -101,6 +108,7 @@ Versiones de referencia (oct-2026): ASP.NET Core / EF Core **10.0.12**, FluentVa
 │   ├── Authorization/                        ← [SEC] HasPermissionAttribute, PermissionPolicyProvider
 │   ├── Filters/ValidationFilter.cs
 │   ├── Errors/GlobalExceptionHandler.cs
+│   ├── Middleware/                           ← SecurityHeaders, TraceIdHeader (standards/09, 10)
 │   └── OpenApi/BearerSecuritySchemeTransformer.cs   ← [SEC]
 ├── DependencyInjection.cs
 ├── Program.cs

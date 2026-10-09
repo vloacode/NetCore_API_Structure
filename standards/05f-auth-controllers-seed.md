@@ -291,11 +291,5 @@ public sealed class RolesController(IRoleService roles) : ApiControllerBase
 }
 ```
 
-### Contrato con el frontend (resumen para la IA que haga el cliente)
-1. **Login**:
-   - Si responde `tokens`, se guardan.
-   - Si responde `requiresTwoFactor: true`, se pide el código y se llama `/login/2fa` con `twoFactorToken`.
-2. Cada request lleva `Authorization: Bearer {accessToken}`.
-3. Ante un **401** se llama `/auth/refresh` **una sola vez**, con bloqueo para evitar refresh concurrentes. Si falla, se hace logout local.
-4. Cada refresh devuelve un refresh token **nuevo**. Usar uno viejo revoca la sesión entera.
-5. Los enlaces de email llegan al frontend (`/confirm-email`, `/reset-password`, `/confirm-email-change`). El frontend lee el query string y hace POST al endpoint correspondiente.
+### Contrato con el frontend
+El contrato completo para el cliente (login, 2FA, refresh, enlaces de email, permisos) está en `standards/15-frontend-integration.md`, sección "Contrato de autenticación".

@@ -8,6 +8,7 @@
 
 ### Controller base — `Api/Controllers/ApiControllerBase.cs`
 ```csharp
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using {Project}.Application.Common.Results;
 
@@ -47,7 +48,7 @@ public abstract class ApiControllerBase : ControllerBase
         problem.Status = status;
         problem.Title = error.Message;
         problem.Extensions["code"] = error.Code;
-        problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
+        problem.Extensions["traceId"] = Activity.Current?.TraceId.ToString() ?? HttpContext.TraceIdentifier;
 
         return new ObjectResult(problem) { StatusCode = status };
     }
@@ -66,8 +67,11 @@ public abstract class ApiControllerBase : ControllerBase
 | `Failure` | 400 |
 | Excepción no controlada | 500 (handler global) |
 
+Todas las respuestas de error son **ProblemDetails** con `code` y `traceId`. El formato completo y el catálogo están en `standards/08-error-codes.md`.
+
 ### Validación automática — `Api/Filters/ValidationFilter.cs`
 ```csharp
+using System.Text.Json;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -92,11 +96,14 @@ public sealed class ValidationFilter : IAsyncActionFilter
             var result = await validator.ValidateAsync(new ValidationContext<object>(argument), context.HttpContext.RequestAborted);
             if (result.IsValid) continue;
 
+            // Claves en camelCase para que coincidan con los nombres del JSON (standards/15).
             foreach (var error in result.Errors)
-                context.ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                context.ModelState.AddModelError(JsonNamingPolicy.CamelCase.ConvertName(error.PropertyName), error.ErrorMessage);
 
             var factory = services.GetRequiredService<ProblemDetailsFactory>();
             var problem = factory.CreateValidationProblemDetails(context.HttpContext, context.ModelState, StatusCodes.Status400BadRequest);
+            problem.Title = "Uno o más campos no son válidos.";
+            problem.Extensions["code"] = "Validation.Failed";
             context.Result = new ObjectResult(problem) { StatusCode = StatusCodes.Status400BadRequest };
             return;
         }
@@ -118,11 +125,12 @@ public sealed class GlobalExceptionHandler(IProblemDetailsService problemDetails
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken ct)
     {
-        var (status, title) = exception switch
+        var (status, code, title) = exception switch
         {
-            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "El registro fue modificado por otro usuario. Recargue e intente de nuevo."),
-            OperationCanceledException => (499, "Solicitud cancelada por el cliente."),
-            _ => (StatusCodes.Status500InternalServerError, "Ocurrió un error interno.")
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Concurrency.Conflict", "El registro fue modificado por otro usuario. Recargue e intente de nuevo."),
+            OperationCanceledException => (499, "Request.Cancelled", "Solicitud cancelada por el cliente."),
+            BadHttpRequestException bad => (bad.StatusCode, "Request.Invalid", "La solicitud no es válida."),
+            _ => (StatusCodes.Status500InternalServerError, "Server.Error", "Ocurrió un error interno.")
         };
 
         if (status == StatusCodes.Status500InternalServerError)
@@ -135,7 +143,8 @@ public sealed class GlobalExceptionHandler(IProblemDetailsService problemDetails
         {
             HttpContext = httpContext,
             Exception = exception,
-            ProblemDetails = new ProblemDetails { Status = status, Title = title }   // nunca exponer exception.Message al cliente
+            // Nunca exponer exception.Message al cliente. traceId lo agrega CustomizeProblemDetails (standards/01a).
+            ProblemDetails = new ProblemDetails { Status = status, Title = title, Extensions = { ["code"] = code } }
         });
     }
 }
