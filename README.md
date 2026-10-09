@@ -1,16 +1,42 @@
 # NetCore_API_Structure
-Con este repositorio podemos dejar que la AI realice todo el setup inicial del proyecto.
 
-## Contenido
+Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core (.NET 10)** siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-| Archivo | Para qué sirve |
+> Estado: **v0.1.0 en construcción** (ver `CHANGELOG.md`).
+
+## Qué incluye
+
+| Parte | Para qué sirve |
 |---|---|
-| [AI_GUIDE_API_ARCHITECTURE.md](AI_GUIDE_API_ARCHITECTURE.md) | Guía completa de arquitectura: ASP.NET Core Web API (.NET 10 LTS), Repository + Unit of Work + Specification, `Result<T>`, auditoría/soft delete automáticos, Identity local con JWT + refresh tokens, 2FA, administración de usuarios/roles y permisos. Las entidades de negocio van como plantillas con marcadores (`{Entity}`). |
-| [CLAUDE.md](CLAUDE.md) | Instrucciones que Claude Code carga automáticamente cuando trabaja en un proyecto que incluye este archivo. |
+| `AGENTS.md` | Entrada universal para cualquier IA: stack, reglas, mapa y Definition of Done |
+| `CLAUDE.md` | Lo mismo para Claude Code, más cómo usar sus comandos y subagentes |
+| `standards/` | Cómo se construye: arquitectura, persistencia (Repository + Unit of Work + Specification), API, autenticación con Identity local + JWT, plantillas por entidad, testing y despliegue |
+| `ai/workflows/` | Flujos paso a paso: `project-init`, `new-entity`, `code-review`, `incident-response`… |
+| `ai/roles/` | Roles especializados: analista, arquitecto, backend, QA, seguridad, DevOps… |
+| `ai/context-packs.md` | Qué archivos leer para cada tarea (ahorra contexto) |
+| `ai/suggestions-catalog.md` | Capacidades opcionales que la IA sugiere, con referencias oficiales |
+| `docs/` | Plantillas de la documentación del proyecto, que llena `/project-init` |
 
-## Cómo usarlo en un proyecto nuevo
+## Modos de creación
+`project-init` empieza siempre preguntando el modo:
 
-1. Copiar `AI_GUIDE_API_ARCHITECTURE.md` y `CLAUDE.md` a la raíz del proyecto nuevo (o pegarle el enlace de este repositorio a la AI).
-2. Pedirle a la AI algo como:
-   > Crea el proyecto `{NombreProyecto}` siguiendo AI_GUIDE_API_ARCHITECTURE.md. Las entidades son: ...
-3. La AI confirmará primero las decisiones de la sección 0.1 de la guía (nombre, entidades, roles, email, URLs) y luego generará la estructura.
+1. **Estándar con seguridad**: arquitectura completa + Identity local + JWT + refresh tokens + 2FA + usuarios, roles y permisos.
+2. **Estándar sin seguridad**: lo mismo sin autenticación, para APIs públicas. Mantiene rate limiting, validación, CORS y HTTPS.
+3. **Entrevista completa**: la IA pregunta por negocio, seguridad, datos, integraciones y despliegue, y ajusta todo a las respuestas.
+
+En los tres modos la IA sugiere de forma proactiva capacidades adicionales (versionado, caché, archivos, jobs…) con referencias actuales.
+
+## Cómo crear un proyecto nuevo
+1. En GitHub, pulsa **Use this template** → **Create a new repository** (o copia el contenido de este repositorio).
+2. Abre el repositorio nuevo con tu IA.
+3. Pídele que inicialice el proyecto:
+   - Claude Code: `/project-init`
+   - Otras IAs: "Lee AGENTS.md y ejecuta ai/workflows/project-init.md".
+4. Responde la elección de modo y la entrevista, revisa los documentos que genera y aprueba la creación del código.
+
+## Cómo seguir trabajando
+- Nueva entidad: `/new-entity` (o "sigue ai/workflows/new-entity.md").
+- Nuevo módulo, endpoint, cambio de BD, revisiones, incidentes: ver la lista de flujos en `AGENTS.md`.
+
+## Actualizar un proyecto existente al kit nuevo
+Compara `KIT_VERSION` del proyecto con el de este repositorio y ejecuta `/upgrade-kit`. Solo se actualizan `standards/`, `ai/` y los adaptadores; `docs/` y `src/` del proyecto no se tocan.
