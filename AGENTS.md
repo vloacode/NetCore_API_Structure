@@ -5,7 +5,7 @@ Este archivo es la **entrada universal**. Lo leen Claude Code, Cursor, Copilot, 
 
 ## 1. Orden de lectura obligatorio
 1. Este archivo completo.
-2. `docs/00-MASTER_CONTEXT.md`: resumen del proyecto y **Perfil del proyecto**. Si no está lleno, el proyecto no se ha inicializado: ejecuta el flujo `ai/workflows/project-init.md`.
+2. `docs/00-MASTER_CONTEXT.md`: resumen del proyecto y **Perfil del proyecto**. Si todavía contiene marcadores `{{...}}`, el proyecto no se ha inicializado: ejecuta el flujo `ai/workflows/project-init.md`.
 3. `ai/context-packs.md`: qué archivos mínimos leer según la tarea.
 4. Solo los archivos que indique el context pack. **No cargues todo el repositorio.**
 
