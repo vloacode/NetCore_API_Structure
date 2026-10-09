@@ -76,7 +76,8 @@ def start_api(project: pathlib.Path, connection: str, proxy_ip: str | None) -> s
     env = dict(os.environ, ASPNETCORE_ENVIRONMENT="Development", ConnectionStrings__Default=connection,
                Database__ApplyMigrationsOnStartup="true", Jwt__Issuer="KitVerify", Jwt__Audience="KitVerify.Client",
                Jwt__SigningKey="verify-" + "k" * 60, Seed__AdminEmail="admin@verify.local",
-               Seed__AdminPassword="Admin#Pass12345", App__ClientUrl="http://localhost:5173", App__AppName="KitVerify")
+               Seed__AdminPassword="Admin#Pass12345", App__ClientUrl="http://localhost:5173", App__AppName="KitVerify",
+               Analytics__HashKey="verify-" + "h" * 60)
     if proxy_ip:
         env.update(ReverseProxy__Enabled="true", ReverseProxy__KnownProxies__0=proxy_ip)
     log = (project.parent / f"nginx-run-{'proxy' if proxy_ip else 'direct'}.log").open("w", encoding="utf-8")

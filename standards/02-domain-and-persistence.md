@@ -167,6 +167,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;   // [SEC]
 using Microsoft.EntityFrameworkCore;
 using {Project}.Domain.Common;
 using {Project}.Infrastructure.Identity;                   // [SEC]
+using {Project}.Infrastructure.Analytics;                  // [CAP:product-analytics]
 
 namespace {Project}.Infrastructure.Persistence;
 
@@ -176,6 +177,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     : DbContext(options)                                   // [PUB]
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();   // [SEC]
+    public DbSet<AnalyticsEvent> AnalyticsEvents => Set<AnalyticsEvent>();   // [CAP:product-analytics]
 
     // Entidades de negocio (standards/07): una línea por entidad.
     // public DbSet<{Entity}> {Entities} => Set<{Entity}>();

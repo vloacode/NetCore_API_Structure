@@ -146,7 +146,8 @@ def smoke(profile: str, database: str, project: pathlib.Path, base: str):
     connection = f"{base.rstrip(';')};Database={name}"
     port = PORTS[(profile, database)]
     env = dict(os.environ, ASPNETCORE_ENVIRONMENT="Development", ConnectionStrings__Default=connection,
-               Database__ApplyMigrationsOnStartup="true", Cors__AllowedOrigins__0="http://localhost:5173")
+               Database__ApplyMigrationsOnStartup="true", Cors__AllowedOrigins__0="http://localhost:5173",
+               Analytics__HashKey="verify-" + "h" * 60)
     if profile == "secure":
         env.update(Jwt__Issuer="KitVerify", Jwt__Audience="KitVerify.Client", Jwt__SigningKey="verify-" + "k" * 60,
                    Seed__AdminEmail="admin@verify.local", Seed__AdminPassword="Admin#Pass12345",

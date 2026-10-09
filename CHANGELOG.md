@@ -5,6 +5,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [2.3.0] - 2026-10-09
+### Añadido
+- **Analítica de producto (uso)**, capacidad opcional `product-analytics`:
+  - `standards/17`:
+    - `IAnalyticsTracker` que no bloquea, con cola `Channel` y `AnalyticsDispatcher` en segundo plano.
+    - Destinos `IAnalyticsSink`: BD por defecto, log en desarrollo y otros con ADR.
+    - Tabla `AnalyticsEvents` con JSON (`jsonb` en PostgreSQL), identidad seudónima con HMAC, guardia de datos personales y retención automática.
+  - `standards/17a`: endpoint `POST /api/analytics/events` para el frontend (lista blanca, máximo 50 eventos, rate limit propio, `X-Anonymous-Id`), consultas SQL de KPIs y tests de integración.
+  - `docs/11-product-analytics.md` (preguntas → KPIs → catálogo de eventos), flujo y comando `/analytics-event`, product-analyst amplía su alcance y entra en el catálogo de sugerencias y en `/project-init`.
+  - GA4 no se incluye en el kit (es del frontend). `standards/17` explica cómo agregarlo como destino con un ADR.
+- Marca `// [CAP:<id>]` para código que solo existe con una capacidad activa.
+
 ## [2.2.0] - 2026-10-09
 ### Añadido
 - **Opción de despliegue con Nginx** (`Deployment = nginx`, servidor Linux/VM con Docker): `standards/13a-reverse-proxy-nginx.md`. Incluye:

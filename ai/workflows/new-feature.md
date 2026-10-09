@@ -21,7 +21,8 @@ Implementar una funcionalidad o un cambio que **no es simplemente una entidad nu
 6. **Compilar** tras cada archivo relevante.
 7. **Tests** para cada criterio de aceptación y cada error nuevo (`test-generation`).
 8. **Revisión de seguridad** si toca autenticación, permisos, datos personales o endpoints públicos (`security-review`).
-9. **Documentar** con `docs-sync` (módulo, `docs/03`, `docs/06` si cambian estados, `docs/08` si hay integraciones).
+9. **Analítica** (solo con `product-analytics`): si la funcionalidad responde a un KPI, agregar su evento con `analytics-event`.
+10. **Documentar** con `docs-sync` (módulo, `docs/03`, `docs/06` si cambian estados, `docs/08` si hay integraciones).
 
 ## Reglas
 - No mezclar cambios no pedidos ("ya que estaba, refactoricé…"). Si se detecta una mejora, proponerla aparte.

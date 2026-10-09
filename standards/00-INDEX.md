@@ -9,7 +9,7 @@ Con seguridad, además: **ASP.NET Core Identity local + JWT + refresh tokens**. 
 ## Antes de leer
 1. Lee el **Perfil del proyecto** en `docs/00-MASTER_CONTEXT.md` (`Security = enabled | disabled` y capacidades activas).
 2. Lee solo los archivos que tu tarea necesita: `ai/context-packs.md` dice cuáles.
-3. Marcas en el código: `[SEC]` solo con seguridad, `[PUB]` solo sin seguridad, `[MSSQL]` solo SQL Server, `[PGSQL]` solo PostgreSQL (`standards/01`).
+3. Marcas en el código: `[SEC]` solo con seguridad, `[PUB]` solo sin seguridad, `[MSSQL]` solo SQL Server, `[PGSQL]` solo PostgreSQL, `[CAP:<id>]` solo con esa capacidad (`standards/01`).
 
 ## Archivos
 
@@ -41,4 +41,7 @@ Con seguridad, además: **ASP.NET Core Identity local + JWT + refresh tokens**. 
 | `14-coding-standards.md` | .editorconfig, Directory.Build.props, analizadores, nullable | Todos |
 | `15-frontend-integration.md` | Lo que la API configura para que el frontend la consuma cómodo | Todos |
 | `16-framework-versions.md` | Política de versiones de .NET, piezas dependientes de la versión, adopción y migración | Todos |
+| `17-product-analytics.md` | Analítica de uso: tracker, cola, dispatcher, tabla de eventos, seudónimos, retención | Solo `product-analytics` |
+| `17b-analytics-dispatch.md` | Destinos (BD, log), dispatcher en segundo plano, retención y `AddProductAnalytics()` | Solo `product-analytics` |
+| `17a-analytics-ingestion-queries.md` | Endpoint de eventos del frontend, consultas de KPIs, tests | Solo `product-analytics` |
 | `99-lessons-learned.md` | Errores de implementaciones anteriores y la regla que los evita | Todos |

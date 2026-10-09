@@ -29,6 +29,7 @@ Marcas en el código de este y otros standards (al crear el proyecto se conserva
 | `// [PUB]` | `Security = disabled` (API pública) |
 | `// [MSSQL]` | `Database = sqlserver` |
 | `// [PGSQL]` | `Database = postgresql` |
+| `// [CAP:<id>]` | la capacidad `<id>` está en `Capabilities` (ej. `[CAP:product-analytics]`, `standards/17`) |
 
 ## Reglas no negociables
 1. **Controllers → Services → IUnitOfWork/IRepository → DbContext.** Un controller nunca toca `DbContext` ni repositorios.

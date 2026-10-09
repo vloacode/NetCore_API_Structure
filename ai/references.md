@@ -96,6 +96,16 @@ Fuentes que la IA debe consultar para trabajar con información **actual** y no 
 | Tablas temporales con EF Core | https://learn.microsoft.com/ef/core/providers/sql-server/temporal-tables |
 | Azure SQL | https://learn.microsoft.com/azure/azure-sql/ |
 
+## Analítica de producto
+| Tema | Enlace |
+|---|---|
+| Channels (colas en memoria) | https://learn.microsoft.com/dotnet/core/extensions/channels |
+| Servicios en segundo plano (BackgroundService) | https://learn.microsoft.com/aspnet/core/fundamentals/host/hosted-services |
+| HMACSHA256 (seudonimización) | https://learn.microsoft.com/dotnet/api/system.security.cryptography.hmacsha256 |
+| JSON en SQL Server | https://learn.microsoft.com/sql/relational-databases/json/json-data-sql-server |
+| Tipos JSON en PostgreSQL (`jsonb`) | https://www.postgresql.org/docs/current/datatype-json.html |
+| GA4 Measurement Protocol (si un proyecto agrega ese destino) | https://developers.google.com/analytics/devguides/collection/protocol/ga4 |
+
 ## Testing
 | Tema | Enlace |
 |---|---|

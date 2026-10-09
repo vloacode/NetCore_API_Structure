@@ -86,6 +86,19 @@ Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. 
 - **Paquetes:** `Azure.Storage.Blobs`.
 - **Referencia:** https://learn.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-dotnet
 
+## Analítica
+
+### Analítica de producto (uso) · `product-analytics`
+- **Disparadores:** "saber qué usan los usuarios", "cuántos completan…", embudos, activación, funciones poco usadas, búsquedas sin resultados.
+- **Qué agrega:**
+  - `IAnalyticsTracker` y cola en memoria con dispatcher en segundo plano.
+  - Tabla de eventos en la BD del proyecto, con identidad seudónima (HMAC) y sin datos personales.
+  - Retención configurable y endpoint para eventos del frontend.
+  - No reemplaza a GA4: lo que es web (páginas, campañas) sigue en el frontend.
+- **Paquetes:** ninguno (BCL + EF Core).
+- **Implementa:** `standards/17-product-analytics.md`, `17a` (endpoint y consultas), `17b` (despacho y registro); flujo `ai/workflows/analytics-event.md`.
+- **Referencia:** https://learn.microsoft.com/dotnet/core/extensions/channels
+
 ## Rendimiento
 
 ### Caché (HybridCache / output caching) · `caching`

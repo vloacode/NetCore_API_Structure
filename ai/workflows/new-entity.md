@@ -33,7 +33,8 @@ Crear una entidad de negocio completa (entidad, configuración EF, contratos, sp
 12. **Buscar marcadores olvidados** en los archivos nuevos: no debe quedar `{Entity}`, `{Parent}`, `{entities}` ni campos de ejemplo.
 13. **Migración**: `dotnet ef migrations add Add{Entity} ...` y revisar el SQL generado (database-architect).
 14. **Tests**: casos mínimos por entidad de `standards/12` (flujo `test-generation`).
-15. **Documentación** (flujo `docs-sync`): endpoints y errores en el módulo, FR con endpoint y test en `docs/03`, permisos en `docs/07` `[SEC]`, `PROJECT_STATUS`.
+15. **Analítica** (solo con `product-analytics`): si algún KPI de `docs/11` depende de esta entidad, agregar el evento con `analytics-event`.
+16. **Documentación** (flujo `docs-sync`): endpoints y errores en el módulo, FR con endpoint y test en `docs/03`, permisos en `docs/07` `[SEC]`, `PROJECT_STATUS`.
 
 ## Reglas
 - Copiar las plantillas y adaptar; no reescribir desde cero con otro estilo.
@@ -44,7 +45,7 @@ Crear una entidad de negocio completa (entidad, configuración EF, contratos, sp
 Entidad funcional con sus endpoints, compilando, con migración, tests y documentación actualizada. Resumen con archivos creados, endpoints y permisos.
 
 ## Definition of Done
-- [ ] Los 15 pasos completos.
+- [ ] Los pasos completos (el 15 solo con `product-analytics`).
 - [ ] `dotnet build` y `dotnet test` en verde.
 - [ ] Sin marcadores sin reemplazar.
 - [ ] Docs sincronizados (módulo, `03`, `05`, `07` `[SEC]`, `PROJECT_STATUS`).

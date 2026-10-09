@@ -9,7 +9,7 @@ Lo crea project-init y lo actualiza docs-sync. Mientras existan marcadores {{...
 
 | Clave | Valor | Opciones |
 |---|---|---|
-| KitVersion | {{2.2.0}} | versión del kit con la que se creó o actualizó |
+| KitVersion | {{2.3.0}} | versión del kit con la que se creó o actualizó |
 | Mode | {{1-standard-secure}} | `1-standard-secure` · `2-standard-public` · `3-interview` |
 | Security | {{enabled}} | `enabled` (Identity + JWT + permisos) · `disabled` |
 | TwoFactor | {{enabled}} | `enabled` · `disabled` (solo si Security = enabled) |
@@ -50,6 +50,7 @@ Lo crea project-init y lo actualiza docs-sync. Mientras existan marcadores {{...
 | `08-integrations-events-jobs.md` | Integraciones externas, eventos, notificaciones, jobs |
 | `09-glossary.md` | Términos del negocio |
 | `10-roadmap.md` | Fases y entregas |
+| `11-product-analytics.md` | Preguntas, KPIs y catálogo de eventos de uso (solo con `product-analytics`) |
 | `modules/` | Un archivo por módulo (fuente de verdad de sus requerimientos funcionales) |
 | `decisions/` | ADRs: decisiones y desvíos de los standards |
 | `runbooks/` | Procedimientos de operación e incidentes |

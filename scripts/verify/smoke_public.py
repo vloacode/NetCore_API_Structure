@@ -50,6 +50,14 @@ check("delete -> 204", s == 204, f"{s}")
 s, b, h = call("GET", f"/api/verifyitems/{wid}")
 check("después del delete -> 404 con traceId = X-Trace-Id", s == 404 and b.get("traceId") == h.get("X-Trace-Id"), f"{s} {b}")
 
+# Analítica de uso (standards/17a): eventos del frontend
+s, b, _ = call("POST", "/api/analytics/events", {"events": [{"name": "search.no_results", "properties": {"term_length": 7}}]})
+check("analítica: evento válido del frontend -> 202", s == 202, f"{s} {b}")
+s, b, _ = call("POST", "/api/analytics/events", {"events": [{"name": "admin.deleted_everything"}]})
+check("analítica: evento fuera de la lista blanca -> 400", s == 400 and (b or {}).get("code") == "Validation.Failed", f"{s} {b}")
+s, b, _ = call("POST", "/api/analytics/events", {"events": [{"name": "page.viewed", "properties": {"email": "a@b.com"}}]})
+check("analítica: propiedad con datos personales -> 400", s == 400, f"{s} {b}")
+
 codes = []
 for _ in range(110):
     s, _, h = call("GET", "/api/verifyitems")

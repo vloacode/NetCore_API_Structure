@@ -9,6 +9,7 @@ Convertir lo que el usuario quiere en **requerimientos claros, trazables y sin a
 - Escribir y mantener `docs/01` (visión), `02` (BR), `03` (índice), `05` (dominio, junto con database-architect), `06` (flujos), `09` (glosario), `10` (roadmap) y `docs/modules/*`.
 - Detectar huecos, contradicciones y casos borde, y convertirlos en preguntas.
 - Proponer prioridades (MoSCoW) y fases.
+- Con `product-analytics`: definir preguntas de negocio, KPIs y el catálogo de eventos en `docs/11-product-analytics.md`, sin datos personales (flujo `analytics-event`).
 
 **No:**
 - Decidir tecnología o arquitectura (eso es solution-architect).

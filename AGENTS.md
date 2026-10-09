@@ -39,7 +39,7 @@ Este archivo es la **entrada universal**. Lo leen Claude Code, Cursor, Copilot, 
 5. Implementa respetando los standards. Ante una duda de negocio, **pregunta**; no inventes. Ante una duda técnica (API, versión, rendimiento), **consulta la documentación oficial** (`ai/references.md`; MCP de Microsoft Learn si está conectado) en lugar de responder de memoria.
 6. Cumple la **Definition of Done** (sección 7) antes de dar la tarea por terminada.
 
-Flujos disponibles: `project-init`, `new-module`, `new-entity`, `new-feature`, `api-endpoint`, `database-change`, `test-generation`, `code-review`, `security-review`, `performance-review`, `log-analysis`, `incident-response`, `record-decision`, `docs-sync`, `upgrade-kit`, `upgrade-dotnet`.
+Flujos disponibles: `project-init`, `new-module`, `new-entity`, `new-feature`, `api-endpoint`, `database-change`, `test-generation`, `code-review`, `security-review`, `performance-review`, `log-analysis`, `incident-response`, `record-decision`, `docs-sync`, `upgrade-kit`, `upgrade-dotnet`, `analytics-event` (si `product-analytics` está activa).
 
 ## 5. Reglas de oro
 Resumen; el detalle está en `standards/01-solution-architecture.md`.

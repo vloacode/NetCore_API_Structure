@@ -77,6 +77,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("App:ClientUrl", "http://localhost");            // [SEC]
         builder.UseSetting("Seed:AdminEmail", TestUsers.AdminEmail);        // [SEC]
         builder.UseSetting("Seed:AdminPassword", TestUsers.AdminPassword);  // [SEC]
+        builder.UseSetting("Analytics:HashKey", new string('h', 64));      // [CAP:product-analytics]
     }
 
     public async ValueTask InitializeAsync()

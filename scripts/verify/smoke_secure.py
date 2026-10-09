@@ -144,6 +144,14 @@ check("el token de 2FA NO sirve como access token -> 401", s == 401, f"{s}")
 s, b, _ = call("POST", "/api/auth/login/2fa", {"twoFactorToken": challenge, "code": totp(secret)})
 check("login/2fa con TOTP -> 200 tokens", s == 200 and b["accessToken"], f"{s} {b}")
 
+# Analítica de uso (standards/17a): eventos del frontend
+s, b, _ = call("POST", "/api/analytics/events", {"events": [{"name": "search.no_results", "properties": {"term_length": 7}}]})
+check("analítica: evento válido del frontend -> 202", s == 202, f"{s} {b}")
+s, b, _ = call("POST", "/api/analytics/events", {"events": [{"name": "admin.deleted_everything"}]})
+check("analítica: evento fuera de la lista blanca -> 400", s == 400 and (b or {}).get("code") == "Validation.Failed", f"{s} {b}")
+s, b, _ = call("POST", "/api/analytics/events", {"events": [{"name": "page.viewed", "properties": {"email": "a@b.com"}}]})
+check("analítica: propiedad con datos personales -> 400", s == 400, f"{s} {b}")
+
 # 14. Rate limiting de Auth (10/min por IP) -> 429 con Retry-After
 codes = []
 for _ in range(12):

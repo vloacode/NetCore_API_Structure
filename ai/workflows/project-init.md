@@ -49,7 +49,7 @@ Preguntar en **rondas cortas** (3 a 6 preguntas), con opciones cuando se pueda. 
 - **Ronda A — Negocio:** problema y objetivos; actores; módulos; reglas de negocio importantes; estados y flujos; qué queda fuera de alcance.
 - **Ronda B — Seguridad:** ¿hay usuarios? (si no, `Security=disabled`); ¿registro público o solo los crea un admin?; ¿2FA?; roles además de Admin y User, y qué puede hacer cada uno; ¿hay datos que solo puede ver su dueño?; ¿API key para sistemas externos?
 - **Ronda C — Datos:** motor (SQL Server o PostgreSQL) y versión del motor; ¿int o Guid como PK?; ¿soft delete?; ¿historial de cambios (auditoría detallada)?; volumen esperado; datos sensibles y retención.
-- **Ronda D — Capacidades e integraciones:** emails reales; archivos; tareas programadas; integraciones con terceros; tiempo real; caché; versionado; multi-empresa; idiomas. Usar los disparadores de `ai/suggestions-catalog.md` para guiar las preguntas.
+- **Ronda D — Capacidades e integraciones:** emails reales; archivos; tareas programadas; integraciones con terceros; tiempo real; caché; versionado; multi-empresa; idiomas; analítica de uso ("¿qué quieren saber de cómo se usa el producto?" → `product-analytics`). Usar los disparadores de `ai/suggestions-catalog.md` para guiar las preguntas.
 - **Ronda E — Infraestructura:** dónde se despliega (Docker, servidor Linux/VM con Nginx, Azure App Service, Container Apps, IIS); entornos; destino de logs; objetivos de rendimiento y disponibilidad (si no los sabe, proponer los valores por defecto de `docs/04`).
 
 ## Paso 4 — Sugerencias proactivas (todos los modos)

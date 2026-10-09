@@ -7,7 +7,7 @@ Todo lo de `AGENTS.md` aplica. Esta sección solo agrega cómo usar las capacida
 ## Comandos (skills)
 Cada flujo de `ai/workflows/` está expuesto como comando en `.claude/skills/<flujo>/SKILL.md`:
 
-`/project-init` · `/new-module` · `/new-entity` · `/new-feature` · `/api-endpoint` · `/database-change` · `/test-generation` · `/code-review` · `/security-review` · `/performance-review` · `/log-analysis` · `/incident-response` · `/record-decision` · `/docs-sync` · `/upgrade-kit` · `/upgrade-dotnet`
+`/project-init` · `/new-module` · `/new-entity` · `/new-feature` · `/api-endpoint` · `/database-change` · `/test-generation` · `/code-review` · `/security-review` · `/performance-review` · `/log-analysis` · `/incident-response` · `/record-decision` · `/docs-sync` · `/upgrade-kit` · `/upgrade-dotnet` · `/analytics-event`
 
 El contenido real está en `ai/workflows/`. Las skills solo apuntan ahí: si cambias un flujo, edita `ai/workflows/`, no la skill.
 

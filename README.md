@@ -2,7 +2,7 @@
 
 Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-> Versión **2.2.0** (ver `CHANGELOG.md`). El código de `standards/` está verificado en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): compila en Release con analizadores, genera migraciones, pasa los tests de integración con Testcontainers y las pruebas de punta a punta contra bases reales (`scripts/verify/`).
+> Versión **2.3.0** (ver `CHANGELOG.md`). El código de `standards/` está verificado en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): compila en Release con analizadores, genera migraciones, pasa los tests de integración con Testcontainers y las pruebas de punta a punta contra bases reales (`scripts/verify/`).
 
 ## Qué incluye
 
@@ -17,6 +17,7 @@ Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) cons
 | `ai/suggestions-catalog.md` | Capacidades opcionales que la IA sugiere, con referencias oficiales |
 | `ai/references.md` + `.mcp.json` | Documentación oficial para consultar (y MCP de Microsoft Learn para buscarla en vivo) |
 | `docs/` | Plantillas de la documentación del proyecto, que llena `/project-init` |
+| Capacidades opcionales | Analítica de uso (`standards/17`), Nginx (`standards/13a`), API key y las del catálogo de sugerencias |
 
 ## Modos de creación
 `project-init` empieza siempre preguntando el modo:

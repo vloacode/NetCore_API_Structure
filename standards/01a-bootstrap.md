@@ -34,6 +34,7 @@ using {Project}.Infrastructure.Email;
 using {Project}.Infrastructure.Identity;                    // [SEC]
 using {Project}.Infrastructure.Persistence;
 using {Project}.Infrastructure.Persistence.Interceptors;
+using {Project}.Infrastructure.Analytics;                   // [CAP:product-analytics]
 using {Project}.Infrastructure.Services;                    // [PUB]
 
 namespace {Project};
@@ -70,6 +71,8 @@ public static class DependencyInjection
 
         // Email (reemplazar por SMTP/proveedor real en producción).
         services.AddScoped<IEmailSender, LoggingEmailSender>();
+
+        services.AddProductAnalytics(configuration);   // [CAP:product-analytics] analítica de uso (standards/17)
 
         // Sin seguridad no hay usuario autenticado: la auditoría guarda solo fechas.
         services.AddScoped<ICurrentUserService, SystemCurrentUserService>();   // [PUB]
@@ -351,12 +354,13 @@ public partial class Program;   // para WebApplicationFactory en tests de integr
 ```
 Con PostgreSQL, la cadena de conexión cambia de formato: `"Default": "Host=localhost;Port=5432;Database={project}_db;Username={project}_app"` (la contraseña va en user-secrets: `dotnet user-secrets set "ConnectionStrings:Default" "Host=…;Password=…"`).
 
-Sin seguridad se eliminan las secciones `Jwt`, `App` y `Seed`. `Database:ApplyMigrationsOnStartup` aplica a ambos perfiles (en `appsettings.Development.json` puede ir en `true`).
+Sin seguridad se eliminan las secciones `Jwt`, `App` y `Seed`. Con `product-analytics` se agrega la sección `"Analytics": { "Enabled": true, "RetentionDays": 90 }` (la `HashKey` va en user-secrets). `Database:ApplyMigrationsOnStartup` aplica a ambos perfiles (en `appsettings.Development.json` puede ir en `true`).
 
 ## Secretos de desarrollo y base de datos
 ```bash
 dotnet user-secrets set "Jwt:SigningKey" "<cadena aleatoria de 64+ caracteres>"   # [SEC]
 dotnet user-secrets set "Seed:AdminPassword" "<contraseña que cumpla la política>" # [SEC]
+dotnet user-secrets set "Analytics:HashKey" "<cadena aleatoria de 64+ caracteres>"  # [CAP:product-analytics]
 dotnet tool install --global dotnet-ef
 dotnet ef migrations add InitialCreate -o Infrastructure/Persistence/Migrations
 dotnet ef database update
