@@ -57,7 +57,9 @@ public static class DependencyInjection
 
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddDbContext<AppDbContext>((sp, options) => options
-            .UseSqlServer(configuration.GetConnectionString("Default"), sql => sql.EnableRetryOnFailure())
+            .UseSqlServer(configuration.GetConnectionString("Default"), sql => sql.EnableRetryOnFailure())          // [MSSQL]
+            .UseNpgsql(configuration.GetConnectionString("Default"), npgsql => npgsql.EnableRetryOnFailure())       // [PGSQL]
+            .UseSnakeCaseNamingConvention()                                                                         // [PGSQL]
             .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>()));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -325,6 +327,8 @@ public partial class Program;   // para WebApplicationFactory en tests de integr
   "AllowedHosts": "*"
 }
 ```
+Con PostgreSQL, la cadena de conexión cambia de formato: `"Default": "Host=localhost;Port=5432;Database={project}_db;Username={project}_app"` (la contraseña va en user-secrets: `dotnet user-secrets set "ConnectionStrings:Default" "Host=…;Password=…"`).
+
 Sin seguridad se eliminan las secciones `Jwt`, `App` y `Seed`. `Database:ApplyMigrationsOnStartup` aplica a ambos perfiles (en `appsettings.Development.json` puede ir en `true`).
 
 ## Secretos de desarrollo y base de datos

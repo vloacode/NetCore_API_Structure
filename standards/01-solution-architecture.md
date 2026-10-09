@@ -4,7 +4,7 @@
 > **Propósito:** Reglas no negociables, marcadores, creación del proyecto, estructura, nombres, DependencyInjection, Program.cs y configuración.  
 > Índice general: `standards/00-INDEX.md`
 
-## Perfiles y marca `[SEC]`
+## Perfil del proyecto y marcas
 
 El **perfil del proyecto** está en `docs/00-MASTER_CONTEXT.md`, sección "Perfil del proyecto". Léelo antes de aplicar este archivo.
 
@@ -14,10 +14,21 @@ El **perfil del proyecto** está en `docs/00-MASTER_CONTEXT.md`, sección "Perfi
 | Estándar sin seguridad (API pública) | `disabled` | Todo excepto Identity, JWT, permisos y controllers de Auth |
 | Entrevista completa | según respuestas | Base del perfil con seguridad, ajustada por las capacidades elegidas |
 
-En el código de este y otros standards:
-- **`// [SEC]`**: la línea, sentencia o método solo existe si `Security = enabled`. Sin seguridad se omite completa.
-- **`// [PUB]`**: la línea solo existe si `Security = disabled` (API pública). Con seguridad se omite.
-- Al crear el proyecto, se conserva solo lo del perfil y se quitan los comentarios de marca.
+Además del modo, el perfil fija el **motor de base de datos** (`Database`) y la **versión de .NET** (`TargetFramework`, ver `standards/16-framework-versions.md`).
+
+| `Database` | Proveedor EF Core | Notas |
+|---|---|---|
+| `sqlserver` (por defecto) | `Microsoft.EntityFrameworkCore.SqlServer` | Collation sin distinguir mayúsculas por defecto |
+| `postgresql` | `Npgsql.EntityFrameworkCore.PostgreSQL` + `EFCore.NamingConventions` | Tablas y columnas en `snake_case`; búsquedas con `ILike` |
+
+Marcas en el código de este y otros standards (al crear el proyecto se conserva solo lo del perfil y se quitan los comentarios de marca):
+
+| Marca | La línea, sentencia o método solo existe si… |
+|---|---|
+| `// [SEC]` | `Security = enabled` |
+| `// [PUB]` | `Security = disabled` (API pública) |
+| `// [MSSQL]` | `Database = sqlserver` |
+| `// [PGSQL]` | `Database = postgresql` |
 
 ## Reglas no negociables
 1. **Controllers → Services → IUnitOfWork/IRepository → DbContext.** Un controller nunca toca `DbContext` ni repositorios.
@@ -27,7 +38,7 @@ En el código de este y otros standards:
 5. **Nunca exponer entidades EF** por la API. Entran `Create{Entity}Request` / `Update{Entity}Request` y sale `{Entity}Dto`.
 6. Lecturas para devolver datos: **proyección** (`Expression<Func<T, TDto>>`) con `ListAsync` / `PagedListAsync` / `FirstOrDefaultAsync(spec, selector)`.
 7. Consultas con filtro, orden o paginación: **una clase `Specification<T>` con nombre de negocio**. Paginar sin `OrderBy` está prohibido (el evaluador lanza excepción).
-8. **Auditoría automática** con `AuditableEntityInterceptor`. Ningún service asigna `CreatedBy`, `CreatedAt`, `UpdatedBy` ni `UpdatedAt`, salvo en `ExecuteUpdateAsync`, que no pasa por el interceptor. Sin seguridad, los campos `*By` quedan en `null`.
+8. **Auditoría y concurrencia automáticas** con `AuditableEntityInterceptor`. Ningún service asigna `CreatedBy`, `CreatedAt`, `UpdatedBy`, `UpdatedAt` ni `RowVersion`, salvo en `ExecuteUpdateAsync`, que no pasa por el interceptor (ahí se asignan `UpdatedAt`, `UpdatedBy` y `RowVersion = Guid.NewGuid()`). Sin seguridad, los campos `*By` quedan en `null`.
 9. `Remove()` sobre una entidad `ISoftDelete` se convierte en soft delete. El filtro global oculta los registros borrados.
 10. Una operación que escribe en varios pasos usa `uow.ExecuteInTransactionAsync(...)`: solo hace commit si el `Result` es exitoso. **Nada de efectos externos (emails, HTTP) dentro de la transacción.**
 11. Todo método async recibe y propaga **`CancellationToken`**.
@@ -56,11 +67,13 @@ En el código de este y otros standards:
 ```bash
 mkdir {Project} && cd {Project}
 dotnet new sln -n {Project}                                   # crea {Project}.slnx
-dotnet new webapi -n {Project}.Api -o src/{Project}.Api --use-controllers -f net10.0
+dotnet new webapi -n {Project}.Api -o src/{Project}.Api --use-controllers -f net10.0   # TargetFramework del perfil
 dotnet sln add src/{Project}.Api
 # Directory.Build.props, Directory.Packages.props, .editorconfig y global.json: standards/14
 cd src/{Project}.Api
-dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer          # [MSSQL]
+dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL           # [PGSQL]
+dotnet add package EFCore.NamingConventions                        # [PGSQL]
 dotnet add package Microsoft.EntityFrameworkCore.Design
 dotnet add package Scalar.AspNetCore
 dotnet add package FluentValidation.DependencyInjectionExtensions
@@ -70,7 +83,7 @@ dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer       # [SEC]
 dotnet user-secrets init
 ```
 
-Versiones de referencia (oct-2026): ASP.NET Core / EF Core **10.0.12**, FluentValidation **12.1.1**, Scalar.AspNetCore **2.17.x**. `dotnet add package` sin versión toma la última estable. Si hay acceso web, verificar la versión vigente en nuget.org.
+Versiones de referencia (oct-2026, .NET 10): ASP.NET Core / EF Core **10.0.12**, Npgsql EF Core **10.0.x**, EFCore.NamingConventions **10.0.x**, FluentValidation **12.1.1**, Scalar.AspNetCore **2.17.x**. Regla: los paquetes de Microsoft y de proveedores EF usan la **misma versión mayor que el framework** (`standards/16`). `dotnet add package` sin versión toma la última estable; si hay acceso web, verificar en nuget.org.
 
 ## Estructura (un proyecto de API separado por carpetas)
 

@@ -64,8 +64,8 @@ Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. 
 
 ### Auditoría detallada (historial de cambios) · `temporal-audit`
 - **Disparadores:** datos regulados (salud, finanzas); "quién cambió qué y cuándo"; requisitos legales.
-- **Qué agrega:** historial completo por fila. Opción recomendada: **tablas temporales de SQL Server**, que EF Core soporta de forma nativa.
-- **Paquetes:** ninguno (EF Core SQL Server).
+- **Qué agrega:** historial completo por fila. SQL Server: **tablas temporales**, soportadas de forma nativa por EF Core. PostgreSQL: no tiene tablas temporales nativas; usar una tabla de auditoría alimentada por un interceptor de EF Core (o triggers, con ADR).
+- **Paquetes:** ninguno en SQL Server (EF Core lo soporta); en PostgreSQL, el interceptor de auditoría propio.
 - **Referencia:** https://learn.microsoft.com/ef/core/providers/sql-server/temporal-tables
 
 ### Multi-tenant · `multi-tenant`
@@ -76,9 +76,9 @@ Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. 
 
 ### Búsqueda de texto · `full-text-search`
 - **Disparadores:** "buscar por nombre o descripción" en tablas grandes; búsqueda tolerante.
-- **Qué agrega:** índices full-text de SQL Server con `EF.Functions.Contains` / `FreeText`.
+- **Qué agrega:** SQL Server: índices full-text con `EF.Functions.Contains` / `FreeText`. PostgreSQL: `tsvector` + índice GIN (Npgsql lo soporta con `EF.Functions.ToTsVector`), o `pg_trgm` para búsquedas `ILIKE`.
 - **Paquetes:** ninguno.
-- **Referencia:** https://learn.microsoft.com/sql/relational-databases/search/full-text-search
+- **Referencia:** https://learn.microsoft.com/sql/relational-databases/search/full-text-search · https://www.npgsql.org/efcore/mapping/full-text-search.html
 
 ### Almacenamiento de archivos · `file-storage`
 - **Disparadores:** subir documentos, imágenes o adjuntos.
@@ -147,7 +147,7 @@ Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. 
 - **Referencia:** https://learn.microsoft.com/aspnet/core/host-and-deploy/health-checks
 
 ### .NET Aspire (desarrollo local) · `aspire`
-- **Disparadores:** la API depende de SQL Server, Redis u otros servicios; se quiere un panel local de logs y trazas.
+- **Disparadores:** la API depende de SQL Server o PostgreSQL, Redis u otros servicios; se quiere un panel local de logs y trazas.
 - **Qué agrega:** AppHost que levanta las dependencias en contenedores y un dashboard de observabilidad.
 - **Paquetes:** plantillas y paquetes de Aspire.
 - **Referencia:** https://learn.microsoft.com/dotnet/aspire/get-started/aspire-overview

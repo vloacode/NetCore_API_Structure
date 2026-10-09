@@ -1,10 +1,11 @@
 """Arma un proyecto .NET con el código C# de standards/ para comprobar que compila.
 
-Uso: python scripts/verify/materialize.py <carpeta_proyecto> <secure|public>
+Uso: python scripts/verify/materialize.py <carpeta_proyecto> <secure|public> [sqlserver|postgresql]
 
 - Toma cada bloque ```csharp de standards/ que tenga una ruta de archivo (`Ruta/Archivo.cs`) en las 3 líneas previas.
 - Perfil `public`: omite standards 05* y 06, quita líneas/bloques `// [SEC]` y conserva `// [PUB]`.
 - Perfil `secure`: quita las líneas `// [PUB]`.
+- Motor: con `sqlserver` quita las líneas `// [PGSQL]`; con `postgresql`, las `// [MSSQL]`.
 - Reemplaza los marcadores con nombres de prueba (VerifyItem / VerifyParent) para compilar las plantillas de standards/07.
   Estos nombres existen solo en la carpeta temporal de verificación, nunca en un proyecto real.
 """
@@ -15,6 +16,8 @@ import sys
 KIT = pathlib.Path(__file__).resolve().parents[2] / "standards"
 out = pathlib.Path(sys.argv[1])
 secure = sys.argv[2] == "secure"
+database = sys.argv[3] if len(sys.argv) > 3 else "sqlserver"
+OTHER_DB_MARK = "// [PGSQL]" if database == "sqlserver" else "// [MSSQL]"
 
 REPL = {"{Project}": "KitVerify", "{Entities}": "VerifyItems", "{Entity}": "VerifyItem", "{entities}": "verifyitems",
         "{entity}": "verifyitem", "{Parent}": "VerifyParent", "{parent}": "verifyParent"}
@@ -102,6 +105,7 @@ for md_name, rel, lines in blocks():
         text = re.sub(r", HasPermission\([^)]*\)", "", text)
         text = text.replace("using {Project}.Api.Authorization;\n", "").replace("using {Project}.Application.Common.Security;\n", "")
 
+    text = "\n".join(l for l in text.splitlines() if OTHER_DB_MARK not in l)
     if secure:
         text = "\n".join(l for l in text.splitlines() if "// [PUB]" not in l)
     else:
@@ -142,4 +146,31 @@ public sealed class VerifyParentConfiguration : BaseEntityConfiguration<VerifyPa
 }
 """, encoding="utf-8")
 
-print(f"{'secure' if secure else 'public'}: {len(written)} archivos desde standards/")
+# Siembra de prueba: un VerifyParent al arrancar (evita depender de sqlcmd/psql).
+(out / "Infrastructure/Persistence/VerifyParentSeeder.cs").write_text("""using KitVerify.Domain.Entities;
+
+namespace KitVerify.Infrastructure.Persistence;
+
+public sealed class VerifyParentSeeder(IServiceProvider services) : IHostedService
+{
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        if (!db.VerifyParents.Any())
+        {
+            db.VerifyParents.Add(new VerifyParent { Name = "Parent 1" });
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+}
+""", encoding="utf-8")
+program = out / "Program.cs"
+program.write_text(program.read_text(encoding="utf-8").replace(
+    "var app = builder.Build();",
+    "builder.Services.AddHostedService<KitVerify.Infrastructure.Persistence.VerifyParentSeeder>();\n\nvar app = builder.Build();", 1),
+    encoding="utf-8")
+
+print(f"{'secure' if secure else 'public'} / {database}: {len(written)} archivos desde standards/")

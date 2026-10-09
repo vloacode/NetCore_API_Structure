@@ -9,7 +9,7 @@ Lo crea project-init y lo actualiza docs-sync. Mientras existan marcadores {{...
 
 | Clave | Valor | Opciones |
 |---|---|---|
-| KitVersion | {{1.0.0}} | versión del kit con la que se creó o actualizó |
+| KitVersion | {{2.0.0}} | versión del kit con la que se creó o actualizó |
 | Mode | {{1-standard-secure}} | `1-standard-secure` · `2-standard-public` · `3-interview` |
 | Security | {{enabled}} | `enabled` (Identity + JWT + permisos) · `disabled` |
 | TwoFactor | {{enabled}} | `enabled` · `disabled` (solo si Security = enabled) |
@@ -17,7 +17,8 @@ Lo crea project-init y lo actualiza docs-sync. Mientras existan marcadores {{...
 | ApiKey | {{disabled}} | `enabled` · `disabled` |
 | PrimaryKey | {{int}} | `int` · `Guid` (entidades de negocio) |
 | SoftDelete | {{enabled}} | `enabled` · `disabled` |
-| Database | SQL Server | fijo en el kit |
+| Database | {{sqlserver}} | `sqlserver` · `postgresql` |
+| TargetFramework | {{net10.0}} | versión de .NET (LTS vigente por defecto; `standards/16`) |
 | Email | {{log}} | `log` (desarrollo) · `smtp` · `<proveedor>` |
 | Deployment | {{docker}} | `docker` · `azure-app-service` · `azure-container-apps` · `iis` |
 | FrontendOrigins | {{https://localhost:5173}} | orígenes CORS separados por coma |

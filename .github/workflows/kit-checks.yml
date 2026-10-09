@@ -26,5 +26,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - name: Compilar el código de standards/ en ambos perfiles (Release + analizadores + format)
+      - name: Instalar dotnet-ef
+        run: dotnet tool install --global dotnet-ef
+      - name: Compilar standards/ en la matriz perfil × motor (migración + Release + analizadores + format)
         run: python scripts/verify/verify-standards.py

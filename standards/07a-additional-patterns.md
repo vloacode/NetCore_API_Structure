@@ -33,27 +33,28 @@ public Task<Result> Set{Flag}Async(int id, CancellationToken ct)
         var entity = await _repo.GetByIdAsync(id, token);
         if (entity is null) return {Entity}Errors.NotFound(id);
 
-        // Excluir la propia fila: si ExecuteUpdate la tocara, cambiaría su RowVersion
-        // y el SaveChanges posterior fallaría por concurrencia.
+        // Excluir la propia fila: se modifica abajo con tracking; si ExecuteUpdate también la tocara,
+        // su RowVersion cambiaría en BD y el SaveChanges posterior fallaría por concurrencia.
         var now = clock.GetUtcNow().UtcDateTime;   // inyectar TimeProvider clock e ICurrentUserService currentUser
         var userId = currentUser.UserId;
         await _repo.ExecuteUpdateAsync(e => e.{Flag} && e.Id != id, s => s
             .SetProperty(e => e.{Flag}, false)
             .SetProperty(e => e.UpdatedAt, now)          // ExecuteUpdate no pasa por el interceptor
-            .SetProperty(e => e.UpdatedBy, userId), token);
+            .SetProperty(e => e.UpdatedBy, userId)
+            .SetProperty(e => e.RowVersion, Guid.NewGuid()), token);   // nuevo token de concurrencia
 
         entity.{Flag} = true;
         return Result.Success();
     }, ct);
 ```
-Con garantía en BD: `builder.HasIndex(e => e.{Flag}).IsUnique().HasFilter("[{Flag}] = 1 AND [IsDeleted] = 0");`. Si el "uno activo" es por padre, el índice es `HasIndex(e => new { e.{Parent}Id, e.{Flag} })` con el mismo filtro.
+Con garantía en BD: `builder.HasIndex(e => e.{Flag}).IsUnique().HasFilter($"{SqlDialect.Column(nameof({Entity}.{Flag}))} = {SqlDialect.True} AND {SqlDialect.NotDeleted}");`. Si el "uno activo" es por padre, el índice es `HasIndex(e => new { e.{Parent}Id, e.{Flag} })` con el mismo filtro.
 
 **C. Varias entidades casi idénticas** (mismas columnas y mismas reglas): no duplicar services ni usar `switch` sobre strings.
 - **Opción 1 (preferida):** una sola tabla con discriminador (TPH) y un `enum` de tipo.
 - **Opción 2:** clase base común `{Base}Entity` y un service genérico `CrudService<TEntity>` con la lógica compartida; cada tipo solo añade lo propio.
 - **Opción 3:** handlers registrados por tipo (`IDictionary<{Tipo}Enum, I{Tipo}Handler>`) resueltos por DI.
 
-**D. Reportes / stored procedures**: DTO plano + `SqlQuery<T>` parametrizado (`standards/02a-repository-unit-of-work.md`, sección SQL crudo) dentro de una clase `I{Report}Queries` en Infrastructure. Nunca concatenar SQL.
+**D. Reportes / stored procedures**: DTO plano + `SqlQuery<T>` parametrizado (SQL Server: `EXEC dbo.Proc …`; PostgreSQL: `SELECT * FROM fn(…)`) (`standards/02a-repository-unit-of-work.md`, sección SQL crudo) dentro de una clase `I{Report}Queries` en Infrastructure. Nunca concatenar SQL.
 
 **E. Listado sin paginar** (combos o dropdowns): spec con `OrderBy` y sin `ApplyPaging`, más una proyección mínima `(Id, Name)`.
 

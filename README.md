@@ -1,8 +1,8 @@
 # NetCore_API_Structure
 
-Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core (.NET 10)** siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
+Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-> Versión **1.0.0** (ver `CHANGELOG.md`). El código de `standards/` está verificado: compila en Release con analizadores en ambos perfiles y pasa pruebas de punta a punta contra SQL Server (`scripts/verify/`).
+> Versión **2.0.0** (ver `CHANGELOG.md`). El código de `standards/` está verificado en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): compila en Release con analizadores y genera migraciones; pasa pruebas de punta a punta contra SQL Server (`scripts/verify/`).
 
 ## Qué incluye
 
@@ -15,6 +15,7 @@ Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) cons
 | `ai/roles/` | Roles especializados: analista, arquitecto, backend, QA, seguridad, DevOps… |
 | `ai/context-packs.md` | Qué archivos leer para cada tarea (ahorra contexto) |
 | `ai/suggestions-catalog.md` | Capacidades opcionales que la IA sugiere, con referencias oficiales |
+| `ai/references.md` + `.mcp.json` | Documentación oficial para consultar (y MCP de Microsoft Learn para buscarla en vivo) |
 | `docs/` | Plantillas de la documentación del proyecto, que llena `/project-init` |
 
 ## Modos de creación

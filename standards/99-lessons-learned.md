@@ -19,7 +19,7 @@ Lecciones de una implementación anterior del patrón. Explican el **porqué** d
 | `TransactionScope` con doble `Dispose`, sin rollback en excepciones y `DbContext` dispuesto por el UoW | `ExecuteInTransactionAsync` con `IDbContextTransaction` y estrategia de reintentos; el UoW no dispone el contexto |
 | Guardados fuera de la transacción por empezarla tarde | La transacción envuelve toda la operación en un lambda |
 | Auditoría (`CreatedBy`, `UpdatedBy`…) repetida en cada método, a veces con errores | `AuditableEntityInterceptor` |
-| `HasDefaultValue(DateTime.Now)`: fecha congelada al generar la migración | `HasDefaultValueSql("SYSUTCDATETIME()")` y `TimeProvider` |
+| `HasDefaultValue(DateTime.Now)`: fecha congelada al generar la migración | El interceptor asigna las fechas con `TimeProvider`; sin defaults de fecha en la BD |
 | Métodos `GetAll` que devolvían `null` | Todo devuelve `Result<T>` |
 | Páginas o vistas que enlazaban el objeto de respuesta completo (overposting) | Requests dedicados (`Create{Entity}Request` / `Update{Entity}Request`) |
 | Un `switch` por strings con 8 tablas casi idénticas y código copiado | `standards/07a-additional-patterns.md` patrón C (TPH, service genérico o handlers) |

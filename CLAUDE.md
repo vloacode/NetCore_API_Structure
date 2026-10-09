@@ -7,7 +7,7 @@ Todo lo de `AGENTS.md` aplica. Esta sección solo agrega cómo usar las capacida
 ## Comandos (skills)
 Cada flujo de `ai/workflows/` está expuesto como comando en `.claude/skills/<flujo>/SKILL.md`:
 
-`/project-init` · `/new-module` · `/new-entity` · `/new-feature` · `/api-endpoint` · `/database-change` · `/test-generation` · `/code-review` · `/security-review` · `/performance-review` · `/log-analysis` · `/incident-response` · `/record-decision` · `/docs-sync` · `/upgrade-kit`
+`/project-init` · `/new-module` · `/new-entity` · `/new-feature` · `/api-endpoint` · `/database-change` · `/test-generation` · `/code-review` · `/security-review` · `/performance-review` · `/log-analysis` · `/incident-response` · `/record-decision` · `/docs-sync` · `/upgrade-kit` · `/upgrade-dotnet`
 
 El contenido real está en `ai/workflows/`. Las skills solo apuntan ahí: si cambias un flujo, edita `ai/workflows/`, no la skill.
 
@@ -32,5 +32,6 @@ Requieren Python 3 en el PATH.
 - Hook `scripts/hooks/build-on-stop.py` (al terminar el turno): si hay código C# modificado y `dotnet build` falla, no deja cerrar la tarea y devuelve los errores.
 
 ## Herramientas
+- **MCP de Microsoft Learn** (`.mcp.json`): úsalo para buscar y leer documentación oficial actual de .NET, ASP.NET Core, EF Core, SQL Server y Azure. Claude Code pide aprobarlo la primera vez. Más fuentes en `ai/references.md`.
 - Usa búsqueda web cuando un flujo pida referencias actuales (versiones de NuGet, Microsoft Learn), sobre todo en las sugerencias proactivas de `/project-init`.
 - Corre `dotnet build` y `dotnet test` para verificar. No declares una tarea terminada sin compilar.

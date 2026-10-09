@@ -5,6 +5,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [2.0.0] - 2026-10-09
+### Añadido
+- **Soporte para PostgreSQL** además de SQL Server: campo `Database` en el perfil, marcas `// [MSSQL]` / `// [PGSQL]`, clase `SqlDialect` (filtros de índices por motor), proveedor Npgsql + `EFCore.NamingConventions` (snake_case), búsquedas con `ILike`, Testcontainers/Respawn para PostgreSQL, docker-compose y Azure Database for PostgreSQL.
+- **Versiones futuras de .NET**: campo `TargetFramework` en el perfil, `standards/16-framework-versions.md` (política LTS, piezas dependientes de la versión, adopción y migración), flujo y comando `/upgrade-dotnet`, propiedades `MicrosoftVersion` / `NpgsqlEfVersion` en `Directory.Packages.props` y `verify-standards.py --framework`.
+- **Referencias oficiales para la IA**: `ai/references.md` (≈90 enlaces verificados por tema y cómo buscar) y MCP de Microsoft Learn configurado para Claude Code (`.mcp.json`), Cursor (`.cursor/mcp.json`) y VS Code/Copilot (`.vscode/mcp.json`).
+- Verificador: matriz perfil × motor, migración `InitialCreate` en cada combinación, siembra de prueba sin depender de `sqlcmd`, pruebas de humo para PostgreSQL (`--smoke-postgresql`).
+
+### Cambiado (incompatible)
+- **Concurrencia optimista**: `RowVersion` pasa de `byte[]` (`rowversion`, solo SQL Server) a `Guid` gestionado por el interceptor (`IVersioned`, `IsConcurrencyToken`). Funciona igual en ambos motores. El DTO sigue enviando `rowVersion` como string.
+- Sin defaults SQL de fecha (`SYSUTCDATETIME()`): el interceptor asigna las fechas.
+- Las plantillas ya no fijan nombres de tabla con `ToTable(...)`: el nombre sale del `DbSet` (y en PostgreSQL pasa a snake_case).
+
+### Migración desde 1.0.0 (proyectos ya creados)
+1. Seguir `upgrade-kit` para traer los standards nuevos.
+2. En `BaseEntity`, cambiar `RowVersion` a `Guid` e implementar `IVersioned`; en `BaseEntityConfiguration`, `IsConcurrencyToken()` en vez de `IsRowVersion()`; agregar la asignación de `RowVersion` en el interceptor.
+3. Actualizar mapeos (`e.RowVersion.ToString()`), validadores (`Guid.TryParse`) y la comparación del service.
+4. Crear una migración y revisar el SQL: la columna pasa de `rowversion` a `uniqueidentifier` (inicializar con `NEWID()` en los registros existentes).
+
 ## [1.0.0] - 2026-10-09
 ### Añadido
 - Lote 7, verificación real: `scripts/verify/` (`verify-standards.py`, `materialize.py`, pruebas de humo).

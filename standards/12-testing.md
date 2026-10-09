@@ -9,10 +9,10 @@
 | Tipo | Qué prueba | Base de datos | Proyecto |
 |---|---|---|---|
 | **Unit** | Validadores, `Result`, `PredicateBuilder`, mapeos, lógica pura de dominio | Ninguna | `tests/{Project}.UnitTests` |
-| **Integration (services)** | Services con `UnitOfWork` real: reglas, duplicados, concurrencia, soft delete, transacciones | **SQL Server real** (Testcontainers) | `tests/{Project}.IntegrationTests` |
-| **Integration (API)** | Endpoints completos: rutas, permisos, validación, códigos HTTP, ProblemDetails | SQL Server real (Testcontainers) | `tests/{Project}.IntegrationTests` |
+| **Integration (services)** | Services con `UnitOfWork` real: reglas, duplicados, concurrencia, soft delete, transacciones | **El motor real del perfil** (Testcontainers: SQL Server o PostgreSQL) | `tests/{Project}.IntegrationTests` |
+| **Integration (API)** | Endpoints completos: rutas, permisos, validación, códigos HTTP, ProblemDetails | El motor real del perfil (Testcontainers) | `tests/{Project}.IntegrationTests` |
 
-> ⚠️ **No usar SQLite ni el proveedor InMemory para probar services.** El modelo usa funciones de SQL Server (`SYSUTCDATETIME()`, `rowversion`, índices filtrados), y esos proveedores no se comportan igual: los tests pasarían o fallarían por razones falsas.
+> ⚠️ **No usar SQLite ni el proveedor InMemory para probar services.** El modelo usa índices filtrados, collations y tipos propios de cada motor, y esos proveedores no se comportan igual: los tests pasarían o fallarían por razones falsas.
 
 ## Crear los proyectos
 ```bash
@@ -21,7 +21,8 @@ dotnet new xunit -n {Project}.IntegrationTests -o tests/{Project}.IntegrationTes
 dotnet add tests/{Project}.UnitTests reference src/{Project}.Api
 dotnet add tests/{Project}.IntegrationTests reference src/{Project}.Api
 dotnet add tests/{Project}.IntegrationTests package Microsoft.AspNetCore.Mvc.Testing
-dotnet add tests/{Project}.IntegrationTests package Testcontainers.MsSql
+dotnet add tests/{Project}.IntegrationTests package Testcontainers.MsSql        # [MSSQL]
+dotnet add tests/{Project}.IntegrationTests package Testcontainers.PostgreSql   # [PGSQL]
 dotnet add tests/{Project}.IntegrationTests package Respawn
 dotnet add tests/{Project}.UnitTests package Shouldly
 dotnet add tests/{Project}.IntegrationTests package Shouldly
@@ -36,14 +37,17 @@ dotnet add tests/{Project}.UnitTests package Microsoft.Extensions.TimeProvider.T
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Respawn;
-using Testcontainers.MsSql;
+using Testcontainers.MsSql;          // [MSSQL]
+using Testcontainers.PostgreSql;     // [PGSQL]
+using Npgsql;                        // [PGSQL]
 
 namespace {Project}.IntegrationTests;
 
-/// <summary>Un SQL Server en contenedor para toda la colección de tests. La BD se limpia con Respawn entre tests.</summary>
+/// <summary>Un contenedor del motor del perfil para toda la colección de tests. La BD se limpia con Respawn entre tests.</summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly MsSqlContainer _db = new MsSqlBuilder().Build();
+    private readonly MsSqlContainer _db = new MsSqlBuilder().Build();             // [MSSQL]
+    private readonly PostgreSqlContainer _db = new PostgreSqlBuilder().Build();   // [PGSQL]
     private Respawner _respawner = null!;
 
     public string ConnectionString => _db.GetConnectionString();
@@ -80,6 +84,18 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 [CollectionDefinition(nameof(ApiCollection))]
 public sealed class ApiCollection : ICollectionFixture<ApiFactory>;
 ```
+> **PostgreSQL**: Respawn necesita una conexión abierta y el adaptador de Postgres, y los nombres de tabla van en `snake_case`:
+> ```csharp
+> await using var connection = new NpgsqlConnection(ConnectionString);
+> await connection.OpenAsync();
+> _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
+> {
+>     DbAdapter = DbAdapter.Postgres,
+>     SchemasToInclude = ["public"],
+>     TablesToIgnore = ["__EFMigrationsHistory", "asp_net_roles", "asp_net_role_claims"]
+> });
+> // ResetDatabaseAsync: abrir otra NpgsqlConnection y llamar _respawner.ResetAsync(connection).
+> ```
 > Escrito para **xUnit v3** (`IAsyncLifetime` con `ValueTask`). En xUnit v2 los métodos devuelven `Task`. Si la API de Testcontainers o Respawn cambió, ajustar a la versión instalada.
 > `[SEC]`: si Respawn borra también `AspNetUsers`, recrear el admin con el seeder en `ResetDatabaseAsync`.
 

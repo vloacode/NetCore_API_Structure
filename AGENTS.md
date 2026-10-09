@@ -1,6 +1,6 @@
 # AGENTS.md — Instrucciones para cualquier IA
 
-Este repositorio usa el kit **NetCore_API_Structure**: una guía para construir **APIs ASP.NET Core (.NET 10, ecosistema Microsoft)** siempre de la misma forma.
+Este repositorio usa el kit **NetCore_API_Structure**: una guía para construir **APIs ASP.NET Core (ecosistema Microsoft .NET, versión LTS vigente; hoy .NET 10)** siempre de la misma forma.
 Este archivo es la **entrada universal**. Lo leen Claude Code, Cursor, Copilot, Codex y modelos locales. Síguelo antes de hacer cualquier cosa.
 
 ## 1. Orden de lectura obligatorio
@@ -10,8 +10,8 @@ Este archivo es la **entrada universal**. Lo leen Claude Code, Cursor, Copilot, 
 4. Solo los archivos que indique el context pack. **No cargues todo el repositorio.**
 
 ## 2. Stack (fijo, no negociable)
-- .NET 10 (LTS), ASP.NET Core Web API con **Controllers**, C# con `Nullable` habilitado.
-- EF Core 10 + SQL Server, migraciones con `dotnet-ef`.
+- .NET en su **versión LTS vigente** (por defecto .NET 10; `TargetFramework` del perfil, política en `standards/16-framework-versions.md`). ASP.NET Core Web API con **Controllers**, C# con `Nullable` habilitado.
+- EF Core (misma versión mayor que .NET) con **SQL Server o PostgreSQL** (`Database` del perfil), migraciones con `dotnet-ef`.
 - FluentValidation, ProblemDetails (RFC 9457), OpenAPI (`Microsoft.AspNetCore.OpenApi`) + Scalar.
 - Con seguridad (`Security = enabled`): ASP.NET Core Identity **local** + JWT propio + refresh tokens. Sin proveedores externos.
 - Pruebas: xUnit. Contenedores: Docker. Despliegue opcional: Azure (App Service / Container Apps) o IIS.
@@ -26,19 +26,20 @@ Este archivo es la **entrada universal**. Lo leen Claude Code, Cursor, Copilot, 
 | `ai/workflows/` | Flujos paso a paso (`project-init`, `new-entity`, `code-review`...) | **No** |
 | `ai/context-packs.md` | Tarea → archivos mínimos a leer | **No** |
 | `ai/suggestions-catalog.md` | Capacidades opcionales para sugerir, con referencias oficiales | **No** |
+| `ai/references.md` | Documentación oficial por tema y cómo buscar en ella | **No** |
 | `docs/` | Lo propio del proyecto: visión, requerimientos, dominio, módulos, decisiones, estado | **Sí**, siempre actualizado |
 | `src/` | Código de la solución | Sí |
-| `.claude/`, `.cursor/`, `.github/copilot-instructions.md` | Adaptadores por herramienta; apuntan a `ai/` y a este archivo | No |
+| `.claude/`, `.cursor/`, `.vscode/`, `.github/copilot-instructions.md`, `.mcp.json` | Adaptadores por herramienta y MCP de Microsoft Learn | No |
 
 ## 4. Cómo trabajar una tarea
 1. **Clasifica** la tarea (inicializar proyecto, nuevo módulo, nueva entidad, endpoint, cambio de BD, revisión, incidente...).
 2. Abre el **flujo** correspondiente en `ai/workflows/` y síguelo paso a paso. Si ningún flujo encaja, usa `new-feature.md`.
 3. Carga el **context pack** de esa tarea (`ai/context-packs.md`).
 4. Adopta el **rol** que indique el flujo (`ai/roles/`). Si tu herramienta tiene subagentes, delega en ellos.
-5. Implementa respetando los standards. Ante una duda de negocio, **pregunta**; no inventes.
+5. Implementa respetando los standards. Ante una duda de negocio, **pregunta**; no inventes. Ante una duda técnica (API, versión, rendimiento), **consulta la documentación oficial** (`ai/references.md`; MCP de Microsoft Learn si está conectado) en lugar de responder de memoria.
 6. Cumple la **Definition of Done** (sección 7) antes de dar la tarea por terminada.
 
-Flujos disponibles: `project-init`, `new-module`, `new-entity`, `new-feature`, `api-endpoint`, `database-change`, `test-generation`, `code-review`, `security-review`, `performance-review`, `log-analysis`, `incident-response`, `record-decision`, `docs-sync`, `upgrade-kit`.
+Flujos disponibles: `project-init`, `new-module`, `new-entity`, `new-feature`, `api-endpoint`, `database-change`, `test-generation`, `code-review`, `security-review`, `performance-review`, `log-analysis`, `incident-response`, `record-decision`, `docs-sync`, `upgrade-kit`, `upgrade-dotnet`.
 
 ## 5. Reglas de oro
 Resumen; el detalle está en `standards/01-solution-architecture.md`.
@@ -79,10 +80,10 @@ dotnet user-secrets set "<Clave>" "<Valor>" --project src/{Project}.Api
 
 ## 9. Verificación del kit
 - `python scripts/check-kit.py` comprueba enlaces, que cada flujo y cada rol tengan su adaptador, y el tamaño de los archivos. Se ejecuta en CI (`.github/workflows/kit-checks.yml`).
-- `python scripts/verify/verify-standards.py` compila el código de `standards/` en ambos perfiles (y con `--smoke`, lo prueba contra SQL Server). Úsalo al **modificar el kit** (ver `scripts/verify/README.md`).
+- `python scripts/verify/verify-standards.py` compila el código de `standards/` en la matriz perfil × motor (y con `--smoke-sqlserver` / `--smoke-postgresql`, lo prueba contra la base real). Úsalo al **modificar el kit** (ver `scripts/verify/README.md`).
 - Claude Code aplica además hooks automáticos (`.claude/settings.json`). Con otras IAs, cumplir lo mismo a mano: nada de secretos en `appsettings*.json`, no editar `standards/` ni `ai/` en un proyecto y no terminar sin `dotnet build`.
 
 ## 10. Para modelos con contexto limitado (IA local)
 - Lee **solo** el context pack de la tarea. Cada archivo de `ai/` y `standards/` se entiende por sí solo.
 - Trabaja un archivo o una entidad por vez y compila entre pasos.
-- Si no tienes acceso web, usa `ai/suggestions-catalog.md` como referencia y marca las versiones de paquetes como "verificar".
+- Si no tienes acceso web, usa `ai/references.md` y `ai/suggestions-catalog.md` como referencia y marca las versiones de paquetes como "verificar".

@@ -14,13 +14,13 @@ Los objetivos concretos (latencia p95, usuarios concurrentes, volumen de datos) 
 5. **`AsSplitQuery()`** cuando una spec incluye dos o más colecciones, para evitar la explosión cartesiana.
 6. **Operaciones masivas** con `ExecuteUpdateAsync` / `ExecuteDeleteAsync`, sin cargar entidades.
 7. **`AnyAsync`** para comprobar existencia. Nunca `CountAsync() > 0` ni cargar la entidad.
-8. Filtros sobre columnas indexadas. Evitar funciones sobre la columna en el `WHERE` (`x.Name.ToLower() == ...`), porque anulan el índice. SQL Server ya compara sin distinguir mayúsculas con la collation por defecto.
-9. **`TagWith("{Entities}ByFilterSpec")`** en consultas complejas para identificarlas en los logs y en Query Store.
+8. Filtros sobre columnas indexadas. Evitar funciones sobre la columna en el `WHERE` (`x.Name.ToLower() == ...`), porque anulan el índice. SQL Server compara sin distinguir mayúsculas con la collation por defecto. **PostgreSQL distingue mayúsculas**: las búsquedas de texto usan `EF.Functions.ILike` (variante `[PGSQL]` de las plantillas) y, en tablas grandes, un índice GIN con `pg_trgm` para que `ILIKE '%texto%'` no recorra toda la tabla.
+9. **`TagWith("{Entities}ByFilterSpec")`** en consultas complejas para identificarlas en los logs, en Query Store (SQL Server) o en `pg_stat_statements` (PostgreSQL).
 
 ## Índices
 - EF Core crea índices en las FK automáticamente.
 - Crear índices en las columnas usadas para **filtrar y ordenar** en las specs de búsqueda.
-- Índices únicos **filtrados** por soft delete: `HasFilter("[IsDeleted] = 0")`.
+- Índices únicos **filtrados** por soft delete: `HasFilter(SqlDialect.NotDeleted)` (`standards/02`, funciona en ambos motores).
 - Índices compuestos para filtros combinados frecuentes (`{Parent}Id + IsActive`).
 - Revisar el SQL generado de cada migración (`ai/workflows/database-change.md`).
 
@@ -87,7 +87,7 @@ services.AddHttpClient<I{External}Client, {External}Client>(c => c.BaseAddress =
 | Herramienta | Para qué |
 |---|---|
 | Logs de EF Core (`Microsoft.EntityFrameworkCore.Database.Command` en `Information`, solo en desarrollo) | Ver el SQL y la duración de cada consulta |
-| SQL Server Query Store / plan de ejecución | Consultas lentas e índices faltantes en producción |
+| SQL Server: Query Store y plan de ejecución · PostgreSQL: `pg_stat_statements` y `EXPLAIN (ANALYZE, BUFFERS)` | Consultas lentas e índices faltantes en producción |
 | `dotnet-counters`, `dotnet-trace` | CPU, GC, threads, peticiones por segundo |
 | OpenTelemetry (`standards/10`) | Latencia por endpoint y por dependencia |
 | BenchmarkDotNet | Microbenchmarks de código crítico |

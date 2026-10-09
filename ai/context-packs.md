@@ -8,7 +8,7 @@ Los archivos marcados `[SEC]` se leen solo si el perfil tiene `Security = enable
 
 | Tarea | Flujo | Rol | Archivos a leer (además de la base) |
 |---|---|---|---|
-| Inicializar proyecto | `ai/workflows/project-init.md` | solution-architect + product-analyst | `ai/suggestions-catalog.md`, `standards/00-INDEX.md`, `standards/01-solution-architecture.md`, `standards/01a-bootstrap.md`, plantillas de `docs/` |
+| Inicializar proyecto | `ai/workflows/project-init.md` | solution-architect + product-analyst | `ai/suggestions-catalog.md`, `ai/references.md`, `standards/16-framework-versions.md`, `standards/00-INDEX.md`, `standards/01-solution-architecture.md`, `standards/01a-bootstrap.md`, plantillas de `docs/` |
 | Nuevo módulo | `ai/workflows/new-module.md` | product-analyst | `docs/modules/_TEMPLATE.md`, `docs/03-requirements-index.md`, `docs/05-domain-model.md`, `docs/07-permissions-matrix.md` [SEC] |
 | Nueva entidad | `ai/workflows/new-entity.md` | backend-developer | `docs/modules/<módulo>.md`, `standards/07-business-entity-templates.md`, `standards/07a-additional-patterns.md`, `standards/06-authorization-permissions.md` [SEC] |
 | Nueva funcionalidad | `ai/workflows/new-feature.md` | product-analyst → backend-developer | `docs/modules/<módulo>.md`, `docs/03-requirements-index.md`, standards según el tipo de cambio |
@@ -26,6 +26,8 @@ Los archivos marcados `[SEC]` se leen solo si el perfil tiene `Security = enable
 | Cambios en autenticación [SEC] | `ai/workflows/new-feature.md` | backend-developer + security-reviewer | `standards/05-authentication-identity.md` y el `05a`–`05f` del tema, `standards/06-authorization-permissions.md` |
 | Integración con el frontend | `ai/workflows/api-endpoint.md` | backend-developer | `standards/15-frontend-integration.md`, `standards/04-api-conventions.md` |
 | Despliegue / CI / Docker | — | devops-engineer | `standards/13-deployment.md`, `docs/04-non-functional-requirements.md` |
+| Migrar a otra versión de .NET | `ai/workflows/upgrade-dotnet.md` | devops-engineer + backend-developer | `standards/16-framework-versions.md`, `ai/references.md` |
+| Duda técnica (API, versión, rendimiento) | — | el rol de la tarea | `ai/references.md` (o MCP de Microsoft Learn) |
 
 ## Reglas
 - Si un archivo del pack no existe todavía (por ejemplo `docs/` sin inicializar), avisa y propone `project-init`.

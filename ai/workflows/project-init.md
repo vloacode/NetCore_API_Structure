@@ -29,8 +29,8 @@ Presentar exactamente estas tres opciones:
 
 | Modo | Perfil inicial |
 |---|---|
-| 1 | `Mode=1-standard-secure`, `Security=enabled`, `TwoFactor=enabled`, `PublicRegistration=enabled`, `ApiKey=disabled`, `PrimaryKey=int`, `SoftDelete=enabled`, `Email=log`, `Deployment=docker` |
-| 2 | `Mode=2-standard-public`, `Security=disabled`, `TwoFactor=disabled`, `PublicRegistration=disabled`, `ApiKey=disabled` (se pregunta), `PrimaryKey=int`, `SoftDelete=enabled`, `Email=log`, `Deployment=docker` |
+| 1 | `Mode=1-standard-secure`, `Security=enabled`, `TwoFactor=enabled`, `PublicRegistration=enabled`, `ApiKey=disabled`, `PrimaryKey=int`, `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
+| 2 | `Mode=2-standard-public`, `Security=disabled`, `TwoFactor=disabled`, `PublicRegistration=disabled`, `ApiKey=disabled` (se pregunta), `PrimaryKey=int`, `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
 | 3 | Parte del modo 1 y cada valor se ajusta con la entrevista |
 
 ## Paso 3 — Recoger información
@@ -41,19 +41,21 @@ Preguntar en **rondas cortas** (3 a 6 preguntas), con opciones cuando se pueda. 
 2. En pocas líneas, qué hace la API y quién la consume.
 3. Módulos y entidades principales: para cada entidad, sus campos importantes, cuáles son obligatorios o únicos, y sus relaciones.
 4. Origen del frontend para CORS (por ejemplo `https://localhost:5173`).
-5. Solo modo 2: ¿las operaciones de escritura (crear, editar, eliminar) serán públicas, protegidas con API key o no existirán?
+5. Base de datos: **SQL Server** (por defecto) o **PostgreSQL**.
+6. Versión de .NET: por defecto la **LTS vigente**. Si hay acceso web, confirmarla en la política oficial (`standards/16`) antes de proponerla.
+7. Solo modo 2: ¿las operaciones de escritura (crear, editar, eliminar) serán públicas, protegidas con API key o no existirán?
 
 ### Entrevista completa (modo 3), además del mínimo
 - **Ronda A — Negocio:** problema y objetivos; actores; módulos; reglas de negocio importantes; estados y flujos; qué queda fuera de alcance.
 - **Ronda B — Seguridad:** ¿hay usuarios? (si no, `Security=disabled`); ¿registro público o solo los crea un admin?; ¿2FA?; roles además de Admin y User, y qué puede hacer cada uno; ¿hay datos que solo puede ver su dueño?; ¿API key para sistemas externos?
-- **Ronda C — Datos:** ¿int o Guid como PK?; ¿soft delete?; ¿historial de cambios (auditoría detallada)?; volumen esperado; datos sensibles y retención.
+- **Ronda C — Datos:** motor (SQL Server o PostgreSQL) y versión del motor; ¿int o Guid como PK?; ¿soft delete?; ¿historial de cambios (auditoría detallada)?; volumen esperado; datos sensibles y retención.
 - **Ronda D — Capacidades e integraciones:** emails reales; archivos; tareas programadas; integraciones con terceros; tiempo real; caché; versionado; multi-empresa; idiomas. Usar los disparadores de `ai/suggestions-catalog.md` para guiar las preguntas.
 - **Ronda E — Infraestructura:** dónde se despliega (Docker, Azure App Service, Container Apps, IIS); entornos; destino de logs; objetivos de rendimiento y disponibilidad (si no los sabe, proponer los valores por defecto de `docs/04`).
 
 ## Paso 4 — Sugerencias proactivas (todos los modos)
 Con todo lo conversado, actuar como **solution-architect**:
 1. Recorrer los disparadores de `ai/suggestions-catalog.md` y elegir las capacidades que encajan **con este proyecto**. Pensar también en lo que no está en el catálogo: riesgos, normativa del sector, casos borde.
-2. **Si hay acceso web**, buscar referencias actuales: documentación oficial de Microsoft Learn, versión vigente en nuget.org y buenas prácticas recientes para el tipo de sistema. Dar el enlace de cada referencia.
+2. **Si hay acceso web**, buscar referencias actuales en las fuentes de `ai/references.md` (o con el MCP de Microsoft Learn): documentación oficial, versión vigente en nuget.org y buenas prácticas recientes para el tipo de sistema. Dar el enlace de cada referencia.
 3. **Si no hay acceso web** (por ejemplo, un modelo local), usar los enlaces del catálogo y marcar las versiones como "verificar versión".
 4. Presentar las sugerencias en una tabla: capacidad, por qué aquí, costo o complejidad, referencia. El usuario **acepta, pospone o descarta** cada una.
 5. Ajustar el perfil (`Capabilities`) con lo aceptado.
@@ -72,7 +74,7 @@ Delegar en **backend-developer**, aplicando solo lo que corresponde al perfil (l
 1. Estructura y archivos raíz: `standards/14` (`.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `global.json`, `.gitignore`).
 2. Proyecto y paquetes: `standards/01`.
 3. Infraestructura común: `standards/02`, `02a`, `03`, `04` (base, persistencia, `Result`, specs, API) y los middlewares de `09` y `10`.
-4. Con seguridad: `standards/05` a `05f` y `06` completos. Sin seguridad: `SystemCurrentUserService`, `AppDbContext : DbContext`, sin Auth. Con API key: la sección API key de `standards/09`.
+4. Conservar solo las líneas del motor elegido (`[MSSQL]` o `[PGSQL]`) y los paquetes de ese motor. Con seguridad: `standards/05` a `05f` y `06` completos. Sin seguridad: `SystemCurrentUserService`, `AppDbContext : DbContext`, sin Auth. Con API key: la sección API key de `standards/09`.
 5. Arranque: `standards/01a` (DI, `Program.cs`, `appsettings.json`) y user-secrets.
 6. Capacidades aceptadas: implementar cada una según su referencia, o dejarla en `docs/10-roadmap.md` si se pospuso.
 7. `dotnet format` (ordena los `using` según el nombre real del proyecto) y `dotnet build` **sin errores**. Si falla, corregir antes de seguir.

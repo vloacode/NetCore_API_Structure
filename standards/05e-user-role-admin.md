@@ -36,7 +36,8 @@ public sealed class UserAdminService(
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var s = filter.Search.Trim();
-            query = query.Where(u => u.Email!.Contains(s) || u.FirstName!.Contains(s) || u.LastName!.Contains(s));
+            query = query.Where(u => u.Email!.Contains(s) || u.FirstName!.Contains(s) || u.LastName!.Contains(s));   // [MSSQL]
+            query = query.Where(u => EF.Functions.ILike(u.Email!, $"%{s}%") || EF.Functions.ILike(u.FirstName!, $"%{s}%") || EF.Functions.ILike(u.LastName!, $"%{s}%"));   // [PGSQL]
         }
 
         if (filter.IsActive.HasValue)

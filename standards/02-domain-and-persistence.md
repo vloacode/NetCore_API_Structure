@@ -1,7 +1,7 @@
 # Dominio y persistencia (EF Core)
 
-> **Aplica a:** Todos los perfiles  
-> **Propósito:** Entidad base, contratos IRepository/IUnitOfWork, AppDbContext, configuraciones EF e interceptor de auditoría/soft delete.  
+> **Aplica a:** Todos los perfiles y ambos motores (SQL Server y PostgreSQL; marcas `[MSSQL]` / `[PGSQL]`)  
+> **Propósito:** Entidad base, contratos IRepository/IUnitOfWork, AppDbContext, dialecto SQL, configuraciones EF e interceptor de auditoría, soft delete y concurrencia.  
 > Índice general: `standards/00-INDEX.md`
 
 ## Domain: entidad base
@@ -25,7 +25,13 @@ public interface ISoftDelete
     Guid? DeletedBy { get; set; }
 }
 
-public abstract class BaseEntity<TKey> : IAuditable, ISoftDelete
+/// <summary>Token de concurrencia optimista que maneja la aplicación (igual en SQL Server y PostgreSQL).</summary>
+public interface IVersioned
+{
+    Guid RowVersion { get; set; }
+}
+
+public abstract class BaseEntity<TKey> : IAuditable, ISoftDelete, IVersioned
     where TKey : IEquatable<TKey>
 {
     public TKey Id { get; set; } = default!;
@@ -41,8 +47,9 @@ public abstract class BaseEntity<TKey> : IAuditable, ISoftDelete
     public DateTime? DeletedAt { get; set; }
     public Guid? DeletedBy { get; set; }
 
-    // Concurrencia optimista (rowversion en SQL Server).
-    public byte[] RowVersion { get; set; } = [];
+    // Concurrencia optimista: el interceptor genera un valor nuevo en cada insert/update;
+    // EF lo incluye en el WHERE del UPDATE, así que un cambio concurrente provoca DbUpdateConcurrencyException.
+    public Guid RowVersion { get; set; } = Guid.NewGuid();
 }
 
 /// <summary>Entidad con PK int identity (default del proyecto).</summary>
@@ -50,6 +57,8 @@ public abstract class BaseEntity : BaseEntity<int>;
 ```
 
 > `CreatedBy`, `UpdatedBy` y `DeletedBy` guardan el `Guid` del `AppUser` autenticado.
+>
+> **¿Por qué un `Guid` y no `rowversion`?** `rowversion` solo existe en SQL Server (PostgreSQL usaría `xmin`, con otro tipo). Un token que maneja la aplicación funciona igual en ambos motores y es el mismo enfoque de ASP.NET Identity (`ConcurrencyStamp`). Regla: toda actualización masiva con `ExecuteUpdateAsync` también debe asignar `RowVersion = Guid.NewGuid()`.
 
 ### Abstracciones de persistencia
 
@@ -205,12 +214,44 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace {Project}.Infrastructure.Persistence.Converters;
 
-/// <summary>SQL Server no guarda el Kind: al leer se marca como UTC para que se serialice con "Z".</summary>
+/// <summary>Garantiza Kind = Utc al leer (SQL Server no guarda el Kind) y al escribir (Npgsql exige UTC en timestamptz).</summary>
 public sealed class UtcDateTimeConverter() : ValueConverter<DateTime, DateTime>(
     v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
     v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 ```
 Agregar `using {Project}.Infrastructure.Persistence.Converters;` en `AppDbContext`.
+
+### Dialecto SQL — `Infrastructure/Persistence/SqlDialect.cs`
+Fragmentos de SQL que dependen del motor (filtros de índices). Un proyecto usa **un solo motor**: al crearlo se conserva solo la línea del perfil (`Database` en `docs/00-MASTER_CONTEXT.md`).
+```csharp
+using System.Text.RegularExpressions;   // [PGSQL]
+
+namespace {Project}.Infrastructure.Persistence;
+
+public static partial class SqlDialect
+{
+    public const string Provider = "SqlServer";   // [MSSQL]
+    public const string Provider = "PostgreSQL";  // [PGSQL]
+
+    public const string True = "1";       // [MSSQL]
+    public const string True = "true";    // [PGSQL]
+    public const string False = "0";      // [MSSQL]
+    public const string False = "false";  // [PGSQL]
+
+    /// <summary>Nombre de columna tal como queda en la BD (PostgreSQL usa snake_case con EFCore.NamingConventions).</summary>
+    public static string Column(string propertyName) => $"[{propertyName}]";                // [MSSQL]
+    public static string Column(string propertyName) => $"\"{ToSnakeCase(propertyName)}\"";  // [PGSQL]
+
+    /// <summary>Filtro de índices únicos que ignoran los registros eliminados (soft delete).</summary>
+    public static string NotDeleted => $"{Column("IsDeleted")} = {False}";
+
+    private static string ToSnakeCase(string name) => SnakeCaseRegex().Replace(name, "$1_$2").ToLowerInvariant();  // [PGSQL]
+
+    [GeneratedRegex("([a-z0-9])([A-Z])")]  // [PGSQL]
+    private static partial Regex SnakeCaseRegex();  // [PGSQL]
+}
+```
+Uso en configuraciones: `.HasFilter(SqlDialect.NotDeleted)` y, para condiciones propias, `$"{SqlDialect.Column(nameof({Entity}.{Flag}))} = {SqlDialect.True}"`.
 
 ### Configuración base — `Infrastructure/Persistence/Configurations/BaseEntityConfiguration.cs`
 ```csharp
@@ -220,15 +261,15 @@ using {Project}.Domain.Common;
 
 namespace {Project}.Infrastructure.Persistence.Configurations;
 
-/// <summary>Configuración común de BaseEntity: concurrencia, defaults SQL, índice de soft delete.</summary>
+/// <summary>Configuración común de BaseEntity: concurrencia e índice de soft delete. Igual en ambos motores.</summary>
 public abstract class BaseEntityConfiguration<T> : IEntityTypeConfiguration<T> where T : BaseEntity
 {
     public virtual void Configure(EntityTypeBuilder<T> builder)
     {
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.RowVersion).IsRowVersion();
-        builder.Property(e => e.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()"); // nunca HasDefaultValue(DateTime.Now)
+        builder.Property(e => e.RowVersion).IsConcurrencyToken();
         builder.HasIndex(e => e.IsDeleted);
+        // Sin defaults SQL para fechas: el interceptor asigna CreatedAt/UpdatedAt (nunca HasDefaultValue(DateTime.Now)).
     }
 }
 ```
@@ -246,7 +287,6 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
-        builder.ToTable("RefreshTokens");
         builder.HasKey(t => t.Id);
         builder.Property(t => t.TokenHash).HasMaxLength(128).IsRequired();
         builder.HasIndex(t => t.TokenHash).IsUnique();
@@ -265,7 +305,6 @@ public sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
     {
         builder.Property(u => u.FirstName).HasMaxLength(100);
         builder.Property(u => u.LastName).HasMaxLength(100);
-        builder.Property(u => u.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
     }
 }
 
@@ -322,6 +361,10 @@ public sealed class AuditableEntityInterceptor(ICurrentUserService currentUser, 
                 softDelete.DeletedAt = now;
                 softDelete.DeletedBy = userId;
             }
+
+            // Concurrencia: valor nuevo en cada escritura. El original (leído) va en el WHERE del UPDATE.
+            if (entry.Entity is IVersioned versioned && entry.State is EntityState.Added or EntityState.Modified)
+                versioned.RowVersion = Guid.NewGuid();
 
             if (entry.Entity is not IAuditable auditable) continue;
 

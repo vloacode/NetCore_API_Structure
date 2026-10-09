@@ -19,6 +19,7 @@ Implementar la API en **ASP.NET Core 10** siguiendo los standards al pie de la l
 ## Archivos a leer
 - `AGENTS.md`, `docs/00-MASTER_CONTEXT.md`, `docs/modules/<módulo>.md`.
 - Según la tarea (ver `ai/context-packs.md`): `standards/07`, `07a`, `03`, `04`, `06` `[SEC]`, `08`, `15`.
+- `ai/references.md` cuando haya dudas sobre una API o versión: consultar la documentación oficial antes de escribir código.
 
 ## Reglas
 1. Seguir las **reglas de oro** de `AGENTS.md` y las 16 reglas de `standards/01`. Las más olvidadas:

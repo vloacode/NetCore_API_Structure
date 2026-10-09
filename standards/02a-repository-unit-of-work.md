@@ -190,7 +190,8 @@ public sealed class UnitOfWork(AppDbContext context) : IUnitOfWork
 ```csharp
 // Resultado sin entidad (EF Core 8+): tipo DTO plano.
 var rows = await context.Database
-    .SqlQuery<{Report}Row>($"EXEC dbo.{StoredProcedure} @From = {from}, @To = {to}")
+    .SqlQuery<{Report}Row>($"EXEC dbo.{StoredProcedure} @From = {from}, @To = {to}")       // [MSSQL] procedimiento
+    .SqlQuery<{Report}Row>($"SELECT * FROM {report_function}({from}, {to})")              // [PGSQL] función
     .ToListAsync(ct);
 ```
 Los valores interpolados se convierten en parámetros SQL. **Nunca** armar el SQL con `+` ni con `string.Format`. Si un service necesita esto, se expone mediante un método en un repositorio específico (`I{Report}Queries`) implementado en Infrastructure.

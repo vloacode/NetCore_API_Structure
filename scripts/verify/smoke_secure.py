@@ -90,7 +90,7 @@ check("listado paginado (pageSize recortado a 100)", s == 200 and b["totalCount"
 # 9. Update con RowVersion vieja -> 409; con la correcta -> 200
 wid = item.get("id")
 s, b, _ = call("PUT", f"/api/verifyitems/{wid}", {"name": "Uno editado", "isActive": True, "verifyParentId": 1,
-                                             "rowVersion": base64.b64encode(b"\x00" * 8).decode()}, token=admin)
+                                             "rowVersion": "00000000-0000-0000-0000-000000000000"}, token=admin)
 check("update con RowVersion vieja -> 409", s == 409 and b.get("code") == "VerifyItem.Concurrency", f"{s} {b}")
 s, b, _ = call("PUT", f"/api/verifyitems/{wid}", {"name": "Uno editado", "isActive": True, "verifyParentId": 1,
                                              "rowVersion": item.get("rowVersion")}, token=admin)

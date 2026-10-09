@@ -48,14 +48,14 @@ public sealed class {Entity}Configuration : BaseEntityConfiguration<{Entity}>
     public override void Configure(EntityTypeBuilder<{Entity}> builder)
     {
         base.Configure(builder);
-        builder.ToTable("{Entities}");
+        // Sin ToTable: el nombre sale del DbSet ({Entities}) y en PostgreSQL se convierte a snake_case.
 
         builder.Property(e => e.Name).HasMaxLength(200).IsRequired();
         builder.Property(e => e.Code).HasMaxLength(50).IsRequired();
         // decimales: builder.Property(e => e.{Monto}).HasPrecision(18, 2);
 
         // Único solo entre los no eliminados (soft delete).
-        builder.HasIndex(e => e.Code).IsUnique().HasFilter("[IsDeleted] = 0");
+        builder.HasIndex(e => e.Code).IsUnique().HasFilter(SqlDialect.NotDeleted);
 
         builder.HasOne(e => e.{Parent})
                .WithMany(/* p => p.{Entities} */)
@@ -86,7 +86,7 @@ public sealed record {Entity}Dto(
     string {Parent}Name,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
-    string RowVersion);      // Base64: el cliente la devuelve en el Update (concurrencia)
+    string RowVersion);      // token de concurrencia: el cliente lo devuelve tal cual en el Update
 
 public sealed record Create{Entity}Request(string Name, string Code, int {Parent}Id);
 
@@ -122,7 +122,7 @@ public static class {Entity}Mappings
         e.Id, e.Name, e.Code, e.IsActive,
         e.{Parent}Id, e.{Parent}.Name,
         e.CreatedAt, e.UpdatedAt,
-        Convert.ToBase64String(e.RowVersion));
+        e.RowVersion.ToString());
 
     public static {Entity} ToEntity(this Create{Entity}Request request) => new()
     {
@@ -142,6 +142,7 @@ public static class {Entity}Mappings
 
 ### Especificaciones — `Application/Features/{Entities}/{Entity}Specifications.cs`
 ```csharp
+using Microsoft.EntityFrameworkCore;   // [PGSQL] EF.Functions.ILike
 using {Project}.Application.Common.Specifications;
 using {Project}.Domain.Entities;
 
@@ -164,7 +165,8 @@ public sealed class {Entities}ByFilterSpec : Specification<{Entity}>
         var search = filter.Search?.Trim();
 
         Where(PredicateBuilder.True<{Entity}>()
-            .AndIf(!string.IsNullOrEmpty(search), e => e.Name.Contains(search!) || e.Code.Contains(search!))
+            .AndIf(!string.IsNullOrEmpty(search), e => e.Name.Contains(search!) || e.Code.Contains(search!))   // [MSSQL] (collation sin distinguir mayúsculas)
+            .AndIf(!string.IsNullOrEmpty(search), e => EF.Functions.ILike(e.Name, $"%{search}%") || EF.Functions.ILike(e.Code, $"%{search}%"))   // [PGSQL]
             .AndIf(filter.{Parent}Id.HasValue, e => e.{Parent}Id == filter.{Parent}Id)
             .AndIf(filter.IsActive.HasValue, e => e.IsActive == filter.IsActive));
 
@@ -207,7 +209,7 @@ public sealed class Update{Entity}RequestValidator : AbstractValidator<Update{En
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.{Parent}Id).GreaterThan(0);
-        RuleFor(x => x.RowVersion).NotEmpty();
+        RuleFor(x => x.RowVersion).NotEmpty().Must(v => Guid.TryParse(v, out _)).WithMessage("Token de concurrencia inválido.");
     }
 }
 ```
@@ -269,7 +271,7 @@ public sealed class {Entity}Service(IUnitOfWork uow) : I{Entity}Service
             return {Entity}Errors.NotFound(id);
 
         // Concurrencia optimista: el cliente envía la RowVersion que leyó.
-        if (!entity.RowVersion.AsSpan().SequenceEqual(Convert.FromBase64String(request.RowVersion)))
+        if (!Guid.TryParse(request.RowVersion, out var rowVersion) || rowVersion != entity.RowVersion)
             return {Entity}Errors.ConcurrencyConflict;
 
         if (entity.{Parent}Id != request.{Parent}Id && !await _parents.AnyAsync(p => p.Id == request.{Parent}Id, ct))

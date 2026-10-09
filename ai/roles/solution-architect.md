@@ -18,7 +18,7 @@ Garantizar que cada proyecto y cada cambio **respeten los standards del kit**, y
 
 ## Archivos a leer
 - `AGENTS.md`, `docs/00-MASTER_CONTEXT.md`, `standards/00-INDEX.md`, `standards/01-solution-architecture.md`.
-- `ai/suggestions-catalog.md` en inicialización y sugerencias.
+- `ai/suggestions-catalog.md` y `ai/references.md` en inicialización y sugerencias; `standards/16-framework-versions.md` para la versión de .NET.
 - `docs/04-non-functional-requirements.md` y `docs/decisions/` existentes.
 
 ## Reglas

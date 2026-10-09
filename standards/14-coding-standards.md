@@ -25,7 +25,7 @@
 ```xml
 <Project>
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>   <!-- TargetFramework del perfil (standards/16) -->
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
@@ -43,21 +43,28 @@ Con esto, los `.csproj` quedan mínimos: sin `TargetFramework` ni `Nullable` rep
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Una sola propiedad por familia: al cambiar de versión de .NET se edita aquí (standards/16). -->
+    <MicrosoftVersion>10.0.12</MicrosoftVersion>
+    <NpgsqlEfVersion>10.0.3</NpgsqlEfVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.14" />
+    <!-- [MSSQL] -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(MicrosoftVersion)" />
+    <!-- [PGSQL] -->
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlEfVersion)" />
+    <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
     <!-- [SEC] -->
-    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(MicrosoftVersion)" />
   </ItemGroup>
 </Project>
 ```
-En los `.csproj`: `<PackageReference Include="..." />` **sin** `Version`. `dotnet add package` actualiza este archivo automáticamente. Versiones de referencia de oct-2026; verificar las vigentes al crear el proyecto.
+En los `.csproj`: `<PackageReference Include="..." />` **sin** `Version`. `dotnet add package` actualiza este archivo automáticamente. Versiones de referencia de oct-2026 para .NET 10; verificar las vigentes al crear el proyecto. Los paquetes `Microsoft.*` y los proveedores de EF Core siguen la **versión mayor del framework** (`standards/16`).
 
 ## `.editorconfig` (base)
 ```ini

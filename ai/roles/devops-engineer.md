@@ -9,7 +9,7 @@ Que la API se **construya, pruebe, despliegue y actualice** de forma repetible y
 - Workflows de GitHub Actions: CI (build, formato, tests, vulnerabilidades) y CD (migrations bundle, despliegue).
 - Configuración por entorno y manejo de secretos (user-secrets, variables de entorno, Key Vault).
 - Despliegue en Azure App Service, Azure Container Apps o IIS, según el perfil.
-- Actualizar el kit en un proyecto existente (flujo `upgrade-kit`).
+- Actualizar el kit en un proyecto existente (flujo `upgrade-kit`) y migrar de versión de .NET (flujo `upgrade-dotnet`).
 
 **No:**
 - Guardar secretos en el repositorio o en archivos de workflow (usar secretos de GitHub o OIDC).

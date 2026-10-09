@@ -29,7 +29,7 @@ Ya configurado en `standards/01a`:
 
 ## Fechas en UTC
 - Se guardan en UTC (`TimeProvider.GetUtcNow()`).
-- `UtcDateTimeConverter` (`standards/02`) marca las fechas leídas de SQL Server como UTC, para que salgan con `Z`. Sin eso, el navegador las interpretaría como hora local.
+- `UtcDateTimeConverter` (`standards/02`) marca las fechas leídas de la base como UTC (SQL Server no guarda el Kind), para que salgan con `Z`. Sin eso, el navegador las interpretaría como hora local.
 - Filtros de fecha recibidos del cliente: aceptar ISO 8601 con zona y convertir a UTC antes de consultar.
 
 ## Paginación

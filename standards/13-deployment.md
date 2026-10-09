@@ -13,6 +13,7 @@
 ## Docker
 `Dockerfile` en la raíz del repositorio:
 ```dockerfile
+# Etiquetas = versión de .NET del perfil (TargetFramework, standards/16)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
@@ -32,7 +33,7 @@ ENTRYPOINT ["dotnet", "{Project}.Api.dll"]
 - Alternativa sin Dockerfile: `dotnet publish -c Release /t:PublishContainer` (soporte de contenedores del SDK).
 - `.dockerignore` con `bin/`, `obj/`, `.git/`, `.vs/`, `**/appsettings.*.local.json`.
 
-`docker-compose.yml` para desarrollo local (API + SQL Server):
+`docker-compose.yml` para desarrollo local (API + base de datos del perfil). Variante SQL Server:
 ```yaml
 services:
   db:
@@ -56,6 +57,20 @@ services:
 volumes:
   sqldata:
 ```
+Variante PostgreSQL (reemplaza el servicio `db` y la cadena de conexión):
+```yaml
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: "{project}_db"
+      POSTGRES_USER: "{project}_app"
+      POSTGRES_PASSWORD: "${PG_PASSWORD}"
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+  # api → ConnectionStrings__Default: "Host=db;Port=5432;Database={project}_db;Username={project}_app;Password=${PG_PASSWORD}"
+```
+Usar la versión mayor de PostgreSQL acordada en el proyecto (la imagen oficial publica una etiqueta por versión).
+
 Las variables (`SA_PASSWORD`, `JWT_SIGNING_KEY`) van en un archivo `.env` **que no se sube al repositorio** (agregarlo a `.gitignore`).
 
 ## Migraciones en producción
@@ -103,6 +118,11 @@ El despliegue (CD) va en otro workflow o job, que solo corre con la CI en verde:
 - Runtime .NET 10 o contenedor. Configuración en **App Settings** (equivalen a variables de entorno) y secretos con referencias a Key Vault.
 - Health check del App Service apuntando a `/health/ready`.
 - Despliegue desde GitHub Actions con `azure/webapps-deploy`, autenticando con OIDC (`azure/login`), sin secretos de publicación.
+
+### Base de datos gestionada
+- SQL Server → **Azure SQL Database** (o SQL Managed Instance). PostgreSQL → **Azure Database for PostgreSQL – Flexible Server**.
+- Conexión con identidad administrada (Microsoft Entra ID) cuando sea posible, en lugar de usuario y contraseña.
+- Backups automáticos del servicio + prueba de restauración periódica. On-premise: `BACKUP DATABASE` (SQL Server) o `pg_dump`/`pg_basebackup` (PostgreSQL).
 
 ### Azure Container Apps
 - Imagen del Dockerfile en Azure Container Registry. Probes: liveness `/health/live`, readiness `/health/ready`.
