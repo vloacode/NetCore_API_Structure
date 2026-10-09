@@ -84,7 +84,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 [CollectionDefinition(nameof(ApiCollection))]
 public sealed class ApiCollection : ICollectionFixture<ApiFactory>;
 ```
-> **PostgreSQL**: Respawn necesita una conexión abierta y el adaptador de Postgres, y los nombres de tabla van en `snake_case`:
+> **PostgreSQL**: Respawn necesita una conexión abierta y el adaptador de Postgres. Las tablas propias van en `snake_case`; las de Identity conservan su nombre (`AspNetRoles`…):
 > ```csharp
 > await using var connection = new NpgsqlConnection(ConnectionString);
 > await connection.OpenAsync();
@@ -92,7 +92,7 @@ public sealed class ApiCollection : ICollectionFixture<ApiFactory>;
 > {
 >     DbAdapter = DbAdapter.Postgres,
 >     SchemasToInclude = ["public"],
->     TablesToIgnore = ["__EFMigrationsHistory", "asp_net_roles", "asp_net_role_claims"]
+>     TablesToIgnore = ["__EFMigrationsHistory", "AspNetRoles", "AspNetRoleClaims"]
 > });
 > // ResetDatabaseAsync: abrir otra NpgsqlConnection y llamar _respawner.ResetAsync(connection).
 > ```

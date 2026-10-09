@@ -19,7 +19,7 @@ Además del modo, el perfil fija el **motor de base de datos** (`Database`) y la
 | `Database` | Proveedor EF Core | Notas |
 |---|---|---|
 | `sqlserver` (por defecto) | `Microsoft.EntityFrameworkCore.SqlServer` | Collation sin distinguir mayúsculas por defecto |
-| `postgresql` | `Npgsql.EntityFrameworkCore.PostgreSQL` + `EFCore.NamingConventions` | Tablas y columnas en `snake_case`; búsquedas con `ILike` |
+| `postgresql` | `Npgsql.EntityFrameworkCore.PostgreSQL` + `EFCore.NamingConventions` | Tablas y columnas propias en `snake_case` (las tablas de Identity conservan su nombre `AspNet*`, que Identity fija explícitamente); búsquedas con `ILike` |
 
 Marcas en el código de este y otros standards (al crear el proyecto se conserva solo lo del perfil y se quitan los comentarios de marca):
 
