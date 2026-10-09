@@ -77,7 +77,11 @@ dotnet ef database update -p src/{Project}.Api
 dotnet user-secrets set "<Clave>" "<Valor>" --project src/{Project}.Api
 ```
 
-## 9. Para modelos con contexto limitado (IA local)
+## 9. Verificación del kit
+- `python scripts/check-kit.py` comprueba enlaces, que cada flujo y cada rol tengan su adaptador, y el tamaño de los archivos. Se ejecuta en CI (`.github/workflows/kit-checks.yml`).
+- Claude Code aplica además hooks automáticos (`.claude/settings.json`). Con otras IAs, cumplir lo mismo a mano: nada de secretos en `appsettings*.json`, no editar `standards/` ni `ai/` en un proyecto y no terminar sin `dotnet build`.
+
+## 10. Para modelos con contexto limitado (IA local)
 - Lee **solo** el context pack de la tarea. Cada archivo de `ai/` y `standards/` se entiende por sí solo.
 - Trabaja un archivo o una entidad por vez y compila entre pasos.
 - Si no tienes acceso web, usa `ai/suggestions-catalog.md` como referencia y marca las versiones de paquetes como "verificar".

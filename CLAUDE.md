@@ -21,6 +21,16 @@ Cada rol de `ai/roles/` tiene un subagente en `.claude/agents/<rol>.md`:
 - Los revisores (`security-reviewer`, `qa-engineer` en modo revisión) trabajan en **solo lectura** y devuelven hallazgos; los cambios los aplica la sesión principal o el `backend-developer`.
 - Las decisiones de negocio y los puntos de control de los flujos se consultan siempre al usuario. Nunca se delegan.
 
+## Permisos y hooks (`.claude/settings.json`)
+Requieren Python 3 en el PATH.
+- **Permitidos sin preguntar**: `dotnet build/test/restore/format/run`, `dotnet ef migrations add/script/list`, `dotnet list package`, `git status/diff/log`.
+- **Piden confirmación**: `dotnet ef database update`, `dotnet ef migrations remove`, `git push`.
+- **Bloqueados**: leer `.env`, `secrets.json`, `appsettings.*.local.json`; `dotnet ef database drop`.
+- Hook `scripts/hooks/guard-edits.py` (antes de editar):
+  - Rechaza secretos en `appsettings*.json`.
+  - En un proyecto ya inicializado, pide confirmación antes de editar archivos del kit (`standards/`, `ai/`, `AGENTS.md`).
+- Hook `scripts/hooks/build-on-stop.py` (al terminar el turno): si hay código C# modificado y `dotnet build` falla, no deja cerrar la tarea y devuelve los errores.
+
 ## Herramientas
 - Usa búsqueda web cuando un flujo pida referencias actuales (versiones de NuGet, Microsoft Learn), sobre todo en las sugerencias proactivas de `/project-init`.
 - Corre `dotnet build` y `dotnet test` para verificar. No declares una tarea terminada sin compilar.

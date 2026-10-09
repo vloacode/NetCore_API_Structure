@@ -19,6 +19,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - Ids de capacidades en `ai/suggestions-catalog.md` para el campo `Capabilities` del perfil.
 - Lote 4: 9 roles en `ai/roles/` (product-analyst, solution-architect, database-architect, backend-developer, qa-engineer, security-reviewer, devops-engineer, observability-engineer, technical-writer) y sus subagentes en `.claude/agents/` (revisor de seguridad en solo lectura).
 - Lote 5: 15 flujos en `ai/workflows/` (project-init con elección de modo y sugerencias proactivas con búsqueda web, new-module, new-entity, new-feature, api-endpoint, database-change, test-generation, code-review, security-review, performance-review, log-analysis, incident-response, record-decision, docs-sync, upgrade-kit) y sus skills en `.claude/skills/` (comandos `/...`).
+- Lote 6: `.claude/settings.json` (permisos y hooks), hooks `scripts/hooks/guard-edits.py` (secretos en appsettings, archivos del kit) y `scripts/hooks/build-on-stop.py` (no terminar sin compilar), `scripts/check-kit.py` y workflow `kit-checks`.
 
 ### Cambiado
 - `12-testing`: los services se prueban contra SQL Server real (Testcontainers); SQLite/InMemory no son compatibles con el modelo.
@@ -27,4 +28,4 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - `AI_GUIDE_API_ARCHITECTURE.md`: su contenido completo pasó a `standards/`.
 
 ### Pendiente (próximos lotes)
-- `settings.json`; plantilla ejecutable verificada.
+- Plantilla ejecutable en `template/` verificada con `dotnet build` en los dos perfiles, y prueba piloto de `project-init`.
