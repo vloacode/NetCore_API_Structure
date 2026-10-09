@@ -17,6 +17,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - `.gitattributes`.
 - Lote 3: plantillas de `docs/` (`00-MASTER_CONTEXT` con Perfil del proyecto, `01`–`10`, plantilla de módulo, ADR, runbook, `ai/AI_MEMORY`, `ai/PROJECT_STATUS`). Marcadores de proyecto `{{...}}` e instrucciones para la IA en comentarios `<!-- IA: -->`.
 - Ids de capacidades en `ai/suggestions-catalog.md` para el campo `Capabilities` del perfil.
+- Lote 4: 9 roles en `ai/roles/` (product-analyst, solution-architect, database-architect, backend-developer, qa-engineer, security-reviewer, devops-engineer, observability-engineer, technical-writer) y sus subagentes en `.claude/agents/` (revisor de seguridad en solo lectura).
 
 ### Cambiado
 - `12-testing`: los services se prueban contra SQL Server real (Testcontainers); SQLite/InMemory no son compatibles con el modelo.
@@ -25,4 +26,4 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - `AI_GUIDE_API_ARCHITECTURE.md`: su contenido completo pasó a `standards/`.
 
 ### Pendiente (próximos lotes)
-- Roles (`ai/roles/`) y flujos (`ai/workflows/`) con sus adaptadores de Claude Code; `settings.json`; plantilla ejecutable verificada.
+- Flujos (`ai/workflows/`) con sus skills de Claude Code; `settings.json`; plantilla ejecutable verificada.
