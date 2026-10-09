@@ -5,6 +5,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [2.2.0] - 2026-10-09
+### Añadido
+- **Opción de despliegue con Nginx** (`Deployment = nginx`, servidor Linux/VM con Docker): `standards/13a-reverse-proxy-nginx.md`. Incluye:
+  - `nginx.conf` con TLS, HTTP/2, límites, gzip y WebSockets.
+  - `docker-compose` con red interna de subred fija.
+  - Certificados con certbot, comandos y checklist.
+- **Forwarded Headers en la API** (`standards/01a`):
+  - Configuración `ReverseProxy:Enabled`, `KnownProxies` y `KnownNetworks`, desactivada por defecto.
+  - `ForwardLimit = 1`, para que el cliente no pueda falsificar su IP.
+  - Sirve con cualquier proxy o balanceador.
+- Nginx, YARP y Caddy en el catálogo de sugerencias. Referencias oficiales de Nginx y de proxies/balanceadores en `ai/references.md`.
+- `scripts/verify/verify-nginx.py`: prueba la API detrás de un contenedor Nginx real (8/8).
+
 ## [2.1.0] - 2026-10-09
 ### Verificado
 - PostgreSQL de punta a punta (contenedor PostgreSQL 18): 32/32 pruebas con seguridad y 8/8 en el perfil público, igual que SQL Server.

@@ -118,6 +118,10 @@ Fuentes que la IA debe consultar para trabajar con información **actual** y no 
 |---|---|
 | .NET en contenedores | https://learn.microsoft.com/dotnet/core/docker/introduction |
 | Hospedar en IIS | https://learn.microsoft.com/aspnet/core/host-and-deploy/iis/ |
+| Linux con Nginx | https://learn.microsoft.com/aspnet/core/host-and-deploy/linux-nginx |
+| Detrás de proxies y balanceadores (Forwarded Headers) | https://learn.microsoft.com/aspnet/core/host-and-deploy/proxy-load-balancer |
+| Documentación de Nginx | https://nginx.org/en/docs/ |
+| YARP (reverse proxy en .NET) | https://learn.microsoft.com/aspnet/core/fundamentals/servers/yarp/yarp-overview |
 | Azure App Service | https://learn.microsoft.com/azure/app-service/ |
 | Azure Container Apps | https://learn.microsoft.com/azure/container-apps/overview |
 | GitHub Actions para .NET | https://docs.github.com/actions/use-cases-and-examples/building-and-testing/building-and-testing-net |

@@ -8,7 +8,7 @@ Que la API se **construya, pruebe, despliegue y actualice** de forma repetible y
 - `Dockerfile`, `docker-compose.yml`, `.dockerignore` (`standards/13`).
 - Workflows de GitHub Actions: CI (build, formato, tests, vulnerabilidades) y CD (migrations bundle, despliegue).
 - Configuración por entorno y manejo de secretos (user-secrets, variables de entorno, Key Vault).
-- Despliegue en Azure App Service, Azure Container Apps o IIS, según el perfil.
+- Despliegue en Azure App Service, Azure Container Apps, IIS o servidor Linux con Nginx (`standards/13a`), según el perfil.
 - Actualizar el kit en un proyecto existente (flujo `upgrade-kit`) y migrar de versión de .NET (flujo `upgrade-dotnet`).
 
 **No:**

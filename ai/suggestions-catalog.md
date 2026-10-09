@@ -132,6 +132,27 @@ Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. 
 - **Paquetes:** `Microsoft.Extensions.Http.Resilience`.
 - **Referencia:** https://learn.microsoft.com/dotnet/core/resilience/http-resilience
 
+## Borde / reverse proxy
+
+### Nginx · `nginx`
+- **Disparadores:** despliegue en un servidor Linux o VM propia; varias APIs en el mismo servidor; HTTPS con Let's Encrypt; protección en el borde.
+- **Qué agrega:** TLS, enrutamiento por dominio, límites y compresión delante de Kestrel. La API activa `ReverseProxy:Enabled`. No aplica en Azure App Service/Container Apps ni en IIS.
+- **Paquetes:** ninguno en la API (imagen `nginx:stable-alpine`).
+- **Implementa:** `standards/13a-reverse-proxy-nginx.md`.
+- **Referencia:** https://learn.microsoft.com/aspnet/core/host-and-deploy/linux-nginx
+
+### YARP · `yarp`
+- **Disparadores:** se quiere un proxy/API gateway escrito en .NET (enrutamiento, transformaciones, autenticación centralizada) o un equipo que solo maneja .NET.
+- **Qué agrega:** un proyecto ASP.NET Core que hace de reverse proxy configurable por código o `appsettings`.
+- **Paquetes:** `Yarp.ReverseProxy`.
+- **Referencia:** https://learn.microsoft.com/aspnet/core/fundamentals/servers/yarp/yarp-overview
+
+### Caddy · `caddy`
+- **Disparadores:** se quiere HTTPS automático (emisión y renovación de certificados) con mínima configuración en un servidor propio.
+- **Qué agrega:** reverse proxy con TLS automático. Misma configuración de `ReverseProxy` en la API que con Nginx.
+- **Paquetes:** ninguno (imagen `caddy`).
+- **Referencia:** https://caddyserver.com/docs/
+
 ## Operación
 
 ### Observabilidad con OpenTelemetry · `opentelemetry`
@@ -170,6 +191,7 @@ Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. 
 | Si el proyecto es… | Sugerir |
 |---|---|
 | API pública | Versionado, caché, rate limiting por cliente, API key si hay escrituras |
+| Servidor propio (Linux/VM) | Nginx (o Caddy), Data Protection persistente, observabilidad |
 | Con pagos | Idempotency keys, webhooks, outbox, auditoría detallada |
 | SaaS | Multi-tenant, feature flags, Data Protection persistente |
 | Con archivos | Almacenamiento de archivos, límites de tamaño, jobs para procesarlos |

@@ -10,12 +10,14 @@ Cuatro métodos: `AddApplication`, `AddPersistence`, `AddSecurity` `[SEC]` y `Ad
 ```csharp
 using System.Diagnostics;
 using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;        // [SEC]
 using Microsoft.AspNetCore.Authorization;                   // [SEC]
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;                        // [SEC]
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -163,6 +165,18 @@ public static class DependencyInjection
             .AllowAnyMethod()
             .WithExposedHeaders("X-Trace-Id", "Retry-After", "Content-Disposition")));   // legibles desde el navegador (standards/15)
 
+        // Detrás de un reverse proxy o balanceador (Nginx, YARP, Azure Front Door…): IP real del cliente y esquema HTTPS.
+        // Solo se confía en los proxies declarados; se activa con ReverseProxy:Enabled (standards/13a).
+        services.Configure<ForwardedHeadersOptions>(o =>
+        {
+            o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+            o.ForwardLimit = 1;   // un solo salto de proxy: el cliente no puede falsificar su IP con X-Forwarded-For
+            foreach (var proxy in configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [])
+                o.KnownProxies.Add(IPAddress.Parse(proxy));
+            foreach (var network in configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [])
+                o.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+        });
+
         services.AddRateLimiter(o =>
         {
             o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -253,6 +267,9 @@ builder.Services
 
 var app = builder.Build();
 
+if (app.Configuration.GetValue<bool>("ReverseProxy:Enabled"))
+    app.UseForwardedHeaders();   // primero: el resto del pipeline (rate limit, logs, HTTPS) ve la IP y el esquema reales
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseTraceIdHeader();                      // X-Trace-Id en cada respuesta (standards/10)
@@ -307,6 +324,11 @@ public partial class Program;   // para WebApplicationFactory en tests de integr
   "App": {
     "ClientUrl": "https://localhost:5173",
     "AppName": "{Project}"
+  },
+  "ReverseProxy": {
+    "Enabled": false,
+    "KnownProxies": [],
+    "KnownNetworks": []
   },
   "Cors": {
     "AllowedOrigins": [ "https://localhost:5173" ]

@@ -27,6 +27,18 @@ Requisitos: SDK de .NET del framework elegido, Python 3 y `dotnet-ef`. Para las 
 
 La CI (`.github/workflows/kit-checks.yml`) corre la matriz completa con `--run-tests` (los runners de GitHub tienen Docker) en cada push.
 
+## `verify-nginx.py` (API detrás de Nginx)
+Levanta un contenedor `nginx:stable-alpine` con el `nginx.conf` de `standards/13a` (adaptado a HTTP local) delante de la API y comprueba:
+- Que Nginx acepta la configuración.
+- La IP que ve la API sin y con `ReverseProxy`.
+- Que un `X-Forwarded-For` falsificado no cambia la IP ni evita el rate limiting.
+- Que los headers de seguridad y gzip llegan bien.
+
+Requiere Docker y un proyecto con seguridad ya generado por `verify-standards.py`:
+```bash
+python scripts/verify/verify-nginx.py --project .verify/secure-sqlserver/KitVerify --connection "Server=(localdb)\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True"
+```
+
 ## Al cambiar un standard
 - Todo bloque C# que represente un archivo debe llevar su ruta entre comillas invertidas en las 3 líneas anteriores (por ejemplo, `` `Infrastructure/Persistence/UnitOfWork.cs` ``).
 - Marcas: `// [SEC]` solo con seguridad, `// [PUB]` solo sin seguridad, `// [MSSQL]` solo SQL Server, `// [PGSQL]` solo PostgreSQL.

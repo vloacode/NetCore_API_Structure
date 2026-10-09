@@ -138,7 +138,7 @@ El despliegue (CD) va en otro workflow o job, que solo corre con la CI en verde:
 - [ ] `ASPNETCORE_ENVIRONMENT=Production`; OpenAPI y Scalar no expuestos públicamente (solo en Development, o protegidos).
 - [ ] Cadena de conexión con un usuario de BD de **mínimos privilegios** (sin DDL; las migraciones usan otro usuario).
 - [ ] HTTPS y HSTS activos; CORS solo con los orígenes reales.
-- [ ] Rate limiting ajustado a `docs/04-non-functional-requirements.md`; `ForwardedHeaders` configurado si hay proxy o balanceador.
+- [ ] Rate limiting ajustado a `docs/04-non-functional-requirements.md`; `ReverseProxy:Enabled` + `KnownProxies`/`KnownNetworks` si hay proxy o balanceador (`standards/13a`).
 - [ ] Health checks conectados al orquestador o balanceador.
 - [ ] Observabilidad: OpenTelemetry o Application Insights con alertas (`standards/10`).
 - [ ] Backups de la base de datos y prueba de restauración documentada en `docs/runbooks/`.

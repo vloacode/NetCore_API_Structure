@@ -37,6 +37,7 @@ Con seguridad, además: **ASP.NET Core Identity local + JWT + refresh tokens**. 
 | `11-performance.md` | Consultas, índices, caché, compresión | Todos |
 | `12-testing.md` | Estrategia de pruebas y casos mínimos | Todos |
 | `13-deployment.md` | Docker, CI, migraciones, Azure/IIS, checklist de producción | Todos |
+| `13a-reverse-proxy-nginx.md` | Nginx delante de la API: TLS, límites, WebSockets, Forwarded Headers, certbot | Solo `Deployment = nginx` |
 | `14-coding-standards.md` | .editorconfig, Directory.Build.props, analizadores, nullable | Todos |
 | `15-frontend-integration.md` | Lo que la API configura para que el frontend la consuma cómodo | Todos |
 | `16-framework-versions.md` | Política de versiones de .NET, piezas dependientes de la versión, adopción y migración | Todos |

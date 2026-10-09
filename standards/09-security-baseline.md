@@ -48,7 +48,7 @@ HTTPS y HSTS se configuran en `Program.cs` (`standards/01a`). El header `Server`
 ## Límites
 - **Body:** 10 MB global en Kestrel. Endpoints de archivos: `[RequestSizeLimit(n)]` con el valor justo.
 - **Paginación:** `PaginationParams.MaxPageSize = 100`. Nunca devolver listas completas de tablas que crecen.
-- **Rate limiting:** global por IP (100/min) y estricto en Auth (10/min) `[SEC]`. Ajustar según `docs/04-non-functional-requirements.md`. Con proxy o balanceador, configurar `ForwardedHeaders` para usar la IP real.
+- **Rate limiting:** global por IP (100/min) y estricto en Auth (10/min) `[SEC]`. Ajustar según `docs/04-non-functional-requirements.md`. Con proxy o balanceador, activar `ReverseProxy:Enabled` con los proxies conocidos (`standards/01a`, `13a`) para usar la IP real.
 - **Timeouts:** `HttpClient` a terceros siempre con timeout (`standards/11`).
 
 ## Secretos

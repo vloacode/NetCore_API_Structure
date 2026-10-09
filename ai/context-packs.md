@@ -25,7 +25,7 @@ Los archivos marcados `[SEC]` se leen solo si el perfil tiene `Security = enable
 | Actualizar el kit | `ai/workflows/upgrade-kit.md` | devops-engineer | `KIT_VERSION`, `CHANGELOG.md` del kit nuevo y del proyecto |
 | Cambios en autenticación [SEC] | `ai/workflows/new-feature.md` | backend-developer + security-reviewer | `standards/05-authentication-identity.md` y el `05a`–`05f` del tema, `standards/06-authorization-permissions.md` |
 | Integración con el frontend | `ai/workflows/api-endpoint.md` | backend-developer | `standards/15-frontend-integration.md`, `standards/04-api-conventions.md` |
-| Despliegue / CI / Docker | — | devops-engineer | `standards/13-deployment.md`, `docs/04-non-functional-requirements.md` |
+| Despliegue / CI / Docker | — | devops-engineer | `standards/13-deployment.md`, `standards/13a-reverse-proxy-nginx.md` (si `Deployment = nginx`), `docs/04-non-functional-requirements.md` |
 | Migrar a otra versión de .NET | `ai/workflows/upgrade-dotnet.md` | devops-engineer + backend-developer | `standards/16-framework-versions.md`, `ai/references.md` |
 | Duda técnica (API, versión, rendimiento) | — | el rol de la tarea | `ai/references.md` (o MCP de Microsoft Learn) |
 
