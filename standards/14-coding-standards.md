@@ -101,7 +101,24 @@ dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 dotnet_naming_style.underscore_camel.capitalization = camel_case
 dotnet_naming_style.underscore_camel.required_prefix = _
 ```
-Si un analizador choca con un patrón del kit, se baja su severidad en `.editorconfig` (`dotnet_diagnostic.CAxxxx.severity = suggestion`) con un comentario del porqué. Nunca con `#pragma` disperso.
+Reglas ajustadas por el kit (agregar al final del `.editorconfig`; verificadas con `AnalysisLevel=latest-recommended` en Release):
+```ini
+# Migraciones generadas por EF Core: fuera del análisis
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
+
+[*.cs]
+# LoggerMessage obligatorio solo en rutas calientes (standards/10); en el resto, ILogger normal
+dotnet_diagnostic.CA1848.severity = suggestion
+dotnet_diagnostic.CA1873.severity = suggestion
+# La API no se consume desde VB: 'Error' y parámetros como 'to' son nombres válidos
+dotnet_diagnostic.CA1716.severity = none
+# Convención del kit: 'ct' para CancellationToken; DbContext e IdentityDbContext nombran distinto el parámetro de OnModelCreating
+dotnet_diagnostic.CA1725.severity = suggestion
+```
+
+Si otro analizador choca con un patrón del kit, se baja su severidad en `.editorconfig` (`dotnet_diagnostic.CAxxxx.severity = suggestion`) con un comentario del porqué. Nunca con `#pragma` disperso.
 
 ## Estilo C#
 | Regla | Ejemplo |
@@ -122,6 +139,8 @@ Si un analizador choca con un patrón del kit, se baja su severidad en `.editorc
 **Idioma:** identificadores en inglés; comentarios, mensajes al usuario y documentación en español. Los comentarios explican el **porqué**, no el qué.
 
 ## Formato y análisis
+**Después de generar o copiar código desde las plantillas, ejecutar siempre `dotnet format`.** El orden de los `using` depende del nombre real del proyecto (`{Project}` puede quedar antes o después de `Microsoft.*`), así que las plantillas no pueden traerlo ya ordenado. Sin este paso, `dotnet format --verify-no-changes` falla en la CI.
+
 ```bash
 dotnet format                         # aplica estilo y fixes automáticos
 dotnet format --verify-no-changes     # en CI: falla si hay algo sin formatear

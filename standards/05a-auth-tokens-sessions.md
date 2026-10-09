@@ -342,22 +342,4 @@ public sealed class AccountEmails(IEmailSender sender, IOptions<AppUrlOptions> o
 }
 ```
 
-`Infrastructure/Email/LoggingEmailSender.cs`
-```csharp
-using {Project}.Application.Abstractions.Services;
-
-namespace {Project}.Infrastructure.Email;
-
-/// <summary>
-/// Implementación de DESARROLLO: escribe el email en el log (incluye el enlace con el token).
-/// En producción registrar una implementación real (SMTP con MailKit, SendGrid, etc.) con la misma interfaz.
-/// </summary>
-public sealed class LoggingEmailSender(ILogger<LoggingEmailSender> logger) : IEmailSender
-{
-    public Task SendAsync(string to, string subject, string htmlBody, CancellationToken ct = default)
-    {
-        logger.LogInformation("EMAIL (dev) To: {To} | Subject: {Subject}\n{Body}", to, subject, htmlBody);
-        return Task.CompletedTask;
-    }
-}
-```
+`LoggingEmailSender` (implementación de `IEmailSender` para desarrollo) está en `standards/01a-bootstrap.md`, porque se usa en ambos perfiles.

@@ -65,7 +65,7 @@ namespace {Project}.Infrastructure.Persistence.Repositories;
 
 public class Repository<T>(AppDbContext context) : IRepository<T> where T : class
 {
-    protected readonly DbSet<T> Set = context.Set<T>();
+    protected DbSet<T> Set { get; } = context.Set<T>();
 
     public ValueTask<T?> GetByIdAsync(object id, CancellationToken ct = default)
         => Set.FindAsync([id], ct);

@@ -144,7 +144,6 @@ public sealed class SeedOptions
 {
     public const string SectionName = "Seed";
 
-    public bool ApplyMigrationsOnStartup { get; init; }
     public string? AdminEmail { get; init; }
     public string? AdminPassword { get; init; }   // user-secrets
 }

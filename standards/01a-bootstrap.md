@@ -9,6 +9,7 @@ Cuatro métodos: `AddApplication`, `AddPersistence`, `AddSecurity` `[SEC]` y `Ad
 
 ```csharp
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -31,6 +32,7 @@ using {Project}.Infrastructure.Email;
 using {Project}.Infrastructure.Identity;                    // [SEC]
 using {Project}.Infrastructure.Persistence;
 using {Project}.Infrastructure.Persistence.Interceptors;
+using {Project}.Infrastructure.Services;                    // [PUB]
 
 namespace {Project};
 
@@ -65,8 +67,8 @@ public static class DependencyInjection
         // Email (reemplazar por SMTP/proveedor real en producción).
         services.AddScoped<IEmailSender, LoggingEmailSender>();
 
-        // SIN seguridad: no hay usuario autenticado; la auditoría guarda solo fechas.
-        // services.AddScoped<ICurrentUserService, SystemCurrentUserService>();
+        // Sin seguridad no hay usuario autenticado: la auditoría guarda solo fechas.
+        services.AddScoped<ICurrentUserService, SystemCurrentUserService>();   // [PUB]
 
         return services;
     }
@@ -145,11 +147,13 @@ public static class DependencyInjection
             // JSON amigable para el frontend (standards/15): camelCase (default) + enums como texto.
             .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-        // Todo ProblemDetails (excepciones, 404/405 vacíos, etc.) lleva traceId para soporte (standards/08).
+        // Todo ProblemDetails (excepciones, 404/405 vacíos, etc.) lleva el mismo traceId que el header X-Trace-Id (standards/08).
+        // Se sobrescribe a propósito: el framework pone por defecto el traceparent completo ("00-…-00").
         services.AddProblemDetails(o => o.CustomizeProblemDetails = ctx =>
-            ctx.ProblemDetails.Extensions.TryAdd("traceId", Activity.Current?.TraceId.ToString() ?? ctx.HttpContext.TraceIdentifier));
+            ctx.ProblemDetails.Extensions["traceId"] = Activity.Current?.TraceId.ToString() ?? ctx.HttpContext.TraceIdentifier);
         services.AddExceptionHandler<GlobalExceptionHandler>();
-        services.AddOpenApi(o => o.AddDocumentTransformer<BearerSecuritySchemeTransformer>());   // sin seguridad: AddOpenApi()
+        services.AddOpenApi(o => o.AddDocumentTransformer<BearerSecuritySchemeTransformer>());   // [SEC]
+        services.AddOpenApi();                                                                     // [PUB]
 
         services.AddCors(o => o.AddPolicy(CorsPolicy, p => p
             .WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
@@ -163,7 +167,7 @@ public static class DependencyInjection
             o.OnRejected = (context, _) =>
             {
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-                    context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+                    context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
                 return ValueTask.CompletedTask;
             };
 
@@ -202,8 +206,29 @@ public sealed class SystemCurrentUserService(IHttpContextAccessor accessor) : IC
 }
 ```
 
+`Infrastructure/Email/LoggingEmailSender.cs`
+```csharp
+using {Project}.Application.Abstractions.Services;
+
+namespace {Project}.Infrastructure.Email;
+
+/// <summary>
+/// Implementación de DESARROLLO: escribe el email en el log (incluye el enlace con el token).
+/// En producción registrar una implementación real (SMTP con MailKit, SendGrid, etc.) con la misma interfaz.
+/// </summary>
+public sealed class LoggingEmailSender(ILogger<LoggingEmailSender> logger) : IEmailSender
+{
+    public Task SendAsync(string to, string subject, string htmlBody, CancellationToken ct = default)
+    {
+        logger.LogInformation("EMAIL (dev) To: {To} | Subject: {Subject}\n{Body}", to, subject, htmlBody);
+        return Task.CompletedTask;
+    }
+}
+```
+
 ## `Program.cs`
 ```csharp
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using {Project};
 using {Project}.Api.Middleware;
@@ -251,7 +276,14 @@ app.MapControllers();
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false });                      // proceso vivo
 app.MapHealthChecks("/health/ready", new() { Predicate = c => c.Tags.Contains("ready") });   // dependencias listas
 
-await DatabaseSeeder.SeedAsync(app.Services);   // [SEC] (sin seguridad: aplicar migraciones si se configuró)
+// Migraciones al arrancar: solo en desarrollo y tests. En producción van en el pipeline (standards/13).
+if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+}
+
+await DatabaseSeeder.SeedAsync(app.Services);   // [SEC] roles, permisos y admin
 await app.RunAsync();
 
 public partial class Program;   // para WebApplicationFactory en tests de integración
@@ -277,8 +309,10 @@ public partial class Program;   // para WebApplicationFactory en tests de integr
   "Cors": {
     "AllowedOrigins": [ "https://localhost:5173" ]
   },
+  "Database": {
+    "ApplyMigrationsOnStartup": false
+  },
   "Seed": {
-    "ApplyMigrationsOnStartup": false,
     "AdminEmail": "admin@{project}.local"
   },
   "Logging": {
@@ -291,7 +325,7 @@ public partial class Program;   // para WebApplicationFactory en tests de integr
   "AllowedHosts": "*"
 }
 ```
-Sin seguridad se eliminan las secciones `Jwt`, `App` y `Seed`.
+Sin seguridad se eliminan las secciones `Jwt`, `App` y `Seed`. `Database:ApplyMigrationsOnStartup` aplica a ambos perfiles (en `appsettings.Development.json` puede ir en `true`).
 
 ## Secretos de desarrollo y base de datos
 ```bash

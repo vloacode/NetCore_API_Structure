@@ -8,7 +8,6 @@
 ```csharp
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using {Project}.Application.Common.Security;
 using {Project}.Infrastructure.Identity;
@@ -23,9 +22,6 @@ public static class DatabaseSeeder
         var sp = scope.ServiceProvider;
         var options = sp.GetRequiredService<IOptions<SeedOptions>>().Value;
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(DatabaseSeeder));
-
-        if (options.ApplyMigrationsOnStartup)
-            await sp.GetRequiredService<AppDbContext>().Database.MigrateAsync(ct);
 
         var roleManager = sp.GetRequiredService<RoleManager<AppRole>>();
         await EnsureRoleAsync(roleManager, AppRoles.Admin, "Administrador del sistema", []);   // Admin pasa todas las políticas

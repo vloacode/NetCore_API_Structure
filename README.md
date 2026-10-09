@@ -2,7 +2,7 @@
 
 Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core (.NET 10)** siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-> Estado: **v0.1.0 en construcción** (ver `CHANGELOG.md`).
+> Versión **1.0.0** (ver `CHANGELOG.md`). El código de `standards/` está verificado: compila en Release con analizadores en ambos perfiles y pasa pruebas de punta a punta contra SQL Server (`scripts/verify/`).
 
 ## Qué incluye
 

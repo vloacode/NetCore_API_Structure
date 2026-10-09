@@ -1,0 +1,17 @@
+# Herramientas de verificación del kit
+.verify/
+
+# .NET
+bin/
+obj/
+.vs/
+*.user
+
+# Secretos y locales
+.env
+.env.*
+secrets.json
+appsettings.*.local.json
+
+# Python
+__pycache__/

@@ -75,7 +75,7 @@ Delegar en **backend-developer**, aplicando solo lo que corresponde al perfil (l
 4. Con seguridad: `standards/05` a `05f` y `06` completos. Sin seguridad: `SystemCurrentUserService`, `AppDbContext : DbContext`, sin Auth. Con API key: la sección API key de `standards/09`.
 5. Arranque: `standards/01a` (DI, `Program.cs`, `appsettings.json`) y user-secrets.
 6. Capacidades aceptadas: implementar cada una según su referencia, o dejarla en `docs/10-roadmap.md` si se pospuso.
-7. `dotnet build` **sin errores**. Si falla, corregir antes de seguir.
+7. `dotnet format` (ordena los `using` según el nombre real del proyecto) y `dotnet build` **sin errores**. Si falla, corregir antes de seguir.
 8. Migración `InitialCreate` (Identity y tablas base).
 
 ## Paso 7 — Entidades de negocio

@@ -14,7 +14,10 @@ El **perfil del proyecto** está en `docs/00-MASTER_CONTEXT.md`, sección "Perfi
 | Estándar sin seguridad (API pública) | `disabled` | Todo excepto Identity, JWT, permisos y controllers de Auth |
 | Entrevista completa | según respuestas | Base del perfil con seguridad, ajustada por las capacidades elegidas |
 
-En el código de este y otros standards, **las líneas o bloques marcados `// [SEC]` solo existen si `Security = enabled`**. En el perfil sin seguridad se omiten completos.
+En el código de este y otros standards:
+- **`// [SEC]`**: la línea, sentencia o método solo existe si `Security = enabled`. Sin seguridad se omite completa.
+- **`// [PUB]`**: la línea solo existe si `Security = disabled` (API pública). Con seguridad se omite.
+- Al crear el proyecto, se conserva solo lo del perfil y se quitan los comentarios de marca.
 
 ## Reglas no negociables
 1. **Controllers → Services → IUnitOfWork/IRepository → DbContext.** Un controller nunca toca `DbContext` ni repositorios.

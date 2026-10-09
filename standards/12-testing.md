@@ -52,7 +52,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", ConnectionString);
-        builder.UseSetting("Seed:ApplyMigrationsOnStartup", "true");
+        builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
         builder.UseSetting("Jwt:SigningKey", new string('k', 64));          // [SEC]
         builder.UseSetting("Seed:AdminEmail", TestUsers.AdminEmail);        // [SEC]
         builder.UseSetting("Seed:AdminPassword", TestUsers.AdminPassword);  // [SEC]

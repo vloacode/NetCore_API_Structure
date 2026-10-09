@@ -59,7 +59,7 @@ Resumen; el detalle está en `standards/01-solution-architecture.md`.
 - Mensajes de error para el usuario final en español, dentro de `{Entity}Errors`.
 
 ## 7. Definition of Done (toda tarea con código)
-- [ ] `dotnet build` sin errores ni warnings nuevos.
+- [ ] `dotnet format` aplicado y `dotnet build` sin errores ni warnings nuevos.
 - [ ] Tests nuevos o actualizados, y `dotnet test` en verde.
 - [ ] Migración creada si cambió el modelo, con el SQL generado revisado.
 - [ ] Permisos registrados y aplicados (perfil con seguridad).
@@ -79,6 +79,7 @@ dotnet user-secrets set "<Clave>" "<Valor>" --project src/{Project}.Api
 
 ## 9. Verificación del kit
 - `python scripts/check-kit.py` comprueba enlaces, que cada flujo y cada rol tengan su adaptador, y el tamaño de los archivos. Se ejecuta en CI (`.github/workflows/kit-checks.yml`).
+- `python scripts/verify/verify-standards.py` compila el código de `standards/` en ambos perfiles (y con `--smoke`, lo prueba contra SQL Server). Úsalo al **modificar el kit** (ver `scripts/verify/README.md`).
 - Claude Code aplica además hooks automáticos (`.claude/settings.json`). Con otras IAs, cumplir lo mismo a mano: nada de secretos en `appsettings*.json`, no editar `standards/` ni `ai/` en un proyecto y no terminar sin `dotnet build`.
 
 ## 10. Para modelos con contexto limitado (IA local)

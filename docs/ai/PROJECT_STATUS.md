@@ -3,7 +3,7 @@
 <!-- IA: tablero de avance. Se actualiza al final de CADA tarea (Definition of Done). Lo primero que mira una IA
 para saber dónde quedó el trabajo. Corto y factual; el historial detallado está en git. -->
 
-**Última actualización:** {{AAAA-MM-DD}} · **Kit:** {{0.1.0}} · **Fase actual:** {{Fase 0 — Fundación}}
+**Última actualización:** {{AAAA-MM-DD}} · **Kit:** {{1.0.0}} · **Fase actual:** {{Fase 0 — Fundación}}
 
 ## Hecho
 | Fecha | Qué | Referencia |

@@ -49,7 +49,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Default: "Server=db;Database={Project}Db;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
       Jwt__SigningKey: "${JWT_SIGNING_KEY}"            # [SEC]
-      Seed__ApplyMigrationsOnStartup: "true"
+      Database__ApplyMigrationsOnStartup: "true"
     ports: ["8080:8080"]
     depends_on: [db]
 
@@ -59,7 +59,7 @@ volumes:
 Las variables (`SA_PASSWORD`, `JWT_SIGNING_KEY`) van en un archivo `.env` **que no se sube al repositorio** (agregarlo a `.gitignore`).
 
 ## Migraciones en producción
-- **Nunca** `ApplyMigrationsOnStartup = true` en producción: con varias instancias compiten, y la app necesitaría permisos de DDL.
+- **Nunca** `Database:ApplyMigrationsOnStartup = true` en producción: con varias instancias compiten, y la app necesitaría permisos de DDL.
 - Opción recomendada, **migrations bundle** (ejecutable autocontenido):
 ```bash
 dotnet ef migrations bundle -p src/{Project}.Api -o efbundle --self-contained -r linux-x64

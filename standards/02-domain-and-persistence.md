@@ -161,9 +161,10 @@ using {Project}.Infrastructure.Identity;                   // [SEC]
 
 namespace {Project}.Infrastructure.Persistence;
 
-// Con seguridad hereda de IdentityDbContext (tablas AspNet*). Sin seguridad: `: DbContext(options)`.
+// Con seguridad hereda de IdentityDbContext (tablas AspNet*); sin seguridad, de DbContext. Usar solo la línea del perfil.
 public class AppDbContext(DbContextOptions<AppDbContext> options)
-    : IdentityDbContext<AppUser, AppRole, Guid>(options)
+    : IdentityDbContext<AppUser, AppRole, Guid>(options)   // [SEC]
+    : DbContext(options)                                   // [PUB]
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();   // [SEC]
 
@@ -211,13 +212,11 @@ public sealed class UtcDateTimeConverter() : ValueConverter<DateTime, DateTime>(
 ```
 Agregar `using {Project}.Infrastructure.Persistence.Converters;` en `AppDbContext`.
 
-### Configuración base y de Identity — `Infrastructure/Persistence/Configurations/`
-`RefreshTokenConfiguration`, `AppUserConfiguration` y `AppRoleConfiguration` son `[SEC]`: sin seguridad no existen.
+### Configuración base — `Infrastructure/Persistence/Configurations/BaseEntityConfiguration.cs`
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using {Project}.Domain.Common;
-using {Project}.Infrastructure.Identity;
 
 namespace {Project}.Infrastructure.Persistence.Configurations;
 
@@ -232,6 +231,16 @@ public abstract class BaseEntityConfiguration<T> : IEntityTypeConfiguration<T> w
         builder.HasIndex(e => e.IsDeleted);
     }
 }
+```
+
+### Configuraciones de Identity `[SEC]` — `Infrastructure/Persistence/Configurations/IdentityConfigurations.cs`
+Solo con seguridad.
+```csharp
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using {Project}.Infrastructure.Identity;
+
+namespace {Project}.Infrastructure.Persistence.Configurations;
 
 public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {

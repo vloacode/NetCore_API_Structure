@@ -29,7 +29,7 @@ Crear una entidad de negocio completa (entidad, configuración EF, contratos, sp
 8. **Service** `{Entity}Service.cs` + interfaz. Agregar las reglas de negocio del módulo como validaciones que devuelven `{Entity}Errors`. Aplicar los patrones de `standards/07a` si el dominio los requiere ("solo uno activo", transacción de varios pasos).
 9. **Controller** `Api/Controllers/{Entities}Controller.cs`. Con seguridad, `[HasPermission]` en cada acción; sin seguridad, la variante pública (y API key en escrituras si el perfil lo indica).
 10. **Registro**: service en `AddApplication()`. Con seguridad, `Permissions.{Entities}` en `Permissions.cs` y, si corresponde, en `DefaultUserPermissions`.
-11. **Compilar**: `dotnet build`. Corregir hasta que compile sin warnings nuevos.
+11. **Formatear y compilar**: `dotnet format` y después `dotnet build`. Corregir hasta que compile sin warnings nuevos.
 12. **Buscar marcadores olvidados** en los archivos nuevos: no debe quedar `{Entity}`, `{Parent}`, `{entities}` ni campos de ejemplo.
 13. **Migración**: `dotnet ef migrations add Add{Entity} ...` y revisar el SQL generado (database-architect).
 14. **Tests**: casos mínimos por entidad de `standards/12` (flujo `test-generation`).
