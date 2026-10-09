@@ -34,4 +34,4 @@ Reglas: nombre `area.accion` en minúsculas y pasado, máximo 25 propiedades, va
 | Quién puede consultar los datos | {{Rol o persona}}, con usuario de BD de solo lectura |
 
 ## Cómo consultar
-Consultas de ejemplo (eventos por día, embudos, propiedades JSON) en `standards/17a-analytics-ingestion-queries.md`.
+Consultas de ejemplo (eventos por día, embudos, propiedades JSON) en `standards/17-product-analytics.md`.

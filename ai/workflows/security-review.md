@@ -11,7 +11,7 @@ Detectar vulnerabilidades y desvíos del baseline de seguridad en un cambio, un 
 **security-reviewer**.
 
 ## Archivos a leer
-`docs/00-MASTER_CONTEXT.md` (perfil), `standards/09-security-baseline.md`; `[SEC]` `standards/05-authentication-identity.md`, `standards/06-authorization-permissions.md`, `docs/07-permissions-matrix.md`; el código bajo revisión.
+`docs/00-MASTER_CONTEXT.md` (perfil), `standards/09-security-baseline.md`; `[SEC]` `standards/05-authentication.md`, `standards/06-authorization-permissions.md`, `docs/07-permissions-matrix.md`; el código bajo revisión.
 
 ## Pasos
 1. **Alcance**: listar los endpoints y componentes a revisar (controllers, services, configuración, `Program.cs`).

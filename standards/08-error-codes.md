@@ -48,8 +48,8 @@ Errores de validación (400) con detalle por campo. Las claves van en camelCase,
 | `Result` fallido de un service | `ApiControllerBase.ToProblem` | `standards/04` |
 | FluentValidation | `ValidationFilter` (`code = Validation.Failed`) | `standards/04` |
 | Excepción no controlada | `GlobalExceptionHandler` | `standards/04` |
-| 401/403 de JWT, 404/405 de rutas | `UseStatusCodePages` + `AddProblemDetails` | `standards/01a` |
-| 429 de rate limiting | `RateLimiter` (+ header `Retry-After`) | `standards/01a` |
+| 401/403 de JWT, 404/405 de rutas | `UseStatusCodePages` + `AddProblemDetails` | `standards/01` |
+| 429 de rate limiting | `RateLimiter` (+ header `Retry-After`) | `standards/01` |
 
 ## Reglas para los códigos
 1. Formato: **`{Modulo}.{Motivo}`** en PascalCase y en inglés. Ejemplos: `Invoice.NotFound`, `Invoice.AlreadyPaid`, `Auth.LockedOut`.
@@ -84,7 +84,7 @@ Errores de validación (400) con detalle por campo. Las claves van en camelCase,
 | `Server.Error` | 500 | Excepción no controlada |
 | *(sin `code`)* | 401 / 403 / 404 / 405 / 429 | Respuestas del framework; el cliente decide por `status` |
 
-Con seguridad, el catálogo de Auth (`Auth.*`, `User.*`, `Role.*`) está en `standards/05b-auth-contracts.md`.
+Con seguridad, el catálogo de Auth (`Auth.*`, `User.*`, `Role.*`) está en `standards/05-authentication.md`.
 
 ## Plantilla por entidad
 ```csharp

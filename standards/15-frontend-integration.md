@@ -10,7 +10,7 @@
 |---|---|
 | Formato | JSON (`application/json`); errores en `application/problem+json` |
 | Nombres de propiedades | **camelCase** (default de ASP.NET Core) |
-| Enums | **Como texto** (`"Active"`, no `1`), con `JsonStringEnumConverter` (`standards/01a`) |
+| Enums | **Como texto** (`"Active"`, no `1`), con `JsonStringEnumConverter` (`standards/01`) |
 | Fechas con hora | ISO 8601 en **UTC con `Z`** (`2026-10-09T14:30:00Z`); el cliente convierte a hora local |
 | Fechas sin hora | `DateOnly` → `"2026-10-09"` (cumpleaños, vencimientos) |
 | Decimales | Número JSON. Montos con `HasPrecision(18, 2)` en BD |
@@ -18,10 +18,10 @@
 | `null` | Las propiedades nulas **se envían** como `null` (forma estable para tipar en TypeScript) |
 | Errores | ProblemDetails con `code`, `title`, `traceId` y `errors` por campo (`standards/08`) |
 | Paginación | Objeto `PagedResult` en el body (abajo) |
-| Autenticación `[SEC]` | `Authorization: Bearer {accessToken}` + refresh token rotativo (`standards/05f`) |
+| Autenticación `[SEC]` | `Authorization: Bearer {accessToken}` + refresh token rotativo (`standards/05`) |
 
 ## CORS
-Ya configurado en `standards/01a`:
+Ya configurado en `standards/01`:
 - Orígenes exactos desde `Cors:AllowedOrigins`. Nunca `AllowAnyOrigin` en producción.
 - Sin `AllowCredentials`: la API usa tokens Bearer, no cookies.
 - Headers expuestos al navegador: `X-Trace-Id`, `Retry-After` y `Content-Disposition` (nombre de archivo en descargas).

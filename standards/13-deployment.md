@@ -12,51 +12,13 @@
 
 ## Docker
 `Dockerfile` en la raíz del repositorio:
-```dockerfile
-# Etiquetas = versión de .NET del perfil (TargetFramework, standards/16)
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
-COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
-COPY ["src/{Project}.Api/{Project}.Api.csproj", "src/{Project}.Api/"]
-RUN dotnet restore "src/{Project}.Api/{Project}.Api.csproj"
-COPY . .
-RUN dotnet publish "src/{Project}.Api/{Project}.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-WORKDIR /app
-USER $APP_UID
-EXPOSE 8080
-COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "{Project}.Api.dll"]
-```
+→ Código: [`templates/api/Dockerfile`](../templates/api/Dockerfile)
 - Las imágenes oficiales de .NET escuchan en el puerto **8080** y traen un usuario sin privilegios (`$APP_UID`).
 - Alternativa sin Dockerfile: `dotnet publish -c Release /t:PublishContainer` (soporte de contenedores del SDK).
 - `.dockerignore` con `bin/`, `obj/`, `.git/`, `.vs/`, `**/appsettings.*.local.json`.
 
 `docker-compose.yml` para desarrollo local (API + base de datos del perfil). Variante SQL Server:
-```yaml
-services:
-  db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "${SA_PASSWORD}"
-    ports: ["1433:1433"]
-    volumes: ["sqldata:/var/opt/mssql"]
-
-  api:
-    build: .
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__Default: "Server=db;Database={Project}Db;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
-      Jwt__SigningKey: "${JWT_SIGNING_KEY}"            # [SEC]
-      Database__ApplyMigrationsOnStartup: "true"
-    ports: ["8080:8080"]
-    depends_on: [db]
-
-volumes:
-  sqldata:
-```
+→ Código: [`templates/api/docker-compose.yml`](../templates/api/docker-compose.yml)
 Variante PostgreSQL (reemplaza el servicio `db` y la cadena de conexión):
 ```yaml
   db:

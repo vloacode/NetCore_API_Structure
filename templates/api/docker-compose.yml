@@ -1,0 +1,42 @@
+# Desarrollo local: API + base de datos. Las claves van en un archivo .env (no se sube al repositorio).
+services:
+  db:
+#if (sqlserver)
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD}"
+    ports: ["1433:1433"]
+    volumes: ["dbdata:/var/opt/mssql"]
+#else
+    image: postgres:17
+    environment:
+      POSTGRES_DB: "kitapi_db"
+      POSTGRES_USER: "kitapi_app"
+      POSTGRES_PASSWORD: "${PG_PASSWORD}"
+    ports: ["5432:5432"]
+    volumes: ["dbdata:/var/lib/postgresql/data"]
+#endif
+
+  api:
+    build: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+#if (sqlserver)
+      ConnectionStrings__Default: "Server=db;Database=KitApiDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+#else
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=kitapi_db;Username=kitapi_app;Password=${PG_PASSWORD}"
+#endif
+#if (security)
+      Jwt__SigningKey: "${JWT_SIGNING_KEY}"
+      Seed__AdminPassword: "${ADMIN_PASSWORD}"
+#endif
+#if (analytics)
+      Analytics__HashKey: "${ANALYTICS_HASH_KEY}"
+#endif
+      Database__ApplyMigrationsOnStartup: "true"
+    ports: ["8080:8080"]
+    depends_on: [db]
+
+volumes:
+  dbdata:

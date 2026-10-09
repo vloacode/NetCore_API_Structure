@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Respawn" />
+    <PackageReference Include="Shouldly" />
+<!--#if (sqlserver) -->
+    <PackageReference Include="Testcontainers.MsSql" />
+<!--#endif -->
+<!--#if (postgresql) -->
+    <PackageReference Include="Testcontainers.PostgreSql" />
+<!--#endif -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\KitApi.Api\KitApi.Api.csproj" />
+  </ItemGroup>
+
+</Project>

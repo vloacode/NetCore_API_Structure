@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "NetCore_API_Structure",
+  "classifications": [
+    "Web",
+    "WebAPI",
+    "ASP.NET Core"
+  ],
+  "identity": "NetCoreApiStructure.Entity",
+  "name": "Entidad de negocio (kit NetCore_API_Structure)",
+  "description": "Genera Features/{Entities}/ con 4 archivos (entidad + configuración EF, contratos + validadores, service + specs, controller) y su test de integración. Ejecutar desde la raíz de la solución.",
+  "shortName": "kit-entity",
+  "sourceName": "KitEntity",
+  "preferNameDirectory": false,
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  },
+  "symbols": {
+    "app": {
+      "type": "parameter",
+      "datatype": "text",
+      "isRequired": true,
+      "replaces": "KitApi",
+      "fileRename": "KitApi",
+      "description": "Nombre del proyecto (el -n usado en dotnet new kitapi)."
+    },
+    "plural": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "",
+      "description": "Plural en inglés de la entidad (por defecto: nombre + 's'). Ej.: Category -> Categories."
+    },
+    "pluralDefault": {
+      "type": "generated",
+      "generator": "join",
+      "parameters": {
+        "symbols": [
+          {
+            "type": "ref",
+            "value": "name"
+          },
+          {
+            "type": "const",
+            "value": "s"
+          }
+        ]
+      }
+    },
+    "entities": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "plural",
+        "fallbackVariableName": "pluralDefault"
+      },
+      "replaces": "KitEntities",
+      "fileRename": "KitEntities"
+    },
+    "entitiesLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "entities",
+        "toLower": true
+      },
+      "replaces": "kitentities"
+    },
+    "parent": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "",
+      "replaces": "KitParent",
+      "description": "Entidad padre (relación N:1), ya creada con kit-entity. Vacío = sin padre."
+    },
+    "parentCamel": {
+      "type": "derived",
+      "valueSource": "parent",
+      "valueTransform": "firstLower",
+      "replaces": "kitParent"
+    },
+    "parentPlural": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "",
+      "description": "Plural de la entidad padre (por defecto: padre + 's')."
+    },
+    "parentPluralDefault": {
+      "type": "generated",
+      "generator": "join",
+      "parameters": {
+        "symbols": [
+          {
+            "type": "ref",
+            "value": "parent"
+          },
+          {
+            "type": "const",
+            "value": "s"
+          }
+        ]
+      }
+    },
+    "parentFeature": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "parentPlural",
+        "fallbackVariableName": "parentPluralDefault"
+      },
+      "replaces": "ParentFeature"
+    },
+    "hasParent": {
+      "type": "computed",
+      "value": "(parent != \"\")"
+    },
+    "security": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Igual que el proyecto: permisos con HasPermission."
+    },
+    "database": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "sqlserver"
+        },
+        {
+          "choice": "postgresql"
+        }
+      ],
+      "defaultValue": "sqlserver",
+      "description": "Igual que el proyecto: define la búsqueda (Contains en SQL Server, ILike en PostgreSQL)."
+    },
+    "apikey": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Igual que el proyecto (solo sin seguridad): escrituras con [Authorize] por API key."
+    },
+    "sqlserver": {
+      "type": "computed",
+      "value": "(database == \"sqlserver\")"
+    },
+    "postgresql": {
+      "type": "computed",
+      "value": "(database == \"postgresql\")"
+    },
+    "useApiKey": {
+      "type": "computed",
+      "value": "(apikey && !security)"
+    }
+  },
+  "forms": {
+    "firstLower": {
+      "identifier": "firstLowerCaseInvariant"
+    }
+  },
+  "postActions": [
+    {
+      "description": "Registro pendiente",
+      "manualInstructions": [
+        {
+          "text": "Copiar las líneas del comentario REGISTRO de Features/<Plural>/<Entidad>.cs (DbSet y, con seguridad, permisos), luego: dotnet format, dotnet build y dotnet ef migrations add Add<Entidad>."
+        }
+      ],
+      "actionId": "AC1156F7-BB77-4DB8-B28F-24EEBCCA1E5C",
+      "continueOnError": true
+    }
+  ]
+}

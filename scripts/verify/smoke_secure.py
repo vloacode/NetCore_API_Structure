@@ -1,5 +1,5 @@
 """Pruebas de humo del perfil con seguridad. Uso: python smoke_secure.py <puerto> <archivo_log_de_la_api>
-La ejecuta verify-standards.py --smoke."""
+La ejecuta verify-template.py --smoke-sqlserver / --smoke-postgresql."""
 import base64, hashlib, hmac, json, re, struct, sys, time, urllib.request, urllib.error, pathlib
 
 BASE = f"http://localhost:{sys.argv[1]}"

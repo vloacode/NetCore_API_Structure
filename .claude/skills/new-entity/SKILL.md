@@ -1,6 +1,6 @@
 ---
 name: new-entity
-description: Crea una entidad de negocio completa con las plantillas del kit: entidad, configuración EF, contratos, specs, validadores, service, controller, permisos, migración y tests. Úsalo para agregar una entidad o tabla a un módulo.
+description: Crea una entidad de negocio completa con `dotnet new kit-entity` (entidad + configuración EF, contratos y validadores, service y specs, controller, test), la registra, la adapta al dominio y agrega migración y tests. Úsalo para agregar una entidad o tabla a un módulo.
 ---
 
 # /new-entity

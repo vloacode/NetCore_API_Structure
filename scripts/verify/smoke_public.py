@@ -1,5 +1,5 @@
 """Pruebas de humo del perfil público. Uso: python smoke_public.py <puerto> [log]
-La ejecuta verify-standards.py --smoke."""
+La ejecuta verify-template.py --smoke-sqlserver / --smoke-postgresql."""
 import json, sys, urllib.request, urllib.error
 
 BASE = f"http://localhost:{sys.argv[1]}"

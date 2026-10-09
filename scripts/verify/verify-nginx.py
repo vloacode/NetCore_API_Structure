@@ -1,10 +1,10 @@
 """Verifica la API detrás de Nginx (standards/13a) usando un contenedor Nginx real.
 
 Uso:
-  python scripts/verify/verify-nginx.py --project .verify/secure-sqlserver/KitVerify \\
+  python scripts/verify/verify-nginx.py --project .verify/secure-sqlserver/KitVerify/src/KitVerify.Api \\
       --connection "Server=(localdb)\\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True"
 
-Requisitos: Docker, y un proyecto del perfil con seguridad ya generado y migrado por verify-standards.py.
+Requisitos: Docker, y un proyecto del perfil con seguridad ya generado por verify-template.py (build Release con migración).
 Comprueba:
   1. Sin ReverseProxy, la API ve la IP de Nginx (el problema que se quiere evitar).
   2. Con ReverseProxy + KnownProxies, la API ve la IP real del cliente.
@@ -81,7 +81,7 @@ def start_api(project: pathlib.Path, connection: str, proxy_ip: str | None) -> s
     if proxy_ip:
         env.update(ReverseProxy__Enabled="true", ReverseProxy__KnownProxies__0=proxy_ip)
     log = (project.parent / f"nginx-run-{'proxy' if proxy_ip else 'direct'}.log").open("w", encoding="utf-8")
-    api = subprocess.Popen(["dotnet", "run", "--no-build", "--urls", f"http://0.0.0.0:{API_PORT}"],
+    api = subprocess.Popen(["dotnet", "run", "--no-build", "-c", "Release", "--no-launch-profile", "--urls", f"http://0.0.0.0:{API_PORT}"],
                            cwd=project, env=env, stdout=log, stderr=subprocess.STDOUT)
     for _ in range(90):
         try:

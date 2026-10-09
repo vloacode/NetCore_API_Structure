@@ -12,7 +12,7 @@ Encontrar y corregir cuellos de botella **con mediciones**, contra los objetivos
 **observability-engineer** (diagnóstico) · **database-architect** (índices y consultas) · **backend-developer** (cambios de código).
 
 ## Archivos a leer
-`docs/04-non-functional-requirements.md`, `standards/11-performance.md`, `standards/02a-repository-unit-of-work.md` y el código de los endpoints involucrados.
+`docs/04-non-functional-requirements.md`, `standards/11-performance.md`, `standards/02-persistence.md` y el código de los endpoints involucrados.
 
 ## Pasos
 1. **Definir el escenario**: endpoint, parámetros, volumen de datos y objetivo (p95).

@@ -1,29 +1,26 @@
-# Verificación de los standards
+# Verificación de las plantillas
 
-Estas herramientas comprueban que **el código C# escrito en `standards/` compila y funciona** en la matriz **perfil** (con seguridad / API pública) × **motor** (SQL Server / PostgreSQL), y con la versión de .NET que se indique. Se usan al modificar el kit, no en los proyectos.
+Estas herramientas comprueban que **las plantillas `dotnet new` del kit** (`templates/api` → `kitapi`, `templates/entity` → `kit-entity`) generan proyectos que compilan y funcionan en la matriz **perfil** (con seguridad / API pública) × **motor** (SQL Server / PostgreSQL), con la versión de .NET que se indique. Se usan al modificar el kit, no en los proyectos.
 
-## Qué hace `verify-standards.py`
-Por cada combinación perfil × motor, en una carpeta temporal `.verify/` (ignorada por git):
-1. Crea un proyecto `dotnet new webapi` (con el `--framework` indicado, por defecto `net10.0`) con los paquetes del perfil y del motor y los `Directory.Build.props` / `.editorconfig` de `standards/14`.
-2. `materialize.py` extrae cada bloque de código de `standards/` que tenga ruta de archivo y lo escribe en el proyecto, aplicando las marcas `[SEC]` / `[PUB]` / `[MSSQL]` / `[PGSQL]`. Las plantillas de `standards/07` se compilan con nombres de prueba (`VerifyItem`, `VerifyParent`) que solo existen en esa carpeta temporal.
-3. Genera la migración `InitialCreate` (valida el modelo de EF Core con el proveedor real) y aplica `dotnet format` + `--verify-no-changes`.
-4. `dotnet build -c Release`, con analizadores y warnings como errores.
-5. Con `--tests`, genera además el proyecto de tests de integración de `standards/12` (xUnit v3 + Testcontainers + Respawn) y lo compila; con `--run-tests`, también lo ejecuta (requiere Docker).
-6. Con `--smoke-sqlserver` / `--smoke-postgresql`, además:
-   - Arranca la API contra la base real (aplica la migración y siembra un registro padre al iniciar).
-   - Corre `smoke_secure.py` (32 pruebas: auth, 2FA, refresh con rotación y reuso, permisos, CRUD, concurrencia, soft delete, errores, rate limit) o `smoke_public.py` (8 pruebas).
-   - Al final borra la base de datos temporal.
+## Qué hace `verify-template.py`
+1. Instala las dos plantillas en un *hive* propio (`.verify/hive`): no toca las plantillas instaladas del usuario.
+2. Por cada combinación, en `.verify/<combinación>/` (ignorada por git):
+   - `dotnet new kitapi` con las opciones del perfil (con `--analytics true`) y, además, una combinación **mínima**: pública + PostgreSQL + `--apikey`, sin analytics.
+   - `dotnet new kit-entity` dos veces: `VerifyParent` (sin padre) y `VerifyItem --parent VerifyParent`. Aplica las líneas del comentario REGISTRO como lo haría la IA (`DbSet` y permisos). Estos nombres de prueba solo existen en `.verify/`.
+   - `dotnet ef migrations add InitialCreate` (valida el modelo con el proveedor real), `dotnet format --verify-no-changes` y `dotnet build -c Release` (analizadores, warnings como errores) de la API y los tests.
+3. Con `--run-tests`, ejecuta los tests de integración generados (xUnit v3 + Testcontainers + Respawn; requiere Docker).
+4. Con `--smoke-sqlserver` / `--smoke-postgresql`, arranca la API contra la base real (migración + un `VerifyParent` sembrado) y corre `smoke_secure.py` (35 pruebas: auth, 2FA, refresh con rotación y reuso, permisos, CRUD, concurrencia, soft delete, errores, analítica, rate limit) o `smoke_public.py` (11 pruebas). Al final borra la base temporal si están `sqlcmd` o `psql` en el PATH.
 
 ## Uso
 ```bash
-python scripts/verify/verify-standards.py
-python scripts/verify/verify-standards.py --profiles public --databases postgresql
-python scripts/verify/verify-standards.py --framework net11.0
-python scripts/verify/verify-standards.py --run-tests
-python scripts/verify/verify-standards.py --smoke-sqlserver "Server=(localdb)\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True"
-python scripts/verify/verify-standards.py --smoke-postgresql "Host=localhost;Port=5432;Username=postgres;Password=<tu-clave>"
+python scripts/verify/verify-template.py
+python scripts/verify/verify-template.py --profiles public --databases postgresql
+python scripts/verify/verify-template.py --framework net11.0
+python scripts/verify/verify-template.py --run-tests
+python scripts/verify/verify-template.py --smoke-sqlserver "Server=(localdb)\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True"
+python scripts/verify/verify-template.py --smoke-postgresql "Host=localhost;Port=5432;Username=postgres;Password=<tu-clave>"
 ```
-Requisitos: SDK de .NET del framework elegido, Python 3 y `dotnet-ef`. Para las pruebas de humo, un servidor accesible del motor (LocalDB en Windows sirve para SQL Server). La base temporal se borra al final si están `sqlcmd` o `psql` en el PATH.
+Requisitos: SDK de .NET del framework elegido, Python 3 y `dotnet-ef`. Para las pruebas de humo, un servidor del motor (LocalDB en Windows sirve para SQL Server; para PostgreSQL, un contenedor temporal con una clave generada).
 
 La CI (`.github/workflows/kit-checks.yml`) corre la matriz completa con `--run-tests` (los runners de GitHub tienen Docker) en cada push.
 
@@ -34,12 +31,12 @@ Levanta un contenedor `nginx:stable-alpine` con el `nginx.conf` de `standards/13
 - Que un `X-Forwarded-For` falsificado no cambia la IP ni evita el rate limiting.
 - Que los headers de seguridad y gzip llegan bien.
 
-Requiere Docker y un proyecto con seguridad ya generado por `verify-standards.py`:
+Requiere Docker y un proyecto con seguridad ya generado por `verify-template.py`:
 ```bash
-python scripts/verify/verify-nginx.py --project .verify/secure-sqlserver/KitVerify --connection "Server=(localdb)\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True"
+python scripts/verify/verify-nginx.py --project .verify/secure-sqlserver/KitVerify/src/KitVerify.Api --connection "Server=(localdb)\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True"
 ```
 
-## Al cambiar un standard
-- Todo bloque C# que represente un archivo debe llevar su ruta entre comillas invertidas en las 3 líneas anteriores (por ejemplo, `` `Infrastructure/Persistence/UnitOfWork.cs` ``).
-- Marcas: `// [SEC]` solo con seguridad, `// [PUB]` solo sin seguridad, `// [MSSQL]` solo SQL Server, `// [PGSQL]` solo PostgreSQL.
-- Correr `verify-standards.py`, y las pruebas de humo si el cambio afecta comportamiento.
+## Al cambiar una plantilla
+- Las variantes se escriben con condiciones del motor de plantillas: `#if (security)`, `#if (!security)`, `#if (sqlserver)`, `#if (postgresql)`, `#if (analytics)`, `#if (useApiKey)` en C#; `<!--#if (...) -->` en XML y `//#if (...)` en JSON. Archivos completos de un perfil: `sources.modifiers` en `.template.config/template.json`.
+- Correr `verify-template.py` (y `--run-tests` y las pruebas de humo si el cambio afecta comportamiento) y `python scripts/check-kit.py`.
+- Si el cambio altera una regla, actualizar el standard que enlaza ese archivo.

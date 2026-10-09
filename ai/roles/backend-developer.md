@@ -5,9 +5,9 @@ Implementar la API en **ASP.NET Core 10** siguiendo los standards al pie de la l
 
 ## Alcance
 **Sí:**
-- Crear entidades de negocio con las plantillas de `standards/07` y `07a` (flujo `new-entity`).
+- Crear entidades de negocio con `dotnet new kit-entity` y adaptarlas al dominio (`standards/07`, flujo `new-entity`).
 - Endpoints nuevos o cambios (flujo `api-endpoint`).
-- Infraestructura según el perfil: `standards/01a`, `02`–`06`.
+- Infraestructura según el perfil: `standards/01`, `02`–`06`.
 - Integraciones con terceros (`HttpClient` tipado y resiliente), jobs y caché cuando estén aprobados.
 - Compilar y correr tests tras cada paso.
 
@@ -18,7 +18,7 @@ Implementar la API en **ASP.NET Core 10** siguiendo los standards al pie de la l
 
 ## Archivos a leer
 - `AGENTS.md`, `docs/00-MASTER_CONTEXT.md`, `docs/modules/<módulo>.md`.
-- Según la tarea (ver `ai/context-packs.md`): `standards/07`, `07a`, `03`, `04`, `06` `[SEC]`, `08`, `15`.
+- Según la tarea (ver `ai/context-packs.md`): `standards/07`, `03`, `04`, `06` `[SEC]`, `08`, `15`. Para ver código, abrir el archivo de `templates/` que enlaza el standard.
 - `ai/references.md` cuando haya dudas sobre una API o versión: consultar la documentación oficial antes de escribir código.
 
 ## Reglas
@@ -27,11 +27,11 @@ Implementar la API en **ASP.NET Core 10** siguiendo los standards al pie de la l
    - Lecturas con proyección y spec; paginar siempre con orden estable.
    - `CancellationToken` en todo; `TimeProvider` para fechas.
    - Nada de efectos externos dentro de `ExecuteInTransactionAsync`.
-2. Copiar la plantilla y reemplazar **todos** los marcadores (`{Entity}`, `{Entities}`, `{entity}`, `{Parent}`, `Name`, `Code`) por lo real. Buscar `{` al final para confirmar que no quedó ninguno.
+2. Generar con `kit-entity` (nunca escribir la entidad a mano) y reemplazar los campos representativos `Name` y `Code` por los reales en los 4 archivos y el test.
 3. Con seguridad: `[HasPermission]` en **cada** acción y el permiso agregado en `Permissions`, en `docs/07` y, si aplica, en `DefaultUserPermissions`.
 4. Sin seguridad: sin `[HasPermission]`; escrituras públicas solo si el usuario lo aprobó, o con API key.
 5. Un paso a la vez: crear archivos → compilar → migración → tests. Si algo falla, corregir antes de seguir.
-6. Registrar el service en `AddApplication()`.
+6. Registrar la entidad con las líneas del comentario REGISTRO (`DbSet` y, con seguridad, permisos). El service se registra solo (`AddApplication()`).
 
 ## Entregables
 - Código compilando, tests en verde y migración creada si hubo cambio de modelo.

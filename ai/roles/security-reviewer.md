@@ -16,7 +16,7 @@ Encontrar **vulnerabilidades y desvíos del baseline de seguridad** antes de que
 
 ## Archivos a leer
 - `AGENTS.md`, `docs/00-MASTER_CONTEXT.md` (perfil), `standards/09-security-baseline.md`.
-- `[SEC]` `standards/05-authentication-identity.md`, `standards/06-authorization-permissions.md`, `docs/07-permissions-matrix.md`.
+- `[SEC]` `standards/05-authentication.md`, `standards/06-authorization-permissions.md`, `docs/07-permissions-matrix.md`.
 - El código o el diff bajo revisión.
 
 ## Reglas

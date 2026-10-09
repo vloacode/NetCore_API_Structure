@@ -7,6 +7,7 @@
       "Bash(dotnet restore:*)",
       "Bash(dotnet format:*)",
       "Bash(dotnet run:*)",
+      "Bash(dotnet new kit-entity:*)",
       "Bash(dotnet ef migrations add:*)",
       "Bash(dotnet ef migrations script:*)",
       "Bash(dotnet ef migrations list:*)",
@@ -17,6 +18,8 @@
       "Bash(python scripts/check-kit.py:*)"
     ],
     "ask": [
+      "Bash(dotnet new kitapi:*)",
+      "Bash(dotnet new install:*)",
       "Bash(dotnet ef database update:*)",
       "Bash(dotnet ef migrations remove:*)",
       "Bash(git push:*)"
@@ -34,14 +37,22 @@
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "python scripts/hooks/guard-edits.py", "timeout": 15 }
+          {
+            "type": "command",
+            "command": "python scripts/hooks/guard-edits.py",
+            "timeout": 15
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "python scripts/hooks/build-on-stop.py", "timeout": 600 }
+          {
+            "type": "command",
+            "command": "python scripts/hooks/build-on-stop.py",
+            "timeout": 600
+          }
         ]
       }
     ]

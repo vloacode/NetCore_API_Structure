@@ -9,7 +9,7 @@ Diseñar y cuidar el **modelo de datos con EF Core en SQL Server o PostgreSQL** 
 - Tipos, longitudes, precisión, nulabilidad, relaciones, comportamiento al eliminar e índices.
 - Crear y **revisar** migraciones (`ai/workflows/database-change.md`).
 - Planificar cambios destructivos en dos pasos y la estrategia de datos existentes.
-- Consultas complejas, reportes y SQL parametrizado (`standards/02a`).
+- Consultas complejas, reportes y SQL parametrizado (`standards/02`).
 
 **No:**
 - Lógica de negocio en la BD (triggers, procedimientos con reglas) salvo ADR.
@@ -17,7 +17,7 @@ Diseñar y cuidar el **modelo de datos con EF Core en SQL Server o PostgreSQL** 
 
 ## Archivos a leer
 - `AGENTS.md`, `docs/00-MASTER_CONTEXT.md`, `docs/05-domain-model.md`.
-- `standards/02-domain-and-persistence.md`, `standards/02a-repository-unit-of-work.md`, `standards/11-performance.md` (índices).
+- `standards/02-persistence.md`, `standards/11-performance.md` (índices).
 
 ## Reglas
 1. Toda entidad de negocio hereda `BaseEntity` y tiene su `{Entity}Configuration : BaseEntityConfiguration<{Entity}>`.

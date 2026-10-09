@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "NetCore_API_Structure",
+  "classifications": [
+    "Web",
+    "WebAPI",
+    "ASP.NET Core"
+  ],
+  "identity": "NetCoreApiStructure.Api",
+  "name": "ASP.NET Core Web API (kit NetCore_API_Structure)",
+  "description": "API con Controllers, EF Core (Repository + Unit of Work), FluentValidation, ProblemDetails, OpenTelemetry y, opcionalmente, Identity local + JWT.",
+  "shortName": "kitapi",
+  "sourceName": "KitApi",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "guids": [
+    "5b0d6a3e-7f1c-4c2a-9e8b-1d2f3a4b5c6d"
+  ],
+  "symbols": {
+    "security": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Identity local + JWT + refresh tokens + 2FA + permisos. false = API pública."
+    },
+    "database": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "sqlserver",
+          "description": "SQL Server"
+        },
+        {
+          "choice": "postgresql",
+          "description": "PostgreSQL (Npgsql, nombres snake_case)"
+        }
+      ],
+      "defaultValue": "sqlserver",
+      "description": "Motor de base de datos."
+    },
+    "analytics": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Capacidad product-analytics (standards/17)."
+    },
+    "apikey": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Solo sin seguridad: protege las escrituras con una API key (header X-Api-Key)."
+    },
+    "framework": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "net10.0",
+      "replaces": "net10.0",
+      "description": "TargetFramework (LTS vigente por defecto; ver standards/16)."
+    },
+    "dockerTag": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "framework",
+        "steps": [
+          {
+            "regex": "^net",
+            "replacement": "DOTNET_VERSION="
+          }
+        ]
+      },
+      "replaces": "DOTNET_VERSION=10.0"
+    },
+    "sqlserver": {
+      "type": "computed",
+      "value": "(database == \"sqlserver\")"
+    },
+    "postgresql": {
+      "type": "computed",
+      "value": "(database == \"postgresql\")"
+    },
+    "useApiKey": {
+      "type": "computed",
+      "value": "(apikey && !security)"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!security)",
+          "exclude": [
+            "src/KitApi.Api/Extensions/SecurityExtensions.cs",
+            "src/KitApi.Api/Infrastructure/Identity/**",
+            "src/KitApi.Api/Infrastructure/Persistence/Configurations/IdentityConfigurations.cs",
+            "src/KitApi.Api/Infrastructure/Persistence/DatabaseSeeder.cs",
+            "src/KitApi.Api/Application/Features/Auth/**",
+            "src/KitApi.Api/Application/Common/Security/**",
+            "src/KitApi.Api/Api/Authorization/**",
+            "src/KitApi.Api/Api/OpenApi/**",
+            "src/KitApi.Api/Api/Controllers/AuthController.cs",
+            "src/KitApi.Api/Api/Controllers/AccountController.cs",
+            "src/KitApi.Api/Api/Controllers/UsersController.cs",
+            "src/KitApi.Api/Api/Controllers/RolesController.cs",
+            "tests/KitApi.IntegrationTests/TestUsers.cs"
+          ]
+        },
+        {
+          "condition": "(security)",
+          "exclude": [
+            "src/KitApi.Api/Infrastructure/Services/**"
+          ]
+        },
+        {
+          "condition": "(!analytics)",
+          "exclude": [
+            "src/KitApi.Api/Application/Abstractions/Analytics/**",
+            "src/KitApi.Api/Application/Features/Analytics/**",
+            "src/KitApi.Api/Infrastructure/Analytics/**",
+            "src/KitApi.Api/Infrastructure/Persistence/Configurations/AnalyticsEventConfiguration.cs",
+            "src/KitApi.Api/Api/Controllers/AnalyticsController.cs",
+            "tests/KitApi.IntegrationTests/ProductAnalyticsTests.cs"
+          ]
+        },
+        {
+          "condition": "(!useApiKey)",
+          "exclude": [
+            "src/KitApi.Api/Api/Authentication/**"
+          ]
+        }
+      ]
+    }
+  ]
+}

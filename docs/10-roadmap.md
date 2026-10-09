@@ -4,7 +4,7 @@
 Las sugerencias aceptadas pero pospuestas en project-init van a "Más adelante". -->
 
 ## Fase 0 — Fundación
-- [ ] Solución creada según el perfil (`standards/01`, `01a`, `14`).
+- [ ] Solución generada con `dotnet new kitapi` según el perfil (`standards/01`).
 - [ ] Autenticación, usuarios, roles y permisos `[SEC]`.
 - [ ] Health checks, observabilidad básica y CI.
 - [ ] Migración inicial aplicada.

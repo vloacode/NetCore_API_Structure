@@ -23,12 +23,12 @@ Cada rol de `ai/roles/` tiene un subagente en `.claude/agents/<rol>.md`:
 
 ## Permisos y hooks (`.claude/settings.json`)
 Requieren Python 3 en el PATH.
-- **Permitidos sin preguntar**: `dotnet build/test/restore/format/run`, `dotnet ef migrations add/script/list`, `dotnet list package`, `git status/diff/log`.
-- **Piden confirmación**: `dotnet ef database update`, `dotnet ef migrations remove`, `git push`.
+- **Permitidos sin preguntar**: `dotnet build/test/restore/format/run`, `dotnet new kit-entity`, `dotnet ef migrations add/script/list`, `dotnet list package`, `git status/diff/log`.
+- **Piden confirmación**: `dotnet new kitapi`, `dotnet new install`, `dotnet ef database update`, `dotnet ef migrations remove`, `git push`.
 - **Bloqueados**: leer `.env`, `secrets.json`, `appsettings.*.local.json`; `dotnet ef database drop`.
 - Hook `scripts/hooks/guard-edits.py` (antes de editar):
   - Rechaza secretos en `appsettings*.json`.
-  - En un proyecto ya inicializado, pide confirmación antes de editar archivos del kit (`standards/`, `ai/`, `AGENTS.md`).
+  - En un proyecto ya inicializado, pide confirmación antes de editar archivos del kit (`standards/`, `templates/`, `ai/`, `AGENTS.md`).
 - Hook `scripts/hooks/build-on-stop.py` (al terminar el turno): si hay código C# modificado y `dotnet build` falla, no deja cerrar la tarea y devuelve los errores.
 
 ## Herramientas

@@ -22,8 +22,8 @@ Llevar un proyecto existente a una versión más nueva de .NET (por ejemplo, de 
 5. **Rama** `chore/upgrade-dotnet-<version>`.
 6. **Actualizar versiones** (tabla "Dónde aparece la versión" de `standards/16`):
    - `Directory.Build.props` (`TargetFramework`) y `global.json`.
-   - `Directory.Packages.props`: `MicrosoftVersion`, `NpgsqlEfVersion` y librerías de terceros a versiones compatibles.
-   - `Dockerfile`, CI (`dotnet-version`) y la herramienta `dotnet-ef` (`dotnet tool update --global dotnet-ef`).
+   - `Directory.Packages.props`: `MicrosoftVersion`, las versiones de Npgsql/EFCore.NamingConventions y librerías de terceros a versiones compatibles.
+   - `Dockerfile` (`ARG DOTNET_VERSION`), CI (`dotnet-version`) y la herramienta `dotnet-ef` (`dotnet tool update --global dotnet-ef`).
 7. **Compilar** (`dotnet build -c Release`) y corregir errores y warnings nuevos (analizadores nuevos incluidos), apoyándose en la lista de breaking changes.
 8. **Migraciones**: `dotnet ef migrations add UpgradeDotnet<version>`. Si el modelo no cambió, la migración debe quedar vacía; si genera cambios, revisarlos (algunas versiones cambian convenciones) con `database-change`.
 9. **Pruebas**: `dotnet test` completo y arrancar la API para una prueba manual de los endpoints clave en `/scalar`.

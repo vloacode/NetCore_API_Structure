@@ -22,6 +22,6 @@ Lecciones de una implementación anterior del patrón. Explican el **porqué** d
 | `HasDefaultValue(DateTime.Now)`: fecha congelada al generar la migración | El interceptor asigna las fechas con `TimeProvider`; sin defaults de fecha en la BD |
 | Métodos `GetAll` que devolvían `null` | Todo devuelve `Result<T>` |
 | Páginas o vistas que enlazaban el objeto de respuesta completo (overposting) | Requests dedicados (`Create{Entity}Request` / `Update{Entity}Request`) |
-| Un `switch` por strings con 8 tablas casi idénticas y código copiado | `standards/07a-additional-patterns.md` patrón C (TPH, service genérico o handlers) |
+| Un `switch` por strings con 8 tablas casi idénticas y código copiado | `standards/07-entities.md` patrón C (TPH, service genérico o handlers) |
 | Consultas N+1 de nombres de usuario | Proyecciones con joins en una sola consulta |
 | Includes por string sin chequeo de compilación | Includes tipados en `Specification<T>` |

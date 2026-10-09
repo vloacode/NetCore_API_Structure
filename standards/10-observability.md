@@ -21,7 +21,7 @@
 | `Error` | Falló una operación | Excepción no controlada, tercero caído tras reintentos |
 | `Critical` | El servicio no puede funcionar | Sin conexión a BD al arrancar |
 
-Configuración base en `appsettings.json` (`standards/01a`): `Default: Information`, `Microsoft.AspNetCore: Warning`, comandos de EF en `Warning`.
+Configuración base en `appsettings.json` (`standards/01`): `Default: Information`, `Microsoft.AspNetCore: Warning`, comandos de EF en `Warning`.
 
 ## Logging de alto rendimiento (rutas calientes)
 Para logs que se ejecutan muchas veces, usar el generador de código:
@@ -35,53 +35,12 @@ public static partial class {Entity}Log
 ```
 
 ## Header `X-Trace-Id` — `Api/Middleware/TraceIdHeaderMiddleware.cs`
-```csharp
-using System.Diagnostics;
-
-namespace {Project}.Api.Middleware;
-
-public static class TraceIdHeaderMiddleware
-{
-    /// <summary>Devuelve el traceId en cada respuesta para que el cliente lo muestre al reportar un problema.</summary>
-    public static IApplicationBuilder UseTraceIdHeader(this IApplicationBuilder app) => app.Use(async (context, next) =>
-    {
-        context.Response.OnStarting(() =>
-        {
-            context.Response.Headers["X-Trace-Id"] = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
-            return Task.CompletedTask;
-        });
-        await next();
-    });
-}
-```
-El header se expone por CORS (`standards/01a`). ProblemDetails trae el mismo valor en `traceId`.
+→ Código: [`templates/api/src/KitApi.Api/Api/Middleware/TraceIdHeaderMiddleware.cs`](../templates/api/src/KitApi.Api/Api/Middleware/TraceIdHeaderMiddleware.cs)
+El header se expone por CORS (`standards/01`). ProblemDetails trae el mismo valor en `traceId`.
 
 ## OpenTelemetry
-Paquetes:
-```bash
-dotnet add package OpenTelemetry.Extensions.Hosting
-dotnet add package OpenTelemetry.Instrumentation.AspNetCore
-dotnet add package OpenTelemetry.Instrumentation.Http
-dotnet add package OpenTelemetry.Instrumentation.Runtime
-dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
-# Opcional (versión prerelease): OpenTelemetry.Instrumentation.EntityFrameworkCore
-```
-
-Registro en `AddPersistence` o en un método `AddObservability(IConfiguration)`:
-```csharp
-services.AddOpenTelemetry()
-    .ConfigureResource(r => r.AddService("{Project}.Api"))
-    .WithTracing(t => t
-        .AddAspNetCoreInstrumentation(o => o.Filter = ctx => !ctx.Request.Path.StartsWithSegments("/health"))
-        .AddHttpClientInstrumentation()
-        .AddOtlpExporter())
-    .WithMetrics(m => m
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddRuntimeInstrumentation()
-        .AddOtlpExporter())
-    .WithLogging(l => l.AddOtlpExporter());
-```
+Viene en la plantilla: `AddObservability()` en [`Extensions/ObservabilityExtensions.cs`](../templates/api/src/KitApi.Api/Extensions/ObservabilityExtensions.cs) registra trazas (ASP.NET Core sin `/health`, HttpClient), métricas (ASP.NET Core, HttpClient, runtime) y el exportador OTLP **solo si existe** `OTEL_EXPORTER_OTLP_ENDPOINT`.
+- Instrumentación de EF Core (opcional, prerelease): `OpenTelemetry.Instrumentation.EntityFrameworkCore`, con ADR.
 - El destino OTLP se configura con variables estándar: `OTEL_EXPORTER_OTLP_ENDPOINT`. En desarrollo, el dashboard de .NET Aspire o Seq sirven como receptor local.
 - **Azure Monitor / Application Insights**: reemplazar los exportadores OTLP por el paquete `Azure.Monitor.OpenTelemetry.AspNetCore` y `services.AddOpenTelemetry().UseAzureMonitor()`, con la connection string en la configuración.
 - Referencia: https://learn.microsoft.com/dotnet/core/diagnostics/observability-with-otel
@@ -114,7 +73,7 @@ app.UseSerilogRequestLogging();   // un log por petición con método, ruta, sta
 OpenTelemetry y Serilog pueden convivir. Elegir uno como fuente principal y registrarlo en un ADR.
 
 ## Health checks
-Ya registrados en `standards/01a`:
+Ya registrados en `standards/01`:
 
 | Endpoint | Qué verifica | Lo usa |
 |---|---|---|

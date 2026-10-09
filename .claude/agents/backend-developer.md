@@ -1,6 +1,6 @@
 ---
 name: backend-developer
-description: Desarrollador ASP.NET Core 10. Úsalo para implementar entidades de negocio con las plantillas del kit, endpoints, services, specs, validadores, permisos e infraestructura del perfil, compilando y probando en cada paso.
+description: Desarrollador ASP.NET Core. Úsalo para implementar entidades de negocio con `dotnet new kit-entity`, endpoints, services, specs, validadores, permisos e infraestructura del perfil, compilando y probando en cada paso.
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 

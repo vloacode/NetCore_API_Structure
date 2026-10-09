@@ -10,7 +10,7 @@
 
 Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. El id entre comillas invertidas es el que se anota en `Capabilities` del Perfil del proyecto (`docs/00-MASTER_CONTEXT.md`).
 
-> `health-checks` ya viene incluido en todos los perfiles (`standards/01a`); se lista para recordar agregar checks de dependencias.
+> `health-checks` ya viene incluido en todos los perfiles (`standards/01`); se lista para recordar agregar checks de dependencias.
 
 ---
 
@@ -96,7 +96,7 @@ Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. 
   - Retención configurable y endpoint para eventos del frontend.
   - No reemplaza a GA4: lo que es web (páginas, campañas) sigue en el frontend.
 - **Paquetes:** ninguno (BCL + EF Core).
-- **Implementa:** `standards/17-product-analytics.md`, `17a` (endpoint y consultas), `17b` (despacho y registro); flujo `ai/workflows/analytics-event.md`.
+- **Implementa:** `--analytics true` en `dotnet new kitapi` (`standards/17-product-analytics.md`); flujo `ai/workflows/analytics-event.md`.
 - **Referencia:** https://learn.microsoft.com/dotnet/core/extensions/channels
 
 ## Rendimiento

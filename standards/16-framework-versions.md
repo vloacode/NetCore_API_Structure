@@ -28,16 +28,16 @@ dotnet package search Microsoft.EntityFrameworkCore --exact-match   # versiones 
 |---|---|---|
 | `docs/00-MASTER_CONTEXT.md` (perfil) | `TargetFramework` | `net10.0` |
 | `Directory.Build.props` | `<TargetFramework>` | `net10.0` |
-| `global.json` | `sdk.version` | `10.0.100` (+ `rollForward: latestFeature`) |
-| `Directory.Packages.props` | `MicrosoftVersion`, `NpgsqlEfVersion` | `10.0.12`, `10.0.3` |
-| `Dockerfile` | etiquetas de imagen | `mcr.microsoft.com/dotnet/sdk:10.0`, `aspnet:10.0` |
+| `global.json` | `sdk.version` | `10.0.100` (+ `rollForward: latestMajor`) |
+| `Directory.Packages.props` | `MicrosoftVersion` y las versiones de Npgsql/EFCore.NamingConventions | `10.0.12`, `10.0.3` |
+| `Dockerfile` | `ARG DOTNET_VERSION` | `10.0` |
 | CI (`.github/workflows/*.yml`) | `dotnet-version` | `10.0.x` |
-| `dotnet new ... -f` | framework | `net10.0` |
+| `dotnet new kitapi --framework` | framework (cambia `Directory.Build.props` y `Dockerfile`) | `net10.0` |
 
 **Regla de paquetes:** los `Microsoft.*` (ASP.NET Core, EF Core, Extensions) y los proveedores de EF Core (Npgsql, EFCore.NamingConventions) usan la **misma versión mayor que el framework**. Las librerías de terceros (FluentValidation, Scalar, Testcontainers) usan su última versión estable compatible.
 
 ## Qué partes del kit dependen de la versión
-El código de los standards está escrito y verificado para **.NET 10**. Estas piezas requieren una versión mínima; al usar otra versión, revisarlas primero:
+El código de las plantillas (`templates/`) está escrito y verificado para **.NET 10**. Estas piezas requieren una versión mínima; al usar otra versión, revisarlas primero:
 
 | Pieza | Mínimo | Si la versión es distinta |
 |---|---|---|
@@ -56,11 +56,11 @@ Versiones **futuras** (.NET 11, 12…): el código debería funcionar igual, sal
 1. Leer **What's new** y **Breaking changes** de .NET, ASP.NET Core, EF Core y C# para la versión nueva (enlaces en `ai/references.md`).
 2. Instalar el SDK nuevo y correr:
    ```bash
-   python scripts/verify/verify-standards.py --framework net11.0
-   python scripts/verify/verify-standards.py --framework net11.0 --smoke-sqlserver "<conexión>" --smoke-postgresql "<conexión>"
+   python scripts/verify/verify-template.py --framework net11.0
+   python scripts/verify/verify-template.py --framework net11.0 --smoke-sqlserver "<conexión>" --smoke-postgresql "<conexión>"
    ```
-3. Corregir los standards hasta que la matriz completa pase. Si una API cambió, actualizar el código **y** la tabla "Qué partes dependen de la versión".
-4. Si la versión nueva pasa a ser la base, actualizar los valores por defecto (`net10.0` → `net11.0` y los de la tabla "Dónde aparece la versión"), el job de CI y el `CHANGELOG` del kit.
+3. Corregir las plantillas hasta que la matriz completa pase. Si una API cambió, actualizar el código **y** la tabla "Qué partes dependen de la versión".
+4. Si la versión nueva pasa a ser la base, actualizar en `templates/` los valores por defecto (`framework` en `.template.config/template.json`, `net10.0` → `net11.0` y los de la tabla "Dónde aparece la versión"), las versiones de `Directory.Packages.props`, el job de CI y el `CHANGELOG` del kit.
 5. Agregar la versión a la matriz de CI (`.github/workflows/kit-checks.yml`) cuando su SDK esté disponible en los runners.
 
 ## Migrar un proyecto a otra versión

@@ -5,7 +5,9 @@ Comprueba:
   2. Que cada subagente (.claude/agents) tenga frontmatter válido y su rol en ai/roles.
   3. Que cada skill (.claude/skills/<n>/SKILL.md) tenga frontmatter válido y su flujo en ai/workflows.
   4. Tamaño de los archivos de ai/ y standards/ (aviso > 300 líneas, error > 450) por modelos de contexto corto.
-  5. Solo en el kit sin inicializar: que no queden nombres de proyectos o entidades de ejemplo.
+  5. Solo en el kit sin inicializar: que no queden nombres de proyectos o entidades de ejemplo (md y templates/).
+  6. Que el código no vuelva a los md: bloques C# de más de 40 líneas en ai/, standards/ o docs/ son error
+     (el código vive en templates/ y los standards lo enlazan).
 
 Uso: python scripts/check-kit.py      (código de salida 1 si hay errores)
 """
@@ -24,7 +26,8 @@ warnings: list[str] = []
 
 def md_files():
     for path in ROOT.rglob("*.md"):
-        if ".git" not in path.parts and "node_modules" not in path.parts and "bin" not in path.parts and "obj" not in path.parts:
+        skip = {".git", "node_modules", "bin", "obj", ".verify"}
+        if not skip.intersection(path.parts):
             yield path
 
 
@@ -39,6 +42,10 @@ def frontmatter(path: pathlib.Path) -> dict[str, str]:
             key, value = line.split(":", 1)
             result[key.strip()] = value.strip()
     return result
+
+
+def skip_build_output(path: pathlib.Path) -> bool:
+    return bool({"bin", "obj"}.intersection(path.parts))
 
 
 # 1. Enlaces
@@ -90,6 +97,27 @@ if context.exists() and "{{NombreProyecto}}" in context.read_text(encoding="utf-
             for number, line in enumerate(md.read_text(encoding="utf-8").splitlines(), 1):
                 if forbidden.search(line):
                     errors.append(f"Nombre de ejemplo en {md.relative_to(ROOT)}:{number}: {line.strip()[:80]}")
+    for source in (ROOT / "templates").rglob("*.cs"):
+        if skip_build_output(source):
+            continue
+        for number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), 1):
+            if forbidden.search(line):
+                errors.append(f"Nombre de ejemplo en {source.relative_to(ROOT)}:{number}: {line.strip()[:80]}")
+
+# 6. Código largo dentro de los md
+for folder in ("ai", "standards", "docs"):
+    for md in sorted((ROOT / folder).rglob("*.md")):
+        fence_open, is_csharp, start, count = False, False, 0, 0
+        for number, line in enumerate(md.read_text(encoding="utf-8").splitlines(), 1):
+            if line.startswith("```"):
+                if not fence_open:
+                    fence_open, is_csharp, start, count = True, line.startswith("```csharp"), number, 0
+                else:
+                    if is_csharp and count > 40:
+                        errors.append(f"Bloque C# de {count} líneas en {md.relative_to(ROOT)}:{start}: moverlo a templates/ y enlazarlo")
+                    fence_open = False
+            elif fence_open:
+                count += 1
 
 for warning in warnings:
     print(f"AVISO  {warning}")

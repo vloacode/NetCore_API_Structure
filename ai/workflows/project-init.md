@@ -1,7 +1,7 @@
 # Flujo: project-init (inicializar un proyecto)
 
 ## Objetivo
-Llevar un repositorio recién creado desde el kit hasta una **API .NET 10 funcionando**: documentación del proyecto llena, decisiones registradas, solución creada según el perfil, entidades implementadas, compilando y con tests.
+Llevar un repositorio recién creado desde el kit hasta una **API .NET funcionando**: documentación del proyecto llena, decisiones registradas, plan de fases y solución generada con `dotnet new kitapi` según el perfil, compilando y con tests. Las entidades se agregan después, fase por fase.
 
 ## Cuándo usarlo
 - `docs/00-MASTER_CONTEXT.md` todavía tiene marcadores `{{...}}`.
@@ -11,7 +11,7 @@ Llevar un repositorio recién creado desde el kit hasta una **API .NET 10 funcio
 Orquesta la sesión principal. Delega en **solution-architect** (perfil, sugerencias, ADR), **product-analyst** (negocio y docs), **backend-developer** (código) y **qa-engineer** (tests).
 
 ## Archivos a leer
-`AGENTS.md`, `ai/context-packs.md`, `ai/suggestions-catalog.md`, `standards/00-INDEX.md`, `standards/01-solution-architecture.md`, `standards/01a-bootstrap.md`, `standards/14-coding-standards.md` y las plantillas de `docs/`.
+Pasos 1–6 (fase 0): `AGENTS.md`, `ai/implementation-phases.md`, `ai/suggestions-catalog.md` y las plantillas de `docs/`. Paso 7 (fase 1): `standards/01-solution-architecture.md`. No leer otros standards en esta sesión.
 
 ---
 
@@ -69,34 +69,35 @@ Delegar en **product-analyst** y **solution-architect**:
 5. Verificar que no quedan `{{` en los documentos llenados.
 6. **Mostrar al usuario un resumen** (perfil, módulos, entidades, sugerencias aceptadas) y **esperar su aprobación** antes de escribir código. Si pide cambios, ajustar y volver a mostrar.
 
-## Paso 6 — Crear la solución (punto de control 2)
-Delegar en **backend-developer**, aplicando solo lo que corresponde al perfil (las marcas `[SEC]` solo con `Security=enabled`):
-1. Estructura y archivos raíz: `standards/14` (`.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `global.json`, `.gitignore`).
-2. Proyecto y paquetes: `standards/01`.
-3. Infraestructura común: `standards/02`, `02a`, `03`, `04` (base, persistencia, `Result`, specs, API) y los middlewares de `09` y `10`.
-4. Conservar solo las líneas del motor elegido (`[MSSQL]` o `[PGSQL]`) y los paquetes de ese motor. Con seguridad: `standards/05` a `05f` y `06` completos. Sin seguridad: `SystemCurrentUserService`, `AppDbContext : DbContext`, sin Auth. Con API key: la sección API key de `standards/09`.
-5. Arranque: `standards/01a` (DI, `Program.cs`, `appsettings.json`) y user-secrets.
-6. Capacidades aceptadas: implementar cada una según su referencia, o dejarla en `docs/10-roadmap.md` si se pospuso.
-7. `dotnet format` (ordena los `using` según el nombre real del proyecto) y `dotnet build` **sin errores**. Si falla, corregir antes de seguir.
-8. Migración `InitialCreate` (Identity y tablas base).
+## Paso 6 — Plan de fases
+Escribir en `docs/ai/PROJECT_STATUS.md` el plan concreto (`ai/implementation-phases.md`): módulos en orden, entidades de cada módulo en orden de dependencia (padres primero) y capacidades aceptadas. Desde aquí, **cada fase se trabaja por separado** y solo con los archivos que indica.
 
-## Paso 7 — Entidades de negocio
-Para cada entidad de `docs/05-domain-model.md`, en orden de dependencia (primero las entidades padre), ejecutar el flujo `ai/workflows/new-entity.md`. Compilar después de cada una. Al final, crear una migración por módulo (o por entidad, según convenga).
+## Paso 7 — Fase 1: esqueleto (punto de control 2)
+Delegar en **backend-developer**:
+1. Instalar las plantillas (una vez por máquina) y generar la solución **en la raíz del repositorio**, con las opciones del perfil:
+   ```bash
+   dotnet new install ./templates/api
+   dotnet new install ./templates/entity
+   dotnet new kitapi -n {Project} -o . --force --security <true|false> --database <sqlserver|postgresql> --analytics <true|false> --apikey <true|false> --framework <TargetFramework>
+   ```
+   `--force` solo reemplaza el `.gitignore` del kit por el del proyecto (que ya ignora `bin/`, `obj/`, secretos y `.env`).
+2. Verificar que se crearon `{Project}.slnx`, `src/{Project}.Api/` y `tests/{Project}.IntegrationTests/`, y que `docs/`, `ai/`, `standards/` y `AGENTS.md` siguen en su lugar.
+3. User-secrets (llave JWT, password del admin, `Analytics:HashKey` según el perfil) y orígenes de CORS en `appsettings.json`.
+4. `dotnet ef migrations add InitialCreate -p src/{Project}.Api -o Infrastructure/Persistence/Migrations`.
+5. `dotnet build -c Release` y `dotnet test` **en verde** (los tests usan Testcontainers: requieren Docker; si no hay, avisar y dejar los tests listos).
+6. Actualizar `PROJECT_STATUS.md` (fase 1 ✅) y proponer commit.
 
-## Paso 8 — Tests y verificación
-1. Crear los proyectos de test (`standards/12`) y el fixture `ApiFactory`.
-2. `ai/workflows/test-generation.md` para los casos mínimos de cada entidad y, con seguridad, los de Auth.
-3. `dotnet test` en verde (requiere Docker para Testcontainers; si no está disponible, avisar al usuario y dejar los tests listos).
+## Paso 8 — Fases siguientes
+Seguir el plan de `PROJECT_STATUS.md` con `ai/implementation-phases.md`:
+- **Fase 2**: por cada entidad, el flujo `ai/workflows/new-entity.md` (una por sesión si el contexto es limitado).
+- **Fase 3**: cada capacidad aceptada, una a la vez.
+- **Fases 4 y 5**: endurecimiento y despliegue.
 
-## Paso 9 — Cierre
-1. `docs/ai/PROJECT_STATUS.md`: qué quedó hecho, en curso y pendiente.
-2. `docs/00-MASTER_CONTEXT.md`: estado actual.
-3. Resumen al usuario:
-   - Perfil y capacidades activas.
-   - Módulos, entidades y endpoints creados.
-   - Cómo correrlo: `dotnet run`, `/scalar` y, con seguridad, el admin del seed (contraseña en user-secrets).
-   - Sugerencias pospuestas y preguntas abiertas.
-   - Próximos pasos recomendados.
+## Paso 9 — Cierre de la inicialización
+Al terminar la fase 1 (y cada fase posterior), resumen al usuario:
+- Perfil y capacidades activas.
+- Qué se creó y cómo correrlo: `dotnet run --project src/{Project}.Api`, `/scalar` y, con seguridad, el admin del seed (contraseña en user-secrets).
+- Siguiente fase del plan y preguntas abiertas.
 
 ---
 
@@ -105,14 +106,15 @@ Para cada entidad de `docs/05-domain-model.md`, en orden de dependencia (primero
 - **Nunca** crear entidades que el usuario no definió, ni entidades de ejemplo.
 - Ante una respuesta ambigua, preguntar. Si se supone algo para avanzar, marcarlo "(supuesto, confirmar)".
 - Las decisiones las toma el usuario; la IA propone con opciones y una recomendación.
-- Si el contexto es limitado (modelo local), trabajar un paso por sesión y guardar el avance en `PROJECT_STATUS.md` antes de continuar.
+- Trabajar por fases (`ai/implementation-phases.md`): una fase o un ítem por sesión, guardando el avance en `PROJECT_STATUS.md`.
 
 ## Salida esperada
-Documentación del proyecto llena, ADR-0001, solución compilando con el perfil elegido, entidades con sus endpoints, migraciones y tests.
+Documentación del proyecto llena, ADR-0001, plan de fases en `PROJECT_STATUS.md` y solución generada compilando, con migración inicial y tests en verde.
 
 ## Definition of Done
 - [ ] Sin marcadores `{{` en `docs/` (salvo plantillas `_TEMPLATE` y `ADR-0000`).
 - [ ] Perfil completo y coherente con lo implementado.
 - [ ] `dotnet build` y `dotnet test` en verde (o tests listos si no hay Docker, informado al usuario).
-- [ ] Migraciones creadas.
+- [ ] Migración `InitialCreate` creada.
+- [ ] Plan de fases escrito en `PROJECT_STATUS.md`.
 - [ ] `PROJECT_STATUS.md` y `00-MASTER_CONTEXT.md` actualizados.

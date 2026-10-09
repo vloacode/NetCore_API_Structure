@@ -1,7 +1,7 @@
 # Flujo: upgrade-kit (actualizar el kit en un proyecto existente)
 
 ## Objetivo
-Traer a un proyecto existente la versión nueva del kit (`standards/`, `ai/`, adaptadores) **sin pisar lo propio del proyecto** (`docs/`, `src/`) y aplicando al código los cambios que los standards nuevos requieran.
+Traer a un proyecto existente la versión nueva del kit (`standards/`, `templates/`, `ai/`, adaptadores) **sin pisar lo propio del proyecto** (`docs/`, `src/`) y aplicando al código los cambios que los standards nuevos requieran.
 
 ## Cuándo usarlo
 `KIT_VERSION` del proyecto es menor que la del repositorio del kit (`NetCore_API_Structure`).
@@ -16,7 +16,7 @@ Traer a un proyecto existente la versión nueva del kit (`standards/`, `ai/`, ad
 
 | Ruta | Acción |
 |---|---|
-| `standards/`, `ai/`, `AGENTS.md`, `CLAUDE.md`, `.claude/agents/`, `.claude/skills/`, `.cursor/rules/`, `.github/copilot-instructions.md` | **Reemplazar** con la versión del kit |
+| `standards/`, `templates/`, `ai/`, `AGENTS.md`, `CLAUDE.md`, `.claude/agents/`, `.claude/skills/`, `.cursor/rules/`, `.github/copilot-instructions.md` | **Reemplazar** con la versión del kit |
 | `docs/` (proyecto) | **No tocar**. Solo agregar plantillas nuevas que no existan (`_TEMPLATE`, nuevos documentos numerados vacíos) |
 | `src/`, `tests/` | **No reemplazar**. Aplicar cambios puntuales según el CHANGELOG |
 | `.claude/settings.json` | **Fusionar**: conservar los permisos propios del proyecto |
@@ -30,6 +30,8 @@ Traer a un proyecto existente la versión nueva del kit (`standards/`, `ai/`, ad
 3. **Crear una rama** `chore/upgrade-kit-<version>`.
 4. **Copiar** los archivos de la tabla ("Reemplazar") desde el kit.
 5. **Plan de cambios de código**: por cada entrada del CHANGELOG que afecte código (por ejemplo, un middleware nuevo o un cambio en `ApiControllerBase`), listar los archivos del proyecto a modificar. **Mostrar el plan al usuario y esperar su aprobación.**
+   Para ver exactamente qué cambió en el código base: generar en una carpeta temporal un proyecto con el kit viejo y otro con el nuevo (`dotnet new kitapi -n {Project}` con las opciones del perfil) y comparar ambos con `git diff --no-index`. Ese diff es lo que hay que llevar a `src/`.
+   Reinstalar las plantillas nuevas: `dotnet new install ./templates/api --force` y `./templates/entity --force`.
 6. **Aplicar** los cambios aprobados, compilando tras cada uno.
 7. **Verificar**: `dotnet build`, `dotnet test` y que la API arranque.
 8. **Actualizar** `KIT_VERSION`, `KitVersion` en el Perfil (`docs/00-MASTER_CONTEXT.md`) y `PROJECT_STATUS`.

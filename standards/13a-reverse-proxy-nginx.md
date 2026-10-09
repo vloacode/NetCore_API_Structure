@@ -20,7 +20,7 @@ Internet ──443/80──► nginx (TLS, límites, gzip) ──HTTP──► a
 ```
 
 ## La API detrás del proxy (obligatorio)
-Ya está preparado en `standards/01a` (`ForwardedHeadersOptions` + `UseForwardedHeaders`). Solo se activa por configuración:
+Ya está preparado en `standards/01` (`ForwardedHeadersOptions` + `UseForwardedHeaders`). Solo se activa por configuración:
 
 | Variable | Valor | Por qué |
 |---|---|---|
@@ -78,7 +78,7 @@ server {
     ssl_session_cache   shared:SSL:10m;
 
     server_tokens off;
-    client_max_body_size  10m;    # = MaxRequestBodySize de Kestrel (standards/01a)
+    client_max_body_size  10m;    # = MaxRequestBodySize de Kestrel (standards/01)
     client_body_timeout   15s;
     client_header_timeout 15s;
 
@@ -106,40 +106,7 @@ server {
 `{domain}` es el dominio real (ej. `api.midominio.com`). Para probar en local sin certificados, usar un único `server { listen 80; ... }` con el mismo bloque `location /`.
 
 ## `docker-compose.yml` (producción en una VM)
-```yaml
-services:
-  nginx:
-    image: nginx:stable-alpine
-    ports: ["80:80", "443:443"]
-    volumes:
-      - ./deploy/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./deploy/certbot/www:/var/www/certbot:ro
-      - ./deploy/certbot/conf:/etc/letsencrypt:ro
-    depends_on: [api]
-    networks: [backend]
-    restart: unless-stopped
-
-  api:
-    build: .
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__Default: "${DB_CONNECTION}"
-      ReverseProxy__Enabled: "true"
-      ReverseProxy__KnownNetworks__0: "172.30.0.0/24"
-      Cors__AllowedOrigins__0: "https://{frontend-domain}"
-      Jwt__SigningKey: "${JWT_SIGNING_KEY}"   # [SEC]
-    expose: ["8080"]          # solo dentro de la red: no se publica al host
-    networks: [backend]
-    restart: unless-stopped
-
-  # db: servicio de la base del perfil (standards/13), también sin publicar puertos en producción
-
-networks:
-  backend:
-    ipam:
-      config:
-        - subnet: 172.30.0.0/24   # la misma subred que ReverseProxy__KnownNetworks__0
-```
+→ Código: [`templates/api/docker-compose.yml`](../templates/api/docker-compose.yml)
 Las migraciones se aplican antes de levantar la versión nueva, con el bundle (`standards/13`), no al arrancar.
 
 ## Certificados (Let's Encrypt con certbot)

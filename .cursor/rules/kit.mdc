@@ -1,9 +1,10 @@
 ---
-description: Reglas del kit NetCore_API_Structure (APIs ASP.NET Core .NET 10)
+description: Reglas del kit NetCore_API_Structure (APIs ASP.NET Core, .NET LTS)
 alwaysApply: true
 ---
 
 - Sigue `AGENTS.md` (entrada universal: stack, reglas, mapa, Definition of Done).
 - Antes de cualquier cambio, lee el Perfil del proyecto en `docs/00-MASTER_CONTEXT.md`.
 - Carga solo los archivos del context pack de la tarea: `ai/context-packs.md`.
-- Flujos paso a paso en `ai/workflows/`; standards de código en `standards/`.
+- Flujos paso a paso en `ai/workflows/`; reglas en `standards/`; código en `templates/` (`dotnet new kitapi`, `dotnet new kit-entity`).
+- Construye por fases (`ai/implementation-phases.md`); la fase actual está en `docs/ai/PROJECT_STATUS.md`.

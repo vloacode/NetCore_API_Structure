@@ -14,7 +14,7 @@ Medir algo nuevo del uso del producto **con un propósito claro**: el evento res
 **product-analyst** (pregunta, KPI y definición del evento) · **backend-developer** (implementación) · **qa-engineer** (test) · **security-reviewer** si hay dudas sobre si una propiedad es un dato personal.
 
 ## Archivos a leer
-`docs/11-product-analytics.md`, `standards/17-product-analytics.md`, `standards/17a-analytics-ingestion-queries.md`, `standards/17b-analytics-dispatch.md` (si se agrega un destino) y el service donde ocurre el hecho.
+`docs/11-product-analytics.md`, `standards/17-product-analytics.md` y el service donde ocurre el hecho.
 
 ## Pasos
 1. **Para qué**: identificar la pregunta de negocio y el KPI que el evento alimenta. Sin KPI, no hay evento.
@@ -27,8 +27,8 @@ Medir algo nuevo del uso del producto **con un propósito claro**: el evento res
 4. **Constante** en `AnalyticsEvents`. Si lo envía el frontend, agregarlo también a `ClientAllowed`.
 5. **Implementar**:
    - **Servidor**: `analytics.Track(AnalyticsEvents.X, props)` en el service, **después** del guardado exitoso (`standards/17`, "Uso en un service"). Inyectar `IAnalyticsTracker` en el constructor.
-   - **Cliente**: informar al equipo de frontend el nombre y las propiedades, y el contrato de `POST /api/analytics/events` (`standards/17a`).
-6. **Test** de integración: el evento se guarda con sus propiedades y sin datos personales (patrón `WaitForEventAsync` de `standards/17a`).
+   - **Cliente**: informar al equipo de frontend el nombre y las propiedades, y el contrato de `POST /api/analytics/events` (`standards/17`).
+6. **Test** de integración: el evento se guarda con sus propiedades y sin datos personales (patrón `WaitForEventAsync` de `standards/17`).
 7. **Consulta**: dejar en `docs/11` (o en el KPI) la consulta SQL que calcula el KPI con este evento.
 8. `docs-sync` y `PROJECT_STATUS`.
 

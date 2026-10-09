@@ -17,7 +17,7 @@ Que `docs/` refleje **exactamente** el estado real del código después de un ca
 1. **Inventario real** desde el código (no desde la memoria):
    - Endpoints: atributos `[Http*]` de los controllers.
    - Permisos `[SEC]`: `Permissions.cs` y `[HasPermission]` usados.
-   - Entidades y relaciones: `Domain/Entities` y configuraciones EF.
+   - Entidades y relaciones: `Features/{Entities}/{Entity}.cs` (entidad y configuración EF).
    - Errores: clases `{Entity}Errors`.
    - Tests: nombres en `tests/`.
 2. **Módulo**: tabla de endpoints, errores, pruebas y estado de cada FR.

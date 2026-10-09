@@ -20,7 +20,7 @@ Mantener `docs/` **fiel al código y útil para la próxima IA o persona** que t
 
 ## Reglas
 1. **Una sola fuente de verdad por tema** (ver `docs/00-MASTER_CONTEXT.md`, tabla de documentos). Los demás documentos enlazan, no copian.
-2. Comprobar contra el código, no contra la memoria: endpoints reales en los controllers, permisos reales en `Permissions`, entidades reales en `Domain/Entities`.
+2. Comprobar contra el código, no contra la memoria: endpoints reales en los controllers, permisos reales en `Permissions`, entidades reales en `Features/`.
 3. Estilo: español claro, frases cortas, tablas para datos repetitivos, sin relleno.
 4. Respetar los límites de tamaño: `00-MASTER_CONTEXT` menos de 120 líneas; cada módulo menos de 250; `AI_MEMORY` menos de 150.
 5. No borrar los comentarios `<!-- IA: ... -->` de las plantillas: guían a la próxima IA.

@@ -10,7 +10,7 @@ Agregar, renombrar o eliminar propiedades; cambiar tipos o longitudes; nuevos í
 **database-architect** (diseño y revisión) · **backend-developer** (ajusta DTOs, specs y services) · **devops-engineer** (si requiere despliegue en dos pasos).
 
 ## Archivos a leer
-`docs/05-domain-model.md`, `standards/02-domain-and-persistence.md`, `standards/02a-repository-unit-of-work.md`, `standards/11-performance.md` (índices) y `standards/13-deployment.md` (migraciones en producción).
+`docs/05-domain-model.md`, `standards/02-persistence.md`, `standards/11-performance.md` (índices) y `standards/13-deployment.md` (migraciones en producción).
 
 ## Pasos
 1. **Clasificar el cambio**:

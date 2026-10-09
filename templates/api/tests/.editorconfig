@@ -1,0 +1,4 @@
+# Nombres de test Metodo_Escenario_Resultado y fixtures de xUnit con sufijo Collection
+[*.cs]
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1711.severity = none

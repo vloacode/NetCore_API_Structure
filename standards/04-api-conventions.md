@@ -1,186 +1,46 @@
 # Convenciones de la API
 
 > **Aplica a:** Todos los perfiles  
-> **Propósito:** Controller base y mapeo Result→HTTP, ValidationFilter, manejo global de excepciones y OpenAPI.  
-> Índice general: `standards/00-INDEX.md`
+> **Propósito:** Controllers, mapeo Result→HTTP, validación automática, manejo global de excepciones, OpenAPI y JSON.  
+> **Código:** [`Api/`](../templates/api/src/KitApi.Api/Api/) · [`Extensions/ApiExtensions.cs`](../templates/api/src/KitApi.Api/Extensions/ApiExtensions.cs)
 
-## Capa API
+## Controllers
+- Todo controller hereda `ApiControllerBase` (`[ApiController]`, ruta `api/[controller]`) y es **delgado**: recibe, llama al service y devuelve `HandleResult(...)` o `HandleCreated(...)` (201 con `Location`).
+- Sin lógica de negocio, sin `DbContext`, sin try/catch.
+- Los controllers de negocio viven en su feature (`Features/{Entities}/{Entities}Controller.cs`); los del kit (Auth, Account, Users, Roles, Analytics) en `Api/Controllers/`.
+- Cada acción declara `[ProducesResponseType<T>]` para OpenAPI y recibe `CancellationToken ct`.
+- Con seguridad: `[HasPermission(...)]` en **cada** acción. Sin seguridad: público, o `[Authorize]` (API key) en escrituras.
 
-### Controller base — `Api/Controllers/ApiControllerBase.cs`
-```csharp
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using {Project}.Application.Common.Results;
-
-namespace {Project}.Api.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-[Produces("application/json")]
-public abstract class ApiControllerBase : ControllerBase
-{
-    protected IActionResult HandleResult<T>(Result<T> result)
-        => result.IsSuccess ? Ok(result.Value) : ToProblem(result.Error);
-
-    protected IActionResult HandleResult(Result result)
-        => result.IsSuccess ? NoContent() : ToProblem(result.Error);
-
-    protected IActionResult HandleCreated<T>(Result<T> result, string actionName, Func<T, object> routeValues)
-        => result.IsSuccess ? CreatedAtAction(actionName, routeValues(result.Value), result.Value) : ToProblem(result.Error);
-
-    /// <summary>Convierte un Error de negocio en ProblemDetails (RFC 9457) con el código HTTP correcto.</summary>
-    protected IActionResult ToProblem(Error error)
-    {
-        var status = error.Type switch
-        {
-            ErrorType.Validation => StatusCodes.Status400BadRequest,
-            ErrorType.NotFound => StatusCodes.Status404NotFound,
-            ErrorType.Conflict => StatusCodes.Status409Conflict,
-            ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
-            ErrorType.Forbidden => StatusCodes.Status403Forbidden,
-            _ => StatusCodes.Status400BadRequest
-        };
-
-        ProblemDetails problem = error.Details is { Count: > 0 }
-            ? new ValidationProblemDetails(error.Details.ToDictionary(d => d.Key, d => d.Value))
-            : new ProblemDetails();
-
-        problem.Status = status;
-        problem.Title = error.Message;
-        problem.Extensions["code"] = error.Code;
-        problem.Extensions["traceId"] = Activity.Current?.TraceId.ToString() ?? HttpContext.TraceIdentifier;
-
-        return new ObjectResult(problem) { StatusCode = status };
-    }
-}
-```
+## Result → HTTP
 
 | `ErrorType` | HTTP |
 |---|---|
 | (éxito con valor) | 200 OK / 201 Created |
 | (éxito sin valor) | 204 No Content |
-| `Validation` | 400 |
+| `Validation` / `Failure` | 400 |
 | `Unauthorized` | 401 |
 | `Forbidden` | 403 |
 | `NotFound` | 404 |
 | `Conflict` | 409 |
-| `Failure` | 400 |
-| Excepción no controlada | 500 (handler global) |
 
-Todas las respuestas de error son **ProblemDetails** con `code` y `traceId`. El formato completo y el catálogo están en `standards/08-error-codes.md`.
+Todas las respuestas de error son **ProblemDetails** (RFC 9457) con `code` y `traceId` (`standards/08`).
 
-### Validación automática — `Api/Filters/ValidationFilter.cs`
-```csharp
-using System.Text.Json;
-using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
+## Validación automática
+`ValidationFilter` ejecuta el `IValidator<T>` de cada argumento y responde **400** con `errors` en camelCase (`{ "name": ["..."] }`) antes de entrar a la acción. No se valida a mano en el controller.
 
-namespace {Project}.Api.Filters;
+## Excepciones (`GlobalExceptionHandler`)
 
-/// <summary>Ejecuta el IValidator&lt;T&gt; registrado para cada argumento de la acción; si falla responde 400.</summary>
-public sealed class ValidationFilter : IAsyncActionFilter
-{
-    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-    {
-        var services = context.HttpContext.RequestServices;
+| Excepción | HTTP | `code` |
+|---|---|---|
+| `DbUpdateConcurrencyException` | 409 | `Concurrency.Conflict` |
+| `OperationCanceledException` | 499 | `Request.Cancelled` |
+| `BadHttpRequestException` | su status | `Request.Invalid` |
+| cualquier otra | 500 (log de error) | `Server.Error` |
 
-        foreach (var argument in context.ActionArguments.Values)
-        {
-            if (argument is null) continue;
+Nunca se expone `exception.Message` al cliente.
 
-            var validatorType = typeof(IValidator<>).MakeGenericType(argument.GetType());
-            if (services.GetService(validatorType) is not IValidator validator) continue;
+## OpenAPI
+`Microsoft.AspNetCore.OpenApi` (`/openapi/v1.json`) + Scalar (`/scalar`), solo en Development. Con seguridad, `BearerSecuritySchemeTransformer` agrega el esquema Bearer. .NET 10 usa **Microsoft.OpenApi 2.x** (namespace `Microsoft.OpenApi`, sin `.Models`).
 
-            var result = await validator.ValidateAsync(new ValidationContext<object>(argument), context.HttpContext.RequestAborted);
-            if (result.IsValid) continue;
-
-            // Claves en camelCase para que coincidan con los nombres del JSON (standards/15).
-            foreach (var error in result.Errors)
-                context.ModelState.AddModelError(JsonNamingPolicy.CamelCase.ConvertName(error.PropertyName), error.ErrorMessage);
-
-            var factory = services.GetRequiredService<ProblemDetailsFactory>();
-            var problem = factory.CreateValidationProblemDetails(context.HttpContext, context.ModelState, StatusCodes.Status400BadRequest);
-            problem.Title = "Uno o más campos no son válidos.";
-            problem.Extensions["code"] = "Validation.Failed";
-            context.Result = new ObjectResult(problem) { StatusCode = StatusCodes.Status400BadRequest };
-            return;
-        }
-
-        await next();
-    }
-}
-```
-
-### Manejo global de excepciones — `Api/Errors/GlobalExceptionHandler.cs`
-```csharp
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
-namespace {Project}.Api.Errors;
-
-public sealed class GlobalExceptionHandler(IProblemDetailsService problemDetails, ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
-{
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
-    {
-        var (status, code, title) = exception switch
-        {
-            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Concurrency.Conflict", "El registro fue modificado por otro usuario. Recargue e intente de nuevo."),
-            OperationCanceledException => (499, "Request.Cancelled", "Solicitud cancelada por el cliente."),
-            BadHttpRequestException bad => (bad.StatusCode, "Request.Invalid", "La solicitud no es válida."),
-            _ => (StatusCodes.Status500InternalServerError, "Server.Error", "Ocurrió un error interno.")
-        };
-
-        if (status == StatusCodes.Status500InternalServerError)
-            logger.LogError(exception, "Excepción no controlada en {Path}", httpContext.Request.Path);
-        else
-            logger.LogWarning(exception, "Excepción controlada ({Status}) en {Path}", status, httpContext.Request.Path);
-
-        httpContext.Response.StatusCode = status;
-        return await problemDetails.TryWriteAsync(new ProblemDetailsContext
-        {
-            HttpContext = httpContext,
-            Exception = exception,
-            // Nunca exponer exception.Message al cliente. traceId lo agrega CustomizeProblemDetails (standards/01a).
-            ProblemDetails = new ProblemDetails { Status = status, Title = title, Extensions = { ["code"] = code } }
-        });
-    }
-}
-```
-
-### OpenAPI con esquema Bearer — `Api/OpenApi/BearerSecuritySchemeTransformer.cs`
-```csharp
-using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi;
-
-namespace {Project}.Api.OpenApi;
-
-/// <summary>Agrega el esquema JWT Bearer al documento para probar endpoints protegidos desde Scalar.</summary>
-internal sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer
-{
-    public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken ct)
-    {
-        document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
-        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
-        {
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            In = ParameterLocation.Header,
-            Description = "Access token JWT obtenido en /api/auth/login"
-        };
-
-        document.Security ??= [];
-        document.Security.Add(new OpenApiSecurityRequirement
-        {
-            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
-        });
-
-        return Task.CompletedTask;
-    }
-}
-```
-> .NET 10 usa **Microsoft.OpenApi 2.x** (namespace `Microsoft.OpenApi`, sin `.Models`). Si el compilador marca diferencias de API, ajustar a la versión instalada.
+## JSON
+camelCase (default) + enums como texto (`JsonStringEnumConverter`). Fechas UTC con `Z` (`standards/15`).

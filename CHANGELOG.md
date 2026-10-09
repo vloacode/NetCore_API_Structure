@@ -5,6 +5,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [3.0.0] - 2026-10-09
+### Cambiado (incompatible)
+- **El código pasa de los md a plantillas `dotnet new` reales**, que son la fuente de verdad:
+  - `templates/api` → `dotnet new kitapi -n {Project} --security --database --analytics --apikey --framework`. Las marcas `[SEC]`/`[PUB]`/`[MSSQL]`/`[PGSQL]`/`[CAP:…]` pasan a ser opciones de la plantilla (`#if (security)`, etc.): el proyecto generado solo contiene lo de su perfil.
+  - `templates/entity` → `dotnet new kit-entity -n {Entity} [--plural] [--parent] --app {Project}`.
+- **Una carpeta por entidad, 4 archivos**: `Features/{Entities}/` con `{Entity}.cs` (entidad + configuración EF), `{Entity}Contracts.cs` (DTOs, requests, filtro, errores, mapeo, validadores), `{Entity}Service.cs` (interfaz, service y specs) y `{Entities}Controller.cs`. Antes eran 7 archivos en 4 carpetas.
+- **`Program.cs` como índice + `Extensions/`**: `DependencyInjection.cs` se divide en `PersistenceExtensions`, `SecurityExtensions`, `ApplicationExtensions`, `ApiExtensions` y `ObservabilityExtensions` (OpenTelemetry, ahora incluido).
+- **Registro automático de services**: `AddApplication()` registra cada `*Service` de `Features/` con su `I*Service`. Una entidad nueva no toca la configuración.
+- **Standards reducidos a reglas** que enlazan al código real: de 31 archivos y ~6400 líneas a 20 archivos y ~1550. Fusiones: `01a` → `01`; `02` + `02a` → `02-persistence`; `05`–`05f` → `05-authentication`; `07` + `07a` → `07-entities`; `17` + `17a` + `17b` → `17`.
+- `scripts/verify/verify-template.py` reemplaza a `verify-standards.py` y `materialize.py`: genera con las plantillas, aplica `kit-entity`, migración, `format`, Release, tests y pruebas de humo.
+
+### Añadido
+- **Implementación por fases** (`ai/implementation-phases.md`): cada fase dice qué leer, qué producir y cómo verificar; `PROJECT_STATUS.md` guarda el plan y la fase actual para retomar en otra sesión sin cargar todo el kit.
+- Opción `--apikey` (API pública con escrituras protegidas por `X-Api-Key`), test base `HealthTests` y `ApiFactory` tolerante a una BD sin tablas.
+- `check-kit.py`: error si un md vuelve a tener un bloque C# de más de 40 líneas; revisa nombres de ejemplo también en `templates/`.
+
+### Verificado
+- Matriz de plantillas (4 combinaciones + mínima con API key): `kitapi` + 2 × `kit-entity` + migración + `format` + build Release con analizadores.
+- PostgreSQL: pruebas de humo 35/35 (con seguridad) y 11/11 (pública); tests de integración con Testcontainers 13/13 y 9/9.
+- SQL Server (LocalDB): pruebas de humo 35/35 y 11/11 (los tests con Testcontainers de SQL Server los corre la CI).
+- Combinación mínima (pública + PostgreSQL + API key): tests de integración 5/5.
+- Nginx delante de la API: 8/8.
+
+### Migración desde 2.x
+- No es obligatoria: un proyecto puede quedarse en 2.x.
+- Para migrar: mover cada entidad a `Features/{Entities}/` uniendo sus archivos en los 4 nuevos (namespace `{Project}.Features.{Entities}`), dividir `DependencyInjection.cs` en `Extensions/` y reemplazar los `AddScoped<I{Entity}Service, …>` por el registro automático. Comparar con un proyecto generado con `dotnet new kitapi` (flujo `upgrade-kit`).
+
 ## [2.3.0] - 2026-10-09
 ### Añadido
 - **Analítica de producto (uso)**, capacidad opcional `product-analytics`:
