@@ -2,7 +2,7 @@
 
 Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-> Versión **3.1.0** (ver `CHANGELOG.md`). El código vive en plantillas `dotnet new` (`templates/`) verificadas en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): generan, compilan en Release con analizadores, crean migraciones, pasan los tests de integración con Testcontainers y las pruebas de punta a punta contra bases reales (`scripts/verify/`).
+> Versión **3.1.1** (ver `CHANGELOG.md`). El código vive en plantillas `dotnet new` (`templates/`) verificadas en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): generan, compilan en Release con analizadores, crean migraciones, pasan los tests de integración con Testcontainers y las pruebas de punta a punta contra bases reales (`scripts/verify/`).
 
 **Stack:** Controllers · services con `Result<T>` · EF Core con Repository + Unit of Work + Specification · FluentValidation · `Program.cs` como índice con `Extensions/` por área · OpenTelemetry · Identity local + JWT (opcional). Sin MediatR ni AutoMapper.
 
@@ -31,6 +31,9 @@ Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) cons
 3. **Entrevista completa**: la IA pregunta por negocio, seguridad, datos, integraciones y despliegue, y ajusta todo a las respuestas.
 
 En los tres modos la IA sugiere de forma proactiva capacidades adicionales (versionado, caché, archivos, jobs…) con referencias actuales.
+
+## Versiones y ramas
+Cada versión de .NET tiene su rama: **`Net10`** (activa) y, en el futuro, `Net11`, `Net12`… `main` es siempre una copia de la rama de la LTS más nueva y es la que usa **Use this template**. Para un proyecto con otra versión de .NET, crear el repositorio desde la rama correspondiente. Política completa en `standards/16-framework-versions.md`.
 
 ## Cómo crear un proyecto nuevo
 1. En GitHub, pulsa **Use this template** → **Create a new repository** (o copia el contenido de este repositorio).

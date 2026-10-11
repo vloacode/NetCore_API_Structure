@@ -2,7 +2,7 @@ name: kit-checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, "Net*"]
   pull_request:
 
 jobs:

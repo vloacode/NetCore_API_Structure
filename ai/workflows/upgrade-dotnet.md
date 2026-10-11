@@ -15,6 +15,7 @@ Llevar un proyecto existente a una versión más nueva de .NET (por ejemplo, de 
 `standards/16-framework-versions.md`, `ai/references.md` (What's new y Breaking changes), `docs/00-MASTER_CONTEXT.md` (`TargetFramework`) y `KIT_VERSION`.
 
 ## Pasos
+0. **Rama del kit**: confirmar que existe la rama del kit para la versión destino (`Net11`, `Net12`…). Si no existe, el kit todavía no soporta esa versión: avisar al usuario (ver `standards/16`, "Ramas del kit").
 1. **Situación actual**: versión del proyecto (perfil y `Directory.Build.props`), SDKs instalados (`dotnet --list-sdks`) y fechas de soporte de la versión actual y de la destino (política oficial).
 2. **Elegir el destino**: por defecto, la LTS vigente. Una STS requiere ADR. Confirmar con el usuario.
 3. **Investigar los cambios**: leer *Breaking changes* de .NET, ASP.NET Core y EF Core de **cada versión intermedia** (si se salta de 10 a 12, también la 11). Con acceso web, usar las fuentes de `ai/references.md` (o el MCP de Microsoft Learn). Listar los que afectan al proyecto: APIs usadas, paquetes y comportamiento.

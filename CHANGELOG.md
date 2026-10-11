@@ -5,6 +5,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [3.1.1] - 2026-10-11
+### Añadido
+- **Ramas por versión de .NET**: `Net10` es la rama activa del kit para .NET 10; `main` es una copia de la rama de la LTS más nueva (la que usa *Use this template*). Política en `standards/16` ("Ramas del kit"), README, `upgrade-kit` y `upgrade-dotnet`.
+- La CI corre también en las ramas `Net*`.
+
 ## [3.1.0] - 2026-10-11
 ### Cambiado
 - **`kit-entity` genera una entidad mínima** (solo `Name`) y agrega con opciones lo que el dominio tenga: `--code` (código único con índice filtrado y error 409) y `--active` (`IsActive` y su filtro). En el piloto, adaptar una entidad sin código pasó de ~39 ediciones (quitar campos) a solo renombrar y agregar.

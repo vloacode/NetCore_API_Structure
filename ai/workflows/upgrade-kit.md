@@ -10,6 +10,8 @@ Traer a un proyecto existente la versión nueva del kit (`standards/`, `template
 **devops-engineer** (actualización de archivos) · **solution-architect** (impacto) · **backend-developer** (cambios de código si los hay).
 
 ## Archivos a leer
+Usar la **rama del kit que corresponde al `TargetFramework` del proyecto** (`Net10`, `Net11`…; `standards/16`, "Ramas del kit"). Para cambiar de versión de .NET, primero `upgrade-dotnet`.
+
 `KIT_VERSION` y `CHANGELOG.md` del proyecto y del kit nuevo; `docs/decisions/` (desvíos aceptados que deben respetarse).
 
 ## Qué se actualiza y qué no

@@ -52,7 +52,25 @@ El código de las plantillas (`templates/`) está escrito y verificado para **.N
 
 Versiones **futuras** (.NET 11, 12…): el código debería funcionar igual, salvo lo que indiquen sus listas de *breaking changes*. Por eso la adopción siempre pasa por la verificación (abajo) y nunca se asume.
 
+## Ramas del kit por versión de .NET
+Cada versión mayor de .NET que el kit soporta tiene **su propia rama**, con plantillas, standards y verificación para esa versión:
+
+| Rama | Contenido | Estado |
+|---|---|---|
+| `Net10` | Kit para .NET 10 (LTS) | Activa: aquí se desarrolla |
+| `main` | Copia de la rama de la LTS más nueva (hoy `Net10`). Es la que usa **Use this template** | Se actualiza al cerrar cada versión del kit |
+| `Net11`, `Net12`… | Se crean cuando salga esa versión (abajo) | — |
+
+Reglas:
+1. El trabajo se hace en la rama de la versión (`Net10`). Al cerrar una versión del kit (entrada en `CHANGELOG.md` y `KIT_VERSION`), `main` se adelanta a esa rama.
+2. Una versión nueva de .NET **no** reemplaza la rama anterior: se crea `NetXX` desde la rama de la LTS vigente, se adapta y se verifica (`verify-template.py --framework netXX.0`). La rama anterior sigue recibiendo correcciones mientras su .NET tenga soporte.
+3. Si la nueva es **LTS**, `main` pasa a seguirla. Si es **STS**, `main` se queda en la LTS.
+4. Una corrección que aplica a varias versiones se hace en la rama más antigua con soporte y se lleva a las demás (`git cherry-pick`).
+5. Cada rama tiene su propio `KIT_VERSION` y `CHANGELOG.md`; las versiones del kit no se repiten entre ramas (la rama nueva arranca con un MAJOR nuevo).
+6. Un proyecto se crea desde la rama de su `TargetFramework` (o desde `main` si usa la LTS más nueva) y se actualiza con `upgrade-kit` desde esa misma rama.
+
 ## Adoptar una versión nueva en el kit (mantenedores)
+0. Crear la rama: `git switch -c Net11 Net10` (desde la rama de la LTS vigente).
 1. Leer **What's new** y **Breaking changes** de .NET, ASP.NET Core, EF Core y C# para la versión nueva (enlaces en `ai/references.md`).
 2. Instalar el SDK nuevo y correr:
    ```bash
