@@ -83,9 +83,10 @@ Delegar en **backend-developer**:
    `--force` solo reemplaza el `.gitignore` del kit por el del proyecto (que ya ignora `bin/`, `obj/`, secretos y `.env`).
 2. Verificar que se crearon `{Project}.slnx`, `src/{Project}.Api/` y `tests/{Project}.IntegrationTests/`, y que `docs/`, `ai/`, `standards/` y `AGENTS.md` siguen en su lugar.
 3. User-secrets (llave JWT, password del admin, `Analytics:HashKey` según el perfil) y orígenes de CORS en `appsettings.json`.
-4. `dotnet ef migrations add InitialCreate -p src/{Project}.Api -o Infrastructure/Persistence/Migrations`.
-5. `dotnet build -c Release` y `dotnet test` **en verde** (los tests usan Testcontainers: requieren Docker; si no hay, avisar y dejar los tests listos).
-6. Actualizar `PROJECT_STATUS.md` (fase 1 ✅) y proponer commit.
+4. `dotnet format {Project}.slnx` (ordena los `using` según el nombre real del proyecto) y `dotnet build` (restaura paquetes; sin esto `dotnet ef` falla con "Assets file not found").
+5. `dotnet ef migrations add InitialCreate -p src/{Project}.Api -o Infrastructure/Persistence/Migrations`.
+6. `dotnet build -c Release`, `dotnet format --verify-no-changes` y `dotnet test` **en verde** (los tests usan Testcontainers: requieren Docker; si no hay, avisar y dejar los tests listos).
+7. Actualizar `PROJECT_STATUS.md` (fase 1 ✅) y proponer commit.
 
 ## Paso 8 — Fases siguientes
 Seguir el plan de `PROJECT_STATUS.md` con `ai/implementation-phases.md`:

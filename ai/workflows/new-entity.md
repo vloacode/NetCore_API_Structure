@@ -21,10 +21,11 @@ Crear una entidad de negocio completa (entidad + configuración EF, contratos, v
 1. **Confirmar la definición**: propiedades (tipo, longitud, obligatoria, única), relación con un padre, reglas e invariantes, filtros del listado, endpoints que pide el módulo y permisos. Si falta algo, preguntar.
 2. **Generar** desde la raíz de la solución, con las opciones del perfil:
    ```bash
-   dotnet new kit-entity -n {Entity} [--plural {Entities}] [--parent {Parent}] --app {Project} --security <true|false> --database <sqlserver|postgresql> [--apikey true]
+   dotnet new kit-entity -n {Entity} [--plural {Entities}] [--parent {Parent}] [--code true] [--active true] --app {Project} --security <true|false> --database <sqlserver|postgresql> [--apikey true]
    ```
+   `--code` solo si la entidad tiene un identificador de negocio único; `--active` solo si se activa/desactiva sin borrar.
 3. **Registrar**: copiar las líneas del comentario REGISTRO de `{Entity}.cs` (`DbSet` + `using` en `AppDbContext`; con seguridad, la clase en `Permissions.cs` y, si corresponde, `DefaultUserPermissions`). Borrar el comentario.
-4. **Adaptar al dominio** en los 4 archivos y en el test: reemplazar `Name`/`Code` por las propiedades reales (entidad, configuración, DTO, requests, mapeo, validadores, búsqueda de la spec) y quitar los endpoints que el módulo no pide.
+4. **Adaptar al dominio** en los 4 archivos y en el test: renombrar `Name` (y `Code`) a las propiedades reales, agregar las demás (entidad, configuración, DTO, requests, mapeo, validadores, búsqueda de la spec) y quitar los endpoints que el módulo no pide. Si el padre no tiene `Name`, ajustar `{Parent}Name` en la proyección y el test.
 5. **Reglas de negocio** en el service, como validaciones que devuelven `{Entity}Errors`. Patrones de `standards/07` ("Patrones adicionales") si el dominio los requiere.
 6. **Formatear y compilar**: `dotnet format` y `dotnet build`. Corregir hasta que compile sin warnings nuevos.
 7. **Migración**: `dotnet ef migrations add Add{Entity} -p src/{Project}.Api -o Infrastructure/Persistence/Migrations` y revisar el SQL (database-architect).

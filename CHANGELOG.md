@@ -5,6 +5,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [3.1.0] - 2026-10-11
+### Cambiado
+- **`kit-entity` genera una entidad mínima** (solo `Name`) y agrega con opciones lo que el dominio tenga: `--code` (código único con índice filtrado y error 409) y `--active` (`IsActive` y su filtro). En el piloto, adaptar una entidad sin código pasó de ~39 ediciones (quitar campos) a solo renombrar y agregar.
+- Requests de la entidad como `record` con propiedades `init` (más fáciles de extender que los posicionales) y test `Create_Valid_Returns201WithLocation` en cada entidad.
+
+### Corregido (encontrado en el proyecto piloto)
+- Tests con muchas entidades fallaban con 429: los límites de rate limiting ahora son configurables (`RateLimiting:GlobalPermitLimit`, `RateLimiting:AuthPermitLimit`) y `ApiFactory` los sube.
+- `project-init` y `standards/01`: `dotnet format` y `dotnet build` **antes** de `dotnet ef migrations add` (sin restore, `dotnet ef` falla con "Assets file not found").
+- `.gitignore` del proyecto: `.env.*` y `.verify/`.
+- `standards/01` aclara qué campos del perfil no cubre la plantilla (`TwoFactor`, `PublicRegistration`, `PrimaryKey`, `SoftDelete`) y que se ajustan a mano con ADR.
+- CI: acciones de GitHub actualizadas (Node 20 obsoleto).
+
+### Verificado
+- Proyecto piloto (biblioteca: `Author` → `Book` con ISBN único) siguiendo `project-init` y `new-entity` por fases: 14/14 tests con PostgreSQL.
+- Matriz de plantillas con 4 entidades por combinación (sin opciones, padre + código + activo, solo código, activo + padre): PostgreSQL 21/15/11 tests; pruebas de humo SQL Server 35/35 y 11/11.
+
 ## [3.0.0] - 2026-10-09
 ### Cambiado (incompatible)
 - **El código pasa de los md a plantillas `dotnet new` reales**, que son la fuente de verdad:

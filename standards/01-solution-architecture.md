@@ -18,6 +18,8 @@ El **perfil** está en `docs/00-MASTER_CONTEXT.md`. Cada campo se traduce en una
 
 En el código de la plantilla, las variantes se escriben con `#if (security)`, `#if (postgresql)`, etc. El proyecto generado ya no las contiene: solo queda lo del perfil.
 
+**Campos del perfil que la plantilla no cubre** (vienen con su valor por defecto): `TwoFactor = enabled`, `PublicRegistration = enabled`, `PrimaryKey = int`, `SoftDelete = enabled`. Otro valor se ajusta a mano después de generar (por ejemplo, quitar `/api/auth/register` o los endpoints de 2FA) y se registra en un ADR.
+
 ## Crear el proyecto
 ```bash
 dotnet new install ./templates/api            # una vez por máquina (desde la raíz del kit)
@@ -27,8 +29,9 @@ cd {Project}
 dotnet user-secrets set "Jwt:SigningKey" "<64+ caracteres aleatorios>" --project src/{Project}.Api   # con seguridad
 dotnet user-secrets set "Seed:AdminPassword" "<contraseña fuerte>" --project src/{Project}.Api       # con seguridad
 dotnet user-secrets set "Analytics:HashKey" "<64+ caracteres aleatorios>" --project src/{Project}.Api # con analytics
+dotnet format {Project}.slnx && dotnet build                       # ordena usings y restaura paquetes (necesario antes de dotnet ef)
 dotnet ef migrations add InitialCreate -p src/{Project}.Api -o Infrastructure/Persistence/Migrations
-dotnet build && dotnet test
+dotnet test                                                       # Testcontainers: requiere Docker en ejecución
 ```
 Llave aleatoria en PowerShell: `[Convert]::ToBase64String((1..64 | % { Get-Random -Max 256 }) -as [byte[]])`.
 

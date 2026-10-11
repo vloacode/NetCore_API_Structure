@@ -18,16 +18,24 @@ public sealed class KitEntitiesApiTests(ApiFactory factory) : IAsyncLifetime
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
+    public async Task Create_Valid_Returns201WithLocation()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var client = await CreateClientAsync();
+
+        var response = await client.PostAsJsonAsync(Route, await ValidRequestAsync(), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        response.Headers.Location.ShouldNotBeNull();
+    }
+#if (code)
+
+    [Fact]
     public async Task Create_WithDuplicateCode_Returns409WithCode()
     {
         var ct = TestContext.Current.CancellationToken;
         var client = await CreateClientAsync();
-#if (hasParent)
-        var parent = await factory.SeedAsync(new KitParent { Name = "Padre", Code = "P-1" });
-        var request = new { name = "Uno", code = "A-1", kitParentId = parent.Id };
-#else
-        var request = new { name = "Uno", code = "A-1" };
-#endif
+        var request = await ValidRequestAsync();
         (await client.PostAsJsonAsync(Route, request, ct)).StatusCode.ShouldBe(HttpStatusCode.Created);
 
         var duplicate = await client.PostAsJsonAsync(Route, request, ct);
@@ -36,6 +44,7 @@ public sealed class KitEntitiesApiTests(ApiFactory factory) : IAsyncLifetime
         var problem = await duplicate.Content.ReadFromJsonAsync<JsonElement>(ct);
         problem.GetProperty("code").GetString().ShouldBe("KitEntity.CodeAlreadyExists");
     }
+#endif
 
     [Fact]
     public async Task GetById_WhenMissing_Returns404WithCode()
@@ -58,6 +67,22 @@ public sealed class KitEntitiesApiTests(ApiFactory factory) : IAsyncLifetime
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
+#endif
+    /// <summary>Request válido: adaptar a las propiedades reales de la entidad.</summary>
+#if (hasParent)
+    private async Task<object> ValidRequestAsync()
+    {
+        var parent = await factory.SeedAsync(new KitParent { Name = "Padre" });
+#if (code)
+        return new { name = "Uno", code = "A-1", kitParentId = parent.Id };
+#else
+        return new { name = "Uno", kitParentId = parent.Id };
+#endif
+    }
+#elif (code)
+    private static Task<object> ValidRequestAsync() => Task.FromResult<object>(new { name = "Uno", code = "A-1" });
+#else
+    private static Task<object> ValidRequestAsync() => Task.FromResult<object>(new { name = "Uno" });
 #endif
 #if (security)
 

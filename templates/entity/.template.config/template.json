@@ -8,7 +8,7 @@
   ],
   "identity": "NetCoreApiStructure.Entity",
   "name": "Entidad de negocio (kit NetCore_API_Structure)",
-  "description": "Genera Features/{Entities}/ con 4 archivos (entidad + configuración EF, contratos + validadores, service + specs, controller) y su test de integración. Ejecutar desde la raíz de la solución.",
+  "description": "Genera Features/{Entities}/ con 4 archivos (entidad + configuración EF, contratos + validadores, service + specs, controller) y su test de integración. Ejecutar desde la raíz de la solución. Por defecto la entidad solo trae Name: agregar --code o --active si el dominio los tiene.",
   "shortName": "kit-entity",
   "sourceName": "KitEntity",
   "preferNameDirectory": false,
@@ -113,6 +113,18 @@
     "hasParent": {
       "type": "computed",
       "value": "(parent != \"\")"
+    },
+    "code": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Agrega un código de negocio único (Code, con índice único filtrado y error 409). Renombrarlo al real: Isbn, Sku, TaxId…"
+    },
+    "active": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Agrega IsActive (activar/desactivar sin borrar) y su filtro en el listado."
     },
     "security": {
       "type": "parameter",

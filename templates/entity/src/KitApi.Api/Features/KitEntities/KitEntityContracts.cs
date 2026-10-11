@@ -10,8 +10,12 @@ namespace KitApi.Features.KitEntities;
 public sealed record KitEntityDto(
     int Id,
     string Name,
+#if (code)
     string Code,
+#endif
+#if (active)
     bool IsActive,
+#endif
 #if (hasParent)
     int KitParentId,
     string KitParentName,
@@ -20,15 +24,28 @@ public sealed record KitEntityDto(
     DateTime? UpdatedAt,
     string RowVersion);      // token de concurrencia: el cliente lo devuelve tal cual en el Update
 
-#if (hasParent)
-public sealed record CreateKitEntityRequest(string Name, string Code, int KitParentId);
-
-public sealed record UpdateKitEntityRequest(string Name, bool IsActive, int KitParentId, string RowVersion);
-#else
-public sealed record CreateKitEntityRequest(string Name, string Code);
-
-public sealed record UpdateKitEntityRequest(string Name, bool IsActive, string RowVersion);
+public sealed record CreateKitEntityRequest
+{
+    public string Name { get; init; } = string.Empty;
+#if (code)
+    public string Code { get; init; } = string.Empty;
 #endif
+#if (hasParent)
+    public int KitParentId { get; init; }
+#endif
+}
+
+public sealed record UpdateKitEntityRequest
+{
+    public string Name { get; init; } = string.Empty;
+#if (active)
+    public bool IsActive { get; init; }
+#endif
+#if (hasParent)
+    public int KitParentId { get; init; }
+#endif
+    public string RowVersion { get; init; } = string.Empty;
+}
 
 /// <summary>Filtros + paginación (se enlaza desde query string).</summary>
 public sealed class KitEntityFilter : PaginationParams
@@ -37,7 +54,9 @@ public sealed class KitEntityFilter : PaginationParams
 #if (hasParent)
     public int? KitParentId { get; init; }
 #endif
+#if (active)
     public bool? IsActive { get; init; }
+#endif
     public string? SortBy { get; init; }          // valores permitidos: los del switch de la spec
     public bool SortDescending { get; init; }
 }
@@ -47,7 +66,9 @@ public sealed class KitEntityFilter : PaginationParams
 public static class KitEntityErrors
 {
     public static Error NotFound(int id) => Error.NotFound("KitEntity.NotFound", $"No existe el registro {id}.");
+#if (code)
     public static Error CodeAlreadyExists(string code) => Error.Conflict("KitEntity.CodeAlreadyExists", $"Ya existe un registro con código '{code}'.");
+#endif
 #if (hasParent)
     public static Error KitParentNotFound(int id) => Error.Validation("KitEntity.KitParentNotFound", $"El KitParent {id} no existe.");
 #endif
@@ -61,28 +82,39 @@ public static class KitEntityMappings
 {
     /// <summary>Proyección traducible a SQL: usar con ListAsync / PagedListAsync / FirstOrDefaultAsync(spec, Projection).</summary>
     public static readonly Expression<Func<KitEntity, KitEntityDto>> Projection = e => new KitEntityDto(
-        e.Id, e.Name, e.Code, e.IsActive,
-#if (hasParent)
-        e.KitParentId, e.KitParent.Name,
+        e.Id,
+        e.Name,
+#if (code)
+        e.Code,
 #endif
-        e.CreatedAt, e.UpdatedAt,
+#if (active)
+        e.IsActive,
+#endif
+#if (hasParent)
+        e.KitParentId,
+        e.KitParent.Name,
+#endif
+        e.CreatedAt,
+        e.UpdatedAt,
         e.RowVersion.ToString());
 
     public static KitEntity ToEntity(this CreateKitEntityRequest request) => new()
     {
         Name = request.Name.Trim(),
-#if (hasParent)
+#if (code)
         Code = request.Code.Trim().ToUpperInvariant(),
-        KitParentId = request.KitParentId
-#else
-        Code = request.Code.Trim().ToUpperInvariant()
+#endif
+#if (hasParent)
+        KitParentId = request.KitParentId,
 #endif
     };
 
     public static void ApplyTo(this UpdateKitEntityRequest request, KitEntity entity)
     {
         entity.Name = request.Name.Trim();
+#if (active)
         entity.IsActive = request.IsActive;
+#endif
 #if (hasParent)
         entity.KitParentId = request.KitParentId;
 #endif
@@ -96,7 +128,9 @@ public sealed class CreateKitEntityRequestValidator : AbstractValidator<CreateKi
     public CreateKitEntityRequestValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+#if (code)
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
+#endif
 #if (hasParent)
         RuleFor(x => x.KitParentId).GreaterThan(0);
 #endif

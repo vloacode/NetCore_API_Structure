@@ -54,6 +54,11 @@ public static class ApiExtensions
                 o.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
         });
 
+        // Límites por minuto y por IP; configurables (los tests de integración los suben en ApiFactory).
+        var globalLimit = configuration.GetValue("RateLimiting:GlobalPermitLimit", 100);
+#if (security)
+        var authLimit = configuration.GetValue("RateLimiting:AuthPermitLimit", 10);
+#endif
         services.AddRateLimiter(o =>
         {
             o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -67,13 +72,13 @@ public static class ApiExtensions
             // Límite global por IP para todos los endpoints (imprescindible en una API pública).
             o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx => RateLimitPartition.GetFixedWindowLimiter(
                 ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                _ => new FixedWindowRateLimiterOptions { PermitLimit = 100, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = globalLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 
 #if (security)
             // Límite estricto para los endpoints de Auth.
             o.AddPolicy(RateLimitPolicies.Auth, ctx => RateLimitPartition.GetFixedWindowLimiter(
                 ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = authLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 #endif
         });
 

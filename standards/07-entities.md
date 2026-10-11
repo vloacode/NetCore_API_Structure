@@ -10,6 +10,7 @@
 Desde la raíz de la solución, con las mismas opciones del perfil del proyecto:
 ```bash
 dotnet new kit-entity -n Customer --app {Project} --security true --database postgresql
+dotnet new kit-entity -n Supplier --code true --active true --app {Project} --security true --database postgresql
 dotnet new kit-entity -n Address --plural Addresses --parent Customer --app {Project} --security true --database postgresql
 ```
 
@@ -19,13 +20,15 @@ dotnet new kit-entity -n Address --plural Addresses --parent Customer --app {Pro
 | `--app` | Nombre del proyecto (`{Project}`) |
 | `--plural` | Si el plural no es `nombre + s` (`Address` → `Addresses`) |
 | `--parent` / `--parent-plural` | Relación N:1 con una entidad ya creada (agrega FK, validación de existencia, filtro y `{Parent}Name` en el DTO) |
+| `--code` | Código de negocio único (`Code` + índice único filtrado + error 409). Usarlo si el dominio tiene un identificador único (ISBN, SKU, RUC…) y renombrarlo |
+| `--active` | `IsActive` (activar/desactivar sin borrar) y su filtro en el listado |
 | `--security`, `--database`, `--apikey` | Igual que el proyecto (`docs/00-MASTER_CONTEXT.md`) |
 
 ## Qué genera
 
 | Archivo | Contiene |
 |---|---|
-| `{Entity}.cs` | Entidad (`: BaseEntity`) + `{Entity}Configuration` (EF) + comentario **REGISTRO** |
+| `{Entity}.cs` | Entidad (`: BaseEntity`) con `Name` (+ `Code`/`IsActive` según opciones) + `{Entity}Configuration` (EF) + comentario **REGISTRO** |
 | `{Entity}Contracts.cs` | `{Entity}Dto`, `Create/Update{Entity}Request`, `{Entity}Filter`, `{Entity}Errors`, `{Entity}Mappings` (proyección, `ToEntity`, `ApplyTo`) y validadores |
 | `{Entity}Service.cs` | `I{Entity}Service` + `{Entity}Service` (CRUD con `Result`) + `{Entity}ByIdSpec` y `{Entities}ByFilterSpec` |
 | `{Entities}Controller.cs` | GET paginado, GET por id, POST, PUT, DELETE; con seguridad, `[HasPermission]` en cada acción |
@@ -33,7 +36,8 @@ dotnet new kit-entity -n Address --plural Addresses --parent Customer --app {Pro
 
 ## Pasos después de generar
 1. **Registro**: copiar las líneas del comentario REGISTRO de `{Entity}.cs`: el `DbSet` (y su `using`) en `AppDbContext` y, con seguridad, la clase de permisos en `Permissions.cs`. Borrar el comentario. El service **no** se registra: lo hace `AddApplication()`.
-2. **Adaptar al dominio**: reemplazar `Name`/`Code` por las propiedades reales en los 4 archivos (entidad, configuración, DTO, requests, mapeo, validadores, búsqueda de la spec) y en el test. Si no hay código único, quitar `Code`, su índice y `CodeAlreadyExists`.
+2. **Adaptar al dominio**: renombrar `Name` (y `Code` si se usó `--code`) a las propiedades reales y agregar las demás, en los 4 archivos (entidad, configuración, DTO, requests, mapeo, validadores, búsqueda y orden de la spec) y en el test. Con `--code`, renombrar también el error (`CodeAlreadyExists` → `IsbnAlreadyExists`, por ejemplo).
+   - Si el **padre** no tiene `Name` (porque se renombró), ajustar `{Parent}Name` en la proyección y el `SeedAsync` del test.
 3. **Quitar lo que el módulo no pide** (por ejemplo, DELETE si la entidad no se elimina).
 4. **Reglas de negocio** en el service como validaciones que devuelven `{Entity}Errors` y, si hace falta, los patrones de abajo.
 5. `dotnet format` → `dotnet build` → `dotnet ef migrations add Add{Entity}` (revisar el SQL) → `dotnet test`.

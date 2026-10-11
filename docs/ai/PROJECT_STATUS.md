@@ -4,7 +4,7 @@
 para saber dónde quedó el trabajo y qué leer a continuación (ai/implementation-phases.md). Corto y factual;
 el historial detallado está en git. -->
 
-**Última actualización:** {{AAAA-MM-DD}} · **Kit:** {{3.0.0}} · **Fase actual:** {{2a — Módulo X}}
+**Última actualización:** {{AAAA-MM-DD}} · **Kit:** {{3.1.0}} · **Fase actual:** {{2a — Módulo X}}
 
 ## Siguiente paso exacto
 <!-- IA: una sola acción concreta, para que otra sesión pueda retomarla sin leer nada más que su pack. -->

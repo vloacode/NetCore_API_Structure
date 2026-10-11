@@ -4,7 +4,9 @@ using KitApi.Domain.Common;
 #if (hasParent)
 using KitApi.Features.ParentFeature;
 #endif
+#if (code)
 using KitApi.Infrastructure.Persistence;
+#endif
 using KitApi.Infrastructure.Persistence.Configurations;
 
 namespace KitApi.Features.KitEntities;
@@ -18,10 +20,14 @@ namespace KitApi.Features.KitEntities;
 
 public class KitEntity : BaseEntity
 {
-    // Name y Code son representativos: reemplazarlos por las propiedades reales del dominio (docs/05-domain-model.md).
+    // Name es representativo: renombrarlo y agregar las propiedades reales del dominio (docs/05-domain-model.md).
     public string Name { get; set; } = string.Empty;
-    public string Code { get; set; } = string.Empty;      // identificador de negocio único (quitar si no existe)
+#if (code)
+    public string Code { get; set; } = string.Empty;      // identificador de negocio único (renombrarlo: Isbn, Sku, TaxId…)
+#endif
+#if (active)
     public bool IsActive { get; set; } = true;            // bool que arranca en true: inicializador C#, no HasDefaultValue
+#endif
 #if (hasParent)
 
     public int KitParentId { get; set; }
@@ -37,11 +43,13 @@ public sealed class KitEntityConfiguration : BaseEntityConfiguration<KitEntity>
         // Sin ToTable: el nombre sale del DbSet (KitEntities) y en PostgreSQL se convierte a snake_case.
 
         builder.Property(e => e.Name).HasMaxLength(200).IsRequired();
-        builder.Property(e => e.Code).HasMaxLength(50).IsRequired();
         // Decimales siempre con precisión: builder.Property(e => e.Amount).HasPrecision(18, 2);
+#if (code)
+        builder.Property(e => e.Code).HasMaxLength(50).IsRequired();
 
         // Único solo entre los no eliminados (soft delete).
         builder.HasIndex(e => e.Code).IsUnique().HasFilter(SqlDialect.NotDeleted);
+#endif
 #if (hasParent)
 
         builder.HasOne(e => e.KitParent)

@@ -5,6 +5,8 @@ obj/
 *.user
 TestResults/
 .env
+.env.*
 appsettings.*.local.json
 secrets.json
 __pycache__/
+.verify/

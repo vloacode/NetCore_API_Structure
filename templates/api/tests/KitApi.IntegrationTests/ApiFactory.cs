@@ -47,6 +47,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", ConnectionString);
         builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
+        // Todos los tests llegan desde la misma IP: sin esto, el rate limiting los cortaría con 429.
+        builder.UseSetting("RateLimiting:GlobalPermitLimit", "100000");
+#if (security)
+        builder.UseSetting("RateLimiting:AuthPermitLimit", "100000");
+#endif
 #if (security)
         builder.UseSetting("Jwt:Issuer", "KitApi.Tests");
         builder.UseSetting("Jwt:Audience", "KitApi.Tests");

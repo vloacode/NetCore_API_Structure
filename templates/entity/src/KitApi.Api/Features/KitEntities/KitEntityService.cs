@@ -39,16 +39,17 @@ public sealed class KitEntityService(IUnitOfWork uow) : IKitEntityService
 
     public async Task<Result<KitEntityDto>> CreateAsync(CreateKitEntityRequest request, CancellationToken ct)
     {
+#if (code)
         var code = request.Code.Trim().ToUpperInvariant();
-
         if (await _repo.AnyAsync(e => e.Code == code, ct))
             return KitEntityErrors.CodeAlreadyExists(code);
-#if (hasParent)
 
+#endif
+#if (hasParent)
         if (!await _parents.AnyAsync(p => p.Id == request.KitParentId, ct))
             return KitEntityErrors.KitParentNotFound(request.KitParentId);
-#endif
 
+#endif
         var entity = request.ToEntity();
         _repo.Add(entity);
         await uow.SaveChangesAsync(ct);          // la auditoría la pone el interceptor
@@ -109,17 +110,24 @@ public sealed class KitEntitiesByFilterSpec : Specification<KitEntity>
     {
         var search = filter.Search?.Trim();
 
-        Where(PredicateBuilder.True<KitEntity>()
-#if (sqlserver)
-            .AndIf(!string.IsNullOrEmpty(search), e => e.Name.Contains(search!) || e.Code.Contains(search!))   // collation sin distinguir mayúsculas
-#endif
-#if (postgresql)
-            .AndIf(!string.IsNullOrEmpty(search), e => EF.Functions.ILike(e.Name, $"%{search}%") || EF.Functions.ILike(e.Code, $"%{search}%"))
+        // Búsqueda de texto: Contains en SQL Server (collation sin mayúsculas), ILike en PostgreSQL.
+        var predicate = PredicateBuilder.True<KitEntity>()
+#if (sqlserver && code)
+            .AndIf(!string.IsNullOrEmpty(search), e => e.Name.Contains(search!) || e.Code.Contains(search!));
+#elif (sqlserver)
+            .AndIf(!string.IsNullOrEmpty(search), e => e.Name.Contains(search!));
+#elif (code)
+            .AndIf(!string.IsNullOrEmpty(search), e => EF.Functions.ILike(e.Name, $"%{search}%") || EF.Functions.ILike(e.Code, $"%{search}%"));
+#else
+            .AndIf(!string.IsNullOrEmpty(search), e => EF.Functions.ILike(e.Name, $"%{search}%"));
 #endif
 #if (hasParent)
-            .AndIf(filter.KitParentId.HasValue, e => e.KitParentId == filter.KitParentId)
+        predicate = predicate.AndIf(filter.KitParentId.HasValue, e => e.KitParentId == filter.KitParentId);
 #endif
-            .AndIf(filter.IsActive.HasValue, e => e.IsActive == filter.IsActive));
+#if (active)
+        predicate = predicate.AndIf(filter.IsActive.HasValue, e => e.IsActive == filter.IsActive);
+#endif
+        Where(predicate);
 
         // Lista blanca de campos ordenables (nunca ordenar por un string arbitrario del cliente).
         switch (filter.SortBy?.ToLowerInvariant())

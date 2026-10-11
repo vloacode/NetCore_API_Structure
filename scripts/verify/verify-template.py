@@ -3,7 +3,7 @@
 Uso:
   python scripts/verify/verify-template.py
       Genera las combinaciones (secure/public × sqlserver/postgresql, con analytics) y una mínima
-      (pública + PostgreSQL + API key, sin analytics). En cada una: kit-entity (con y sin padre),
+      (pública + PostgreSQL + API key, sin analytics). En cada una: kit-entity (4 entidades: sin opciones, padre + código + activo, solo código, activo + padre),
       migración InitialCreate, dotnet format --verify-no-changes y build Release (analizadores, warnings como errores).
   python scripts/verify/verify-template.py --profiles public --databases postgresql
   python scripts/verify/verify-template.py --framework net11.0
@@ -95,7 +95,7 @@ public sealed class VerifyParentSeeder(IServiceProvider services, IConfiguration
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         if (!db.VerifyParents.Any())
         {{
-            db.VerifyParents.Add(new VerifyParent {{ Name = "Parent 1", Code = "P-1" }});
+            db.VerifyParents.Add(new VerifyParent {{ Name = "Parent 1" }});
             await db.SaveChangesAsync(cancellationToken);
         }}
     }}
@@ -124,8 +124,11 @@ def build(name, profile, database, analytics, apikey, framework, with_entities=T
                       "--apikey", str(apikey).lower()]
     if with_entities:
         dotnet_new(["kit-entity", "-n", "VerifyParent", *entity_options], root)
-        dotnet_new(["kit-entity", "-n", "VerifyItem", "--parent", "VerifyParent", *entity_options], root)
-        for entity in ("VerifyParents/VerifyParent.cs", "VerifyItems/VerifyItem.cs"):
+        dotnet_new(["kit-entity", "-n", "VerifyItem", "--parent", "VerifyParent", "--code", "true", "--active", "true", *entity_options], root)
+        # Cubren las demás combinaciones de opciones (solo código; activo + padre).
+        dotnet_new(["kit-entity", "-n", "VerifyTag", "--code", "true", *entity_options], root)
+        dotnet_new(["kit-entity", "-n", "VerifyNote", "--active", "true", "--parent", "VerifyParent", *entity_options], root)
+        for entity in ("VerifyParents/VerifyParent.cs", "VerifyItems/VerifyItem.cs", "VerifyTags/VerifyTag.cs", "VerifyNotes/VerifyNote.cs"):
             register_entity(root, api / "Features" / entity)
         add_parent_seeder(api)
     run(["dotnet", "build", "-nologo"], root)
