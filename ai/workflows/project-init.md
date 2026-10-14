@@ -78,11 +78,11 @@ Delegar en **backend-developer**:
    ```bash
    dotnet new install ./templates/api
    dotnet new install ./templates/entity
-   dotnet new kitapi -n {Project} -o . --force --security <true|false> --database <sqlserver|postgresql> --analytics <true|false> --apikey <true|false> --framework <TargetFramework>
+   dotnet new kitapi -n {Project} -o . --force --security <true|false> --database <sqlserver|postgresql> --analytics <true|false> --apikey <true|false> --email <log|smtp> --framework <TargetFramework>
    ```
    `--force` solo reemplaza el `.gitignore` del kit por el del proyecto (que ya ignora `bin/`, `obj/`, secretos y `.env`).
 2. Verificar que se crearon `{Project}.slnx`, `src/{Project}.Api/`, `tests/{Project}.IntegrationTests/` y `.github/workflows/ci.yml`, y que `docs/`, `ai/`, `standards/` y `AGENTS.md` siguen en su lugar. Borrar `.github/workflows/kit-checks.yml` (es la CI del kit, no la del proyecto).
-3. User-secrets (llave JWT, password del admin, `Analytics:HashKey` según el perfil) y orígenes de CORS en `appsettings.json`.
+3. User-secrets (llave JWT, password del admin, `Analytics:HashKey`, `Smtp:Password` según el perfil) y orígenes de CORS en `appsettings.json`.
 4. `dotnet format {Project}.slnx` (ordena los `using` según el nombre real del proyecto) y `dotnet build` (restaura paquetes; sin esto `dotnet ef` falla con "Assets file not found").
 5. `dotnet ef migrations add InitialCreate -p src/{Project}.Api -o Infrastructure/Persistence/Migrations`.
 6. `dotnet build -c Release`, `dotnet format --verify-no-changes` y `dotnet test` **en verde** (los tests usan Testcontainers: requieren Docker; si no hay, avisar y dejar los tests listos).

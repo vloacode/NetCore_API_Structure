@@ -84,7 +84,9 @@ public static class SecurityExtensions
         // tras reiniciar el contenedor y entre varias instancias de la API.
         services.AddDataProtection().PersistKeysToDbContext<AppDbContext>().SetApplicationName("KitApi");
 
-        services.AddHostedService<RefreshTokenCleanupJob>();   // borra los refresh tokens vencidos una vez al día
+        services.AddScoped<ISecurityAuditLog, SecurityAuditLog>();
+        services.AddScoped<ISecurityEventService, SecurityEventService>();
+        services.AddHostedService<SecurityCleanupJob>();   // refresh tokens vencidos y retención de la bitácora, una vez al día
 
         return services;
     }

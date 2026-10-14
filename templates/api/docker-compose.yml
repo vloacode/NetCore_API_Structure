@@ -18,6 +18,13 @@ services:
     volumes: ["dbdata:/var/lib/postgresql/data"]
 #endif
 
+#if (smtpEmail)
+  # Servidor SMTP de pruebas: atrapa todos los emails. Bandeja web en http://localhost:8025
+  mail:
+    image: axllent/mailpit:latest
+    ports: ["8025:8025", "1025:1025"]
+
+#endif
   api:
     build: .
     environment:
@@ -34,9 +41,18 @@ services:
 #if (analytics)
       Analytics__HashKey: "${ANALYTICS_HASH_KEY}"
 #endif
+#if (smtpEmail)
+      Smtp__Host: mail
+      Smtp__Port: "1025"
+      Smtp__UseStartTls: "false"
+#endif
       Database__ApplyMigrationsOnStartup: "true"
     ports: ["8080:8080"]
+#if (smtpEmail)
+    depends_on: [db, mail]
+#else
     depends_on: [db]
+#endif
 
 volumes:
   dbdata:

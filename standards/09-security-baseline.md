@@ -29,7 +29,7 @@ HTTPS y HSTS se configuran en `Program.cs` (`standards/01`). El header `Server` 
 - **Body:** 10 MB global en Kestrel. Endpoints de archivos: `[RequestSizeLimit(n)]` con el valor justo.
 - **Paginación:** `PaginationParams.MaxPageSize = 100`. Nunca devolver listas completas de tablas que crecen.
 - **Tiempo por request:** 30 s por defecto (`RequestTimeouts:DefaultSeconds`) → 504. Endpoints largos (exportaciones): `[RequestTimeout(ms)]` o `[DisableRequestTimeout]`.
-- **Rate limiting:** global por IP (`RateLimiting:GlobalPermitLimit`, 100/min) y estricto en Auth (`RateLimiting:AuthPermitLimit`, 10/min) `[SEC]`. Ajustar según `docs/04-non-functional-requirements.md`. Con proxy o balanceador, activar `ReverseProxy:Enabled` con los proxies conocidos (`standards/01`, `13a`) para usar la IP real.
+- **Rate limiting:** global (`RateLimiting:GlobalPermitLimit`, 100/min) **por usuario** cuando hay sesión (claim `sub`: JWT o API key) y **por IP** sin sesión, para que usuarios detrás de la misma IP no se bloqueen entre ellos; estricto en Auth por IP (`RateLimiting:AuthPermitLimit`, 10/min) `[SEC]`. Ajustar según `docs/04-non-functional-requirements.md`. Con proxy o balanceador, activar `ReverseProxy:Enabled` con los proxies conocidos (`standards/01`, `13a`) para usar la IP real.
 - **Timeouts:** `HttpClient` a terceros siempre con timeout (`standards/11`).
 
 ## Secretos
@@ -40,6 +40,11 @@ HTTPS y HSTS se configuran en `Program.cs` (`standards/01`). El header `Server` 
 
 ## Llaves de Data Protection `[SEC]`
 Los tokens de los enlaces de email (confirmación, reset, cambio de email) se firman con Data Protection. La plantilla guarda las llaves en la BD (`DataProtectionKeys`, `PersistKeysToDbContext`), así siguen siendo válidas tras reiniciar el contenedor y entre instancias. Para cifrarlas en reposo: `ProtectKeysWithCertificate` o Key Vault (`key-vault` en el catálogo), con ADR.
+
+## Emails
+- `--email log` (por defecto): el email se escribe en el log. Solo para desarrollo.
+- `--email smtp`: `SmtpEmailSender` con MailKit (STARTTLS en el 587). `Smtp:Password` en secretos. En desarrollo, `docker-compose` levanta **Mailpit** (bandeja web en `http://localhost:8025`) y `appsettings.Development.json` apunta a él.
+- Un fallo de envío se registra y no hace fallar la operación. Si un email no puede perderse, usar outbox.
 
 ## Datos sensibles
 - **Nunca loguear**: contraseñas, tokens (access, refresh, reset, 2FA), API keys, números de tarjeta, documentos de identidad.

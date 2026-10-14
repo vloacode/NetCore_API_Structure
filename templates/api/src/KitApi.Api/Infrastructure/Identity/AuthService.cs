@@ -10,6 +10,7 @@ public sealed class AuthService(
     SessionManager sessions,
     ITokenService tokenService,
     AccountEmails emails,
+    ISecurityAuditLog audit,
     TimeProvider clock,
     ILogger<AuthService> logger) : IAuthService
 {
@@ -75,15 +76,23 @@ public sealed class AuthService(
     {
         var user = await userManager.FindByEmailAsync(request.Email.Trim());
         if (user is null)
+        {
+            await audit.WriteAsync(SecurityEventTypes.LoginFailed, null, "Email no registrado", ct);
             return AuthErrors.InvalidCredentials;
+        }
 
         if (await userManager.IsLockedOutAsync(user))
+        {
+            await audit.WriteAsync(SecurityEventTypes.LoginBlocked, user.Id, null, ct);
             return AuthErrors.LockedOut;
+        }
 
         if (!await userManager.CheckPasswordAsync(user, request.Password))
         {
             await userManager.AccessFailedAsync(user);   // cuenta intentos → lockout automático
-            return await userManager.IsLockedOutAsync(user) ? AuthErrors.LockedOut : AuthErrors.InvalidCredentials;
+            var locked = await userManager.IsLockedOutAsync(user);
+            await audit.WriteAsync(locked ? SecurityEventTypes.AccountLocked : SecurityEventTypes.LoginFailed, user.Id, "Contraseña incorrecta", ct);
+            return locked ? AuthErrors.LockedOut : AuthErrors.InvalidCredentials;
         }
 
         // Estas verificaciones van DESPUÉS del password para no revelar estado de cuentas ajenas.
@@ -125,7 +134,9 @@ public sealed class AuthService(
         if (!valid)
         {
             await userManager.AccessFailedAsync(user);
-            return await userManager.IsLockedOutAsync(user) ? AuthErrors.LockedOut : AuthErrors.InvalidTwoFactorCode;
+            var locked = await userManager.IsLockedOutAsync(user);
+            await audit.WriteAsync(locked ? SecurityEventTypes.AccountLocked : SecurityEventTypes.TwoFactorFailed, user.Id, "Código de 2FA incorrecto", ct);
+            return locked ? AuthErrors.LockedOut : AuthErrors.InvalidTwoFactorCode;
         }
 
         await userManager.ResetAccessFailedCountAsync(user);
@@ -174,6 +185,7 @@ public sealed class AuthService(
 
         await userManager.ResetAccessFailedCountAsync(user);
         await sessions.RevokeAllAsync(user.Id, "Password reset", ct);
+        await audit.WriteAsync(SecurityEventTypes.PasswordReset, user.Id, null, ct);
         await emails.SendSecurityNoticeAsync(user.Email!, "Tu contraseña fue restablecida. Si no fuiste tú, contacta soporte.", ct);
         return Result.Success();
     }
@@ -196,6 +208,7 @@ public sealed class AuthService(
             return Error.FromIdentity(renamed.Errors);
 
         await sessions.RevokeAllAsync(user.Id, "Email changed", ct);
+        await audit.WriteAsync(SecurityEventTypes.EmailChanged, user.Id, null, ct);
         if (oldEmail is not null)
             await emails.SendSecurityNoticeAsync(oldEmail, $"El email de tu cuenta cambió a {request.NewEmail}.", ct);
 
@@ -206,6 +219,7 @@ public sealed class AuthService(
     {
         user.LastLoginAt = clock.GetUtcNow().UtcDateTime;
         await userManager.UpdateAsync(user);
+        await audit.WriteAsync(SecurityEventTypes.LoginSucceeded, user.Id, null, ct);
         return await sessions.IssueTokensAsync(user, familyId: null, ct);
     }
 }

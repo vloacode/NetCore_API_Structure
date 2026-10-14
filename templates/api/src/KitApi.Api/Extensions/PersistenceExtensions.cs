@@ -36,8 +36,14 @@ public static class PersistenceExtensions
         // /health/ready verifica la base de datos (standards/10).
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>(tags: ["ready"]);
 
-        // Email: reemplazar por SMTP o un proveedor real en producción.
+#if (smtpEmail)
+        // Email real por SMTP (MailKit). Desarrollo: Mailpit en docker-compose (http://localhost:8025).
+        services.AddOptions<SmtpOptions>().BindConfiguration(SmtpOptions.SectionName).ValidateDataAnnotations().ValidateOnStart();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+#else
+        // Email de desarrollo: se escribe en el log. Para emails reales, generar con --email smtp (standards/09).
         services.AddScoped<IEmailSender, LoggingEmailSender>();
+#endif
 
 #if (analytics)
         services.AddProductAnalytics(configuration);   // analítica de uso (standards/17)

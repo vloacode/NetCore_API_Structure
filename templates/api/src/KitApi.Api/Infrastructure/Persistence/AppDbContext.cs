@@ -27,6 +27,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 #if (security)
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+    public DbSet<SecurityEvent> SecurityEvents => Set<SecurityEvent>();
 #endif
 #if (analytics)
     public DbSet<AnalyticsEvent> AnalyticsEvents => Set<AnalyticsEvent>();

@@ -5,6 +5,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [3.3.0] - 2026-10-14
+### Añadido
+- **`--email smtp`**: emails reales con MailKit (`SmtpEmailSender`, opciones validadas al arrancar, `Smtp:Password` en secretos). En desarrollo, `docker-compose` levanta Mailpit (bandeja en `http://localhost:8025`). Un fallo de envío se registra y no tumba la operación.
+- **Rate limiting por usuario**: con sesión (JWT o API key) el límite global cuenta por usuario (`sub`); sin sesión, por IP. Usuarios detrás de la misma IP ya no se bloquean entre ellos.
+- **Bitácora de seguridad** `[SEC]`: tabla `SecurityEvents` y `GET /api/security-events` (permiso `audit.read`) con logins correctos/fallidos, bloqueos, 2FA, reuso de sesión, cambios de contraseña y email, y acciones de administradores sobre usuarios y roles (quién, a quién, IP). Retención `SecurityAudit:RetentionDays` (365).
+- `RefreshTokenCleanupJob` pasa a `SecurityCleanupJob` (tokens vencidos + retención de la bitácora).
+
+### Corregido
+- MailKit arrastra `System.Security.Cryptography.Pkcs` 10.0.0 (vulnerabilidad alta): con `--email smtp` se fija la versión parcheada.
+
+### Verificado
+- PostgreSQL: con seguridad 28/28 tests (incluye bitácora), pública 19/19, mínima (API key + SMTP) 15/15.
+- Prueba real con Mailpit: el registro envía "Confirma tu cuenta" por SMTP; la bitácora registra `login.failed` y `login.succeeded` y se consulta en `/api/security-events`.
+
 ## [3.2.0] - 2026-10-14
 ### Añadido (robustez para producción)
 - **Limpieza de refresh tokens vencidos** `[SEC]`: `RefreshTokenCleanupJob` diario; la tabla ya no crece sin límite.

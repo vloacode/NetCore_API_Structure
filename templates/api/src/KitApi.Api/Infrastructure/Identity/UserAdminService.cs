@@ -18,6 +18,7 @@ public sealed class UserAdminService(
     SessionManager sessions,
     AccountEmails emails,
     ICurrentUserService currentUser,
+    ISecurityAuditLog audit,
     TimeProvider clock) : IUserAdminService
 {
     public async Task<Result<PagedResult<UserSummaryDto>>> GetPagedAsync(UserFilter filter, CancellationToken ct)
@@ -123,6 +124,7 @@ public sealed class UserAdminService(
         await userManager.SetLockoutEnabledAsync(user, true);
         await userManager.SetLockoutEndDateAsync(user, request.Until ?? DateTimeOffset.MaxValue);
         await sessions.RevokeAllAsync(user.Id, "Locked by admin", ct);
+        await audit.WriteAsync(SecurityEventTypes.UserLocked, user.Id, request.Until is null ? "Sin fecha de fin" : $"Hasta {request.Until:O}", ct);
         return Result.Success();
     }
 
@@ -133,6 +135,7 @@ public sealed class UserAdminService(
 
         await userManager.SetLockoutEndDateAsync(user, null);
         await userManager.ResetAccessFailedCountAsync(user);
+        await audit.WriteAsync(SecurityEventTypes.UserUnlocked, user.Id, null, ct);
         return Result.Success();
     }
 
@@ -148,6 +151,7 @@ public sealed class UserAdminService(
 
         if (!isActive)
             await sessions.RevokeAllAsync(user.Id, "Deactivated by admin", ct);
+        await audit.WriteAsync(isActive ? SecurityEventTypes.UserActivated : SecurityEventTypes.UserDeactivated, user.Id, null, ct);
         return Result.Success();
     }
 
@@ -169,7 +173,7 @@ public sealed class UserAdminService(
         var toAdd = target.Except(current, StringComparer.OrdinalIgnoreCase).ToList();
 
         // Los nuevos permisos llegan al usuario en su próximo refresh de token.
-        return await uow.ExecuteInTransactionAsync(async _ =>
+        var result = await uow.ExecuteInTransactionAsync(async _ =>
         {
             if (toRemove.Count > 0)
             {
@@ -183,6 +187,10 @@ public sealed class UserAdminService(
             }
             return Result.Success();
         }, ct);
+
+        if (result.IsSuccess && (toAdd.Count > 0 || toRemove.Count > 0))
+            await audit.WriteAsync(SecurityEventTypes.UserRolesChanged, user.Id, $"Roles: {string.Join(", ", target)}", ct);
+        return result;
     }
 
     public async Task<Result> SendPasswordResetAsync(Guid id, CancellationToken ct)
@@ -199,6 +207,7 @@ public sealed class UserAdminService(
     {
         if (await userManager.FindByIdAsync(id.ToString()) is null) return UserAdminErrors.NotFound(id);
         await sessions.RevokeAllAsync(id, "Revoked by admin", ct);
+        await audit.WriteAsync(SecurityEventTypes.SessionsRevoked, id, "Por un administrador", ct);
         return Result.Success();
     }
 

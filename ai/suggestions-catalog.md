@@ -127,7 +127,7 @@ Formato: **Disparadores** · **Qué agrega** · **Paquetes** · **Referencia**. 
 - **Paquetes:** ninguno (patrón) o un bus de mensajes si ya existe.
 - **Referencia:** https://microservices.io/patterns/data/transactional-outbox.html
 
-### Email real (SMTP) · `email-smtp`
+### Email real (SMTP) · `email-smtp` — en la plantilla: `--email smtp`
 - **Disparadores:** perfil con seguridad (confirmaciones, reset); notificaciones a usuarios.
 - **Qué agrega:** `IEmailSender` con SMTP y plantillas HTML. Reemplaza al `LoggingEmailSender`.
 - **Paquetes:** `MailKit`.

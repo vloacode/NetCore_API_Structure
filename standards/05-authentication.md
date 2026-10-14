@@ -25,6 +25,7 @@ El módulo viene **completo** en la plantilla. En un proyecto normal no se reesc
 | POST / PUT | `/api/users`, `/{id}/lock`, `/unlock`, `/activate`, `/deactivate`, `/roles`, `/send-password-reset`, `/revoke-sessions` | `users.manage` | Administración de usuarios. |
 | GET | `/api/roles` · `/{id}` · `/permissions` | `roles.read` | Roles y catálogo de permisos. |
 | POST / PUT / DELETE | `/api/roles`, `/{id}`, `/{id}/permissions` | `roles.manage` | CRUD de roles (los de sistema están protegidos). |
+| GET | `/api/security-events` | `audit.read` | Bitácora de seguridad paginada (filtros: `userId`, `type`, `from`, `to`). |
 
 ## Flujo de tokens
 - **Access token**: JWT HS256, 15 min (`Jwt:AccessTokenMinutes`). Claims `sub`, `email`, `name`, `jti`, `role` y `permission` (varios).
@@ -45,7 +46,8 @@ El módulo viene **completo** en la plantilla. En un proyecto normal no se reesc
 | `AccountEmails` | Arma enlaces al frontend (`App:ClientUrl`) y envía con `IEmailSender` |
 | `AuthService`, `AccountService`, `UserAdminService`, `RoleService` | Casos de uso; devuelven `Result` |
 | `DatabaseSeeder` | Idempotente: roles de sistema, permisos y admin inicial (`Seed:*`) |
-| `RefreshTokenCleanupJob` | Una vez al día borra los refresh tokens vencidos (la tabla no crece sin límite) |
+| `SecurityAuditLog` (`ISecurityAuditLog`) | Bitácora de seguridad en la tabla `SecurityEvents`: quién, a quién, qué, cuándo y desde qué IP |
+| `SecurityCleanupJob` | Una vez al día borra los refresh tokens vencidos y los eventos más viejos que `SecurityAudit:RetentionDays` (365) |
 
 ## Reglas
 1. Identity **local**: `AddIdentityCore` sin cookies ni proveedores externos. Email confirmado obligatorio para iniciar sesión.
@@ -56,4 +58,17 @@ El módulo viene **completo** en la plantilla. En un proyecto normal no se reesc
 6. Llave de firma (`Jwt:SigningKey`, 32+ caracteres) y `Seed:AdminPassword` solo en user-secrets o variables de entorno.
 7. Los endpoints de Auth usan la política de rate limit `RateLimitPolicies.Auth` (10/min por IP).
 8. Un campo nuevo del usuario: propiedad en `AppUser` + DTO/validador en `AuthContracts`/`AuthValidators` + migración.
-9. En producción, reemplazar `LoggingEmailSender` por un `IEmailSender` real (SMTP o proveedor) registrado en `PersistenceExtensions`.
+9. Emails reales: generar con `--email smtp` (MailKit) o registrar otro `IEmailSender` (SendGrid, SES…) en `PersistenceExtensions` con un ADR.
+10. **Bitácora de seguridad**: todo evento de seguridad nuevo se escribe con `audit.WriteAsync(SecurityEventTypes.X, userId, detalles)`, después de que la acción tuvo éxito. Nunca contraseñas, tokens ni códigos en `details`.
+
+## Bitácora de seguridad (`/api/security-events`, permiso `audit.read`)
+| Evento | Cuándo |
+|---|---|
+| `login.succeeded` / `login.failed` / `login.blocked` | Login correcto, fallido (email inexistente o contraseña incorrecta) o sobre una cuenta bloqueada |
+| `account.locked`, `login.2fa_failed` | Bloqueo automático por intentos; código de 2FA incorrecto |
+| `session.reuse_detected`, `sessions.revoked` | Reuso de un refresh token rotado (posible robo); cierre de todas las sesiones |
+| `password.changed`, `password.reset`, `email.changed`, `2fa.enabled`, `2fa.disabled` | Cambios en la cuenta |
+| `user.locked`, `user.unlocked`, `user.activated`, `user.deactivated`, `user.roles_changed` | Acciones de un administrador sobre un usuario (`actorId` = el admin) |
+| `role.permissions_changed`, `role.deleted` | Cambios en roles |
+
+La escritura usa su propio `DbContext`: el evento queda aunque la operación haga rollback, y un fallo al escribir solo deja un warning (nunca tumba el request).

@@ -14,6 +14,7 @@ El **perfil** está en `docs/00-MASTER_CONTEXT.md`. Cada campo se traduce en una
 | `Database = sqlserver / postgresql` | `--database sqlserver/postgresql` | Proveedor EF Core; en PostgreSQL, `snake_case` (las tablas de Identity conservan `AspNet*`) y búsquedas con `ILike` |
 | `Capabilities` incluye `product-analytics` | `--analytics true` | Módulo de analítica de uso (`standards/17`) |
 | `ApiKey = yes` (solo sin seguridad) | `--apikey true` | Escrituras protegidas con `X-Api-Key` (`standards/09`) |
+| `Email = log / smtp` | `--email log/smtp` | Emails al log (desarrollo) o SMTP real con MailKit + Mailpit en `docker-compose` (`standards/09`) |
 | `TargetFramework` | `--framework net10.0` | Versión de .NET (`standards/16`) |
 
 En el código de la plantilla, las variantes se escriben con `#if (security)`, `#if (postgresql)`, etc. El proyecto generado ya no las contiene: solo queda lo del perfil.
@@ -29,6 +30,7 @@ cd {Project}
 dotnet user-secrets set "Jwt:SigningKey" "<64+ caracteres aleatorios>" --project src/{Project}.Api   # con seguridad
 dotnet user-secrets set "Seed:AdminPassword" "<contraseña fuerte>" --project src/{Project}.Api       # con seguridad
 dotnet user-secrets set "Analytics:HashKey" "<64+ caracteres aleatorios>" --project src/{Project}.Api # con analytics
+dotnet user-secrets set "Smtp:Password" "<clave del servidor SMTP>" --project src/{Project}.Api      # con --email smtp (producción)
 dotnet format {Project}.slnx && dotnet build                       # ordena usings y restaura paquetes (necesario antes de dotnet ef)
 dotnet ef migrations add InitialCreate -p src/{Project}.Api -o Infrastructure/Persistence/Migrations
 dotnet test                                                       # Testcontainers: requiere Docker en ejecución

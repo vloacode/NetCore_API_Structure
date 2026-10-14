@@ -54,6 +54,22 @@
       "defaultValue": "false",
       "description": "Solo sin seguridad: protege las escrituras con una API key (header X-Api-Key)."
     },
+    "email": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "log",
+          "description": "Emails al log (desarrollo)"
+        },
+        {
+          "choice": "smtp",
+          "description": "SMTP real con MailKit (+ Mailpit en docker-compose)"
+        }
+      ],
+      "defaultValue": "log",
+      "description": "Envío de emails (confirmación, reset de contraseña, avisos de seguridad)."
+    },
     "framework": {
       "type": "parameter",
       "datatype": "text",
@@ -86,6 +102,10 @@
     "useApiKey": {
       "type": "computed",
       "value": "(apikey && !security)"
+    },
+    "smtpEmail": {
+      "type": "computed",
+      "value": "(email == \"smtp\")"
     }
   },
   "sources": [
@@ -106,7 +126,9 @@
             "src/KitApi.Api/Api/Controllers/AccountController.cs",
             "src/KitApi.Api/Api/Controllers/UsersController.cs",
             "src/KitApi.Api/Api/Controllers/RolesController.cs",
-            "tests/KitApi.IntegrationTests/TestUsers.cs"
+            "src/KitApi.Api/Api/Controllers/SecurityEventsController.cs",
+            "tests/KitApi.IntegrationTests/TestUsers.cs",
+            "tests/KitApi.IntegrationTests/SecurityAuditTests.cs"
           ]
         },
         {
@@ -130,6 +152,12 @@
           "condition": "(!useApiKey)",
           "exclude": [
             "src/KitApi.Api/Api/Authentication/**"
+          ]
+        },
+        {
+          "condition": "(!smtpEmail)",
+          "exclude": [
+            "src/KitApi.Api/Infrastructure/Email/SmtpEmailSender.cs"
           ]
         }
       ]

@@ -32,6 +32,11 @@ public static class Permissions
         public const string Manage = "roles.manage";
     }
 
+    public static class Audit
+    {
+        public const string Read = "audit.read";   // bitácora de seguridad (/api/security-events)
+    }
+
     // ---- Entidades de negocio: una clase anidada por entidad (la imprime `dotnet new kit-entity`) ----
 
     /// <summary>Todos los permisos declarados arriba (por reflexión).</summary>

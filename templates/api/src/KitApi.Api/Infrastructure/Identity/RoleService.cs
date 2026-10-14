@@ -9,7 +9,7 @@ using KitApi.Infrastructure.Persistence;
 
 namespace KitApi.Infrastructure.Identity;
 
-public sealed class RoleService(RoleManager<AppRole> roleManager, AppDbContext db, IUnitOfWork uow) : IRoleService
+public sealed class RoleService(RoleManager<AppRole> roleManager, AppDbContext db, IUnitOfWork uow, ISecurityAuditLog audit) : IRoleService
 {
     public async Task<Result<IReadOnlyList<RoleDto>>> GetAllAsync(CancellationToken ct)
     {
@@ -81,7 +81,10 @@ public sealed class RoleService(RoleManager<AppRole> roleManager, AppDbContext d
         if (await db.UserRoles.AnyAsync(ur => ur.RoleId == id, ct)) return RoleErrors.HasUsers;
 
         var result = await roleManager.DeleteAsync(role);
-        return result.Succeeded ? Result.Success() : Error.FromIdentity(result.Errors);
+        if (!result.Succeeded) return Error.FromIdentity(result.Errors);
+
+        await audit.WriteAsync(SecurityEventTypes.RoleDeleted, null, $"Rol {role.Name}", ct);
+        return Result.Success();
     }
 
     public async Task<Result<RoleDetailDto>> SetPermissionsAsync(Guid id, SetPermissionsRequest request, CancellationToken ct)
@@ -113,7 +116,12 @@ public sealed class RoleService(RoleManager<AppRole> roleManager, AppDbContext d
             return Result.Success();
         }, ct);
 
-        return result.IsFailure ? result.Error : await ToDetailAsync(role);
+        if (result.IsFailure) return result.Error;
+
+        if (toAdd.Count > 0 || toRemove.Count > 0)
+            await audit.WriteAsync(SecurityEventTypes.RolePermissionsChanged, null,
+                $"Rol {role.Name}: +[{string.Join(", ", toAdd)}] -[{string.Join(", ", toRemove.Select(c => c.Value))}]", ct);
+        return await ToDetailAsync(role);
     }
 
     public IReadOnlyList<string> GetAvailablePermissions() => Permissions.All;

@@ -13,6 +13,7 @@ public sealed class AccountService(
     SessionManager sessions,
     ICurrentUserService currentUser,
     AccountEmails emails,
+    ISecurityAuditLog audit,
     IOptions<AppUrlOptions> appOptions) : IAccountService
 {
     private const int RecoveryCodeCount = 10;
@@ -53,6 +54,7 @@ public sealed class AccountService(
 
         // Cierra todas las sesiones (incluidas las de otros dispositivos) y entrega una nueva al llamador.
         await sessions.RevokeAllAsync(user.Id, "Password changed", ct);
+        await audit.WriteAsync(SecurityEventTypes.PasswordChanged, user.Id, null, ct);
         await emails.SendSecurityNoticeAsync(user.Email!, "Tu contraseña fue cambiada.", ct);
         return await sessions.IssueTokensAsync(user, familyId: null, ct);
     }
@@ -94,6 +96,7 @@ public sealed class AccountService(
     {
         if (currentUser.UserId is not { } userId) return AuthErrors.NotAuthenticated;
         await sessions.RevokeAllAsync(userId, "Logout all", ct);
+        await audit.WriteAsync(SecurityEventTypes.SessionsRevoked, userId, "Cerró todas sus sesiones", ct);
         return Result.Success();
     }
 
@@ -136,6 +139,7 @@ public sealed class AccountService(
             return AuthErrors.InvalidTwoFactorCode;
 
         await userManager.SetTwoFactorEnabledAsync(user, true);
+        await audit.WriteAsync(SecurityEventTypes.TwoFactorEnabled, user.Id, null, ct);
         var codes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, RecoveryCodeCount);
         await emails.SendSecurityNoticeAsync(user.Email!, "Se activó la verificación en dos pasos en tu cuenta.", ct);
 
@@ -153,6 +157,7 @@ public sealed class AccountService(
 
         await userManager.SetTwoFactorEnabledAsync(user, false);
         await userManager.ResetAuthenticatorKeyAsync(user);   // re-activar exige un setup nuevo
+        await audit.WriteAsync(SecurityEventTypes.TwoFactorDisabled, user.Id, null, ct);
         await emails.SendSecurityNoticeAsync(user.Email!, "Se desactivó la verificación en dos pasos en tu cuenta.", ct);
         return Result.Success();
     }

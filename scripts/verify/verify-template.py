@@ -3,7 +3,7 @@
 Uso:
   python scripts/verify/verify-template.py
       Genera las combinaciones (secure/public × sqlserver/postgresql, con analytics) y una mínima
-      (pública + PostgreSQL + API key, sin analytics). En cada una: kit-entity (4 entidades: sin opciones, padre + código + activo, solo código, activo + padre),
+      (pública + PostgreSQL + API key + email SMTP, sin analytics). En cada una: kit-entity (4 entidades: sin opciones, padre + código + activo, solo código, activo + padre),
       migración InitialCreate, dotnet format --verify-no-changes y build Release (analizadores, warnings como errores).
   python scripts/verify/verify-template.py --profiles public --databases postgresql
   python scripts/verify/verify-template.py --framework net11.0
@@ -110,13 +110,13 @@ public sealed class VerifyParentSeeder(IServiceProvider services, IConfiguration
         encoding="utf-8")
 
 
-def build(name, profile, database, analytics, apikey, framework, with_entities=True):
+def build(name, profile, database, analytics, apikey, framework, with_entities=True, email="log"):
     folder = WORK / name
     if folder.exists():
         shutil.rmtree(folder)
     folder.mkdir(parents=True)
     options = ["--security", str(profile == "secure").lower(), "--database", database,
-               "--analytics", str(analytics).lower(), "--apikey", str(apikey).lower(), "--framework", framework]
+               "--analytics", str(analytics).lower(), "--apikey", str(apikey).lower(), "--email", email, "--framework", framework]
     dotnet_new(["kitapi", "-n", APP, "-o", APP, *options], folder)
     root = folder / APP
     api = root / "src" / f"{APP}.Api"
@@ -230,7 +230,8 @@ def main():
         label = f"{name} / {args.framework}"
         print(f"== {label}")
         try:
-            root = build(name, profile, database, analytics, apikey, args.framework)
+            root = build(name, profile, database, analytics, apikey, args.framework,
+                         email="smtp" if name.startswith("minimal") else "log")
             if args.run_tests:
                 run_tests(root)
             base = smoke_bases.get(database)

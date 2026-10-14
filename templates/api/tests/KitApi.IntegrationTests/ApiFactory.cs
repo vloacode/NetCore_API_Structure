@@ -9,6 +9,11 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 #endif
 using Microsoft.Extensions.DependencyInjection;
+#if (smtpEmail)
+using Microsoft.AspNetCore.TestHost;
+using KitApi.Application.Abstractions.Services;
+using KitApi.Infrastructure.Email;
+#endif
 #if (postgresql)
 using Npgsql;
 #endif
@@ -47,6 +52,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", ConnectionString);
         builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
+#if (smtpEmail)
+        // Los tests no envían emails reales: SMTP válido para pasar la validación y el emisor de log en su lugar.
+        builder.UseSetting("Smtp:Host", "localhost");
+        builder.UseSetting("Smtp:FromAddress", "tests@kitapi.local");
+        builder.ConfigureTestServices(services => services.AddScoped<IEmailSender, LoggingEmailSender>());
+#endif
         // Todos los tests llegan desde la misma IP: sin esto, el rate limiting los cortaría con 429.
         builder.UseSetting("RateLimiting:GlobalPermitLimit", "100000");
 #if (security)

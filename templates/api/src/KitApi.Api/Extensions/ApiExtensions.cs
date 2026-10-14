@@ -78,9 +78,12 @@ public static class ApiExtensions
                 return ValueTask.CompletedTask;
             };
 
-            // Límite global por IP para todos los endpoints (imprescindible en una API pública).
+            // Límite global para todos los endpoints. Con sesión (JWT o API key) cuenta por usuario o cliente (claim "sub"):
+            // así varios usuarios detrás de la misma IP (oficina, NAT) no se bloquean entre ellos. Sin sesión, por IP.
             o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx => RateLimitPartition.GetFixedWindowLimiter(
-                ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                ctx.User.FindFirst("sub")?.Value is { } subject
+                    ? "user:" + subject
+                    : "ip:" + (ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = globalLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 
 #if (security)

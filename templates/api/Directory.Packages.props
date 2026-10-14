@@ -25,6 +25,11 @@
     <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
 <!--#endif -->
+<!--#if (smtpEmail) -->
+    <PackageVersion Include="MailKit" Version="4.18.1" />
+    <!-- MailKit arrastra System.Security.Cryptography.Pkcs 10.0.0 (vulnerable): se fija la versión parcheada. -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="$(MicrosoftVersion)" />
+<!--#endif -->
 <!--#if (security) -->
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(MicrosoftVersion)" />

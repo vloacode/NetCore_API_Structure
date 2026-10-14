@@ -34,6 +34,7 @@ public sealed class SessionManager(
     ITokenService tokenService,
     ICurrentUserService currentUser,
     IOptions<JwtOptions> jwtOptions,
+    ISecurityAuditLog audit,
     TimeProvider clock)
 {
     private readonly IRepository<RefreshToken> _tokens = uow.Repository<RefreshToken>();
@@ -59,7 +60,10 @@ public sealed class SessionManager(
         {
             // Un token ya rotado se volvió a usar: posible robo. Se revoca toda la familia (sesión).
             if (stored.ReplacedByTokenHash is not null)
+            {
                 await RevokeFamilyAsync(stored.UserId, stored.FamilyId, "Reuse detected", ct);
+                await audit.WriteAsync(SecurityEventTypes.SessionReuseDetected, stored.UserId, "Se revocó la sesión completa", ct);
+            }
             return AuthErrors.InvalidRefreshToken;
         }
 
