@@ -28,7 +28,8 @@ HTTPS y HSTS se configuran en `Program.cs` (`standards/01`). El header `Server` 
 ## Límites
 - **Body:** 10 MB global en Kestrel. Endpoints de archivos: `[RequestSizeLimit(n)]` con el valor justo.
 - **Paginación:** `PaginationParams.MaxPageSize = 100`. Nunca devolver listas completas de tablas que crecen.
-- **Rate limiting:** global por IP (100/min) y estricto en Auth (10/min) `[SEC]`. Ajustar según `docs/04-non-functional-requirements.md`. Con proxy o balanceador, activar `ReverseProxy:Enabled` con los proxies conocidos (`standards/01`, `13a`) para usar la IP real.
+- **Tiempo por request:** 30 s por defecto (`RequestTimeouts:DefaultSeconds`) → 504. Endpoints largos (exportaciones): `[RequestTimeout(ms)]` o `[DisableRequestTimeout]`.
+- **Rate limiting:** global por IP (`RateLimiting:GlobalPermitLimit`, 100/min) y estricto en Auth (`RateLimiting:AuthPermitLimit`, 10/min) `[SEC]`. Ajustar según `docs/04-non-functional-requirements.md`. Con proxy o balanceador, activar `ReverseProxy:Enabled` con los proxies conocidos (`standards/01`, `13a`) para usar la IP real.
 - **Timeouts:** `HttpClient` a terceros siempre con timeout (`standards/11`).
 
 ## Secretos
@@ -36,6 +37,9 @@ HTTPS y HSTS se configuran en `Program.cs` (`standards/01`). El header `Server` 
 - Nunca en `appsettings*.json`, en el código, en logs ni en mensajes de error.
 - Variables de entorno con doble guion bajo: `ConnectionStrings__Default`, `Jwt__SigningKey`.
 - Rotar la llave JWT de forma planificada. Al rotarla, todos los access tokens vigentes dejan de servir.
+
+## Llaves de Data Protection `[SEC]`
+Los tokens de los enlaces de email (confirmación, reset, cambio de email) se firman con Data Protection. La plantilla guarda las llaves en la BD (`DataProtectionKeys`, `PersistKeysToDbContext`), así siguen siendo válidas tras reiniciar el contenedor y entre instancias. Para cifrarlas en reposo: `ProtectKeysWithCertificate` o Key Vault (`key-vault` en el catálogo), con ADR.
 
 ## Datos sensibles
 - **Nunca loguear**: contraseñas, tokens (access, refresh, reset, 2FA), API keys, números de tarjeta, documentos de identidad.

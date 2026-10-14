@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 #if (security)
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 #endif
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ namespace KitApi.Infrastructure.Persistence;
 // Con seguridad hereda de IdentityDbContext (tablas AspNet*); sin seguridad, de DbContext.
 public class AppDbContext(DbContextOptions<AppDbContext> options)
 #if (security)
-    : IdentityDbContext<AppUser, AppRole, Guid>(options)
+    : IdentityDbContext<AppUser, AppRole, Guid>(options), IDataProtectionKeyContext
 #endif
 #if (!security)
     : DbContext(options)
@@ -25,6 +26,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 {
 #if (security)
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 #endif
 #if (analytics)
     public DbSet<AnalyticsEvent> AnalyticsEvents => Set<AnalyticsEvent>();

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.HttpOverrides;
 using KitApi.Api.Errors;
 using KitApi.Api.Filters;
@@ -52,6 +53,14 @@ public static class ApiExtensions
                 o.KnownProxies.Add(IPAddress.Parse(proxy));
             foreach (var network in configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [])
                 o.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+        });
+
+        // Tiempo máximo por request (504 si se pasa): una consulta lenta no deja la conexión colgada.
+        // Un endpoint puede pedir más con [RequestTimeout(milliseconds)] o [DisableRequestTimeout] (por ejemplo, exportaciones).
+        services.AddRequestTimeouts(o => o.DefaultPolicy = new RequestTimeoutPolicy
+        {
+            Timeout = TimeSpan.FromSeconds(configuration.GetValue("RequestTimeouts:DefaultSeconds", 30)),
+            TimeoutStatusCode = StatusCodes.Status504GatewayTimeout
         });
 
         // Límites por minuto y por IP; configurables (los tests de integración los suben en ApiFactory).

@@ -45,6 +45,7 @@ El módulo viene **completo** en la plantilla. En un proyecto normal no se reesc
 | `AccountEmails` | Arma enlaces al frontend (`App:ClientUrl`) y envía con `IEmailSender` |
 | `AuthService`, `AccountService`, `UserAdminService`, `RoleService` | Casos de uso; devuelven `Result` |
 | `DatabaseSeeder` | Idempotente: roles de sistema, permisos y admin inicial (`Seed:*`) |
+| `RefreshTokenCleanupJob` | Una vez al día borra los refresh tokens vencidos (la tabla no crece sin límite) |
 
 ## Reglas
 1. Identity **local**: `AddIdentityCore` sin cookies ni proveedores externos. Email confirmado obligatorio para iniciar sesión.

@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- Una propiedad por familia: al cambiar de versión de .NET se edita aquí (standards/16). -->
-    <MicrosoftVersion>10.0.12</MicrosoftVersion>
+    <MicrosoftVersion>10.0.13</MicrosoftVersion>
     <OpenTelemetryVersion>1.19.0</OpenTelemetryVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -28,6 +28,7 @@
 <!--#if (security) -->
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
 <!--#endif -->
     <!-- Tests -->
     <PackageVersion Include="xunit.v3" Version="4.0.2" />

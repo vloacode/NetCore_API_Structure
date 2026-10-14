@@ -42,6 +42,9 @@ Para probar permisos concretos, crear un usuario con un rol de prueba y loguears
 ## Tests por entidad — `tests/{Project}.IntegrationTests/{Entities}ApiTests.cs` (los genera `kit-entity`)
 → Código: [`templates/entity/tests/KitApi.IntegrationTests/KitEntitiesApiTests.cs`](../templates/entity/tests/KitApi.IntegrationTests/KitEntitiesApiTests.cs)
 
+## Tests de arquitectura — [`ArchitectureTests.cs`](../templates/api/tests/KitApi.IntegrationTests/ArchitectureTests.cs)
+Comprueban las reglas de oro sobre el código real, sin base de datos: controllers sin `DbContext`/repositorios, cada `*Service` de `Features/` con su `I*Service`, métodos de service que devuelven `Task<Result>`, cada entidad con `DbSet` y configuración EF y, con seguridad, cada acción de `Features/` con `[HasPermission]` o `[AllowAnonymous]`. **No se desactivan**: si fallan, se corrige el código (o se registra un ADR y se ajusta la regla).
+
 ## Convenciones
 - Nombre: `Metodo_Escenario_ResultadoEsperado` (`Create_WithDuplicateCode_Returns409WithCode`).
 - Estructura Arrange / Act / Assert, separada por líneas en blanco.

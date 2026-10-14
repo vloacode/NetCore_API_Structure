@@ -59,6 +59,7 @@ app.UseRateLimiter();
 #if (security || useApiKey)
 app.UseAuthorization();
 #endif
+app.UseRequestTimeouts();                    // 504 si un request supera RequestTimeouts:DefaultSeconds (standards/04)
 
 app.MapControllers();
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false });                      // proceso vivo

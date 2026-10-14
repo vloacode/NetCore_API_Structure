@@ -8,7 +8,7 @@ namespace KitApi.Extensions;
 public static class ObservabilityExtensions
 {
     /// <summary>
-    /// OpenTelemetry: trazas, métricas y logs (standards/10). El exportador OTLP solo se activa si existe
+    /// OpenTelemetry: trazas, métricas y logs (standards/10). Los logs de ILogger salen con el trace id de su request. El exportador OTLP solo se activa si existe
     /// OTEL_EXPORTER_OTLP_ENDPOINT (dashboard de Aspire, Seq, Jaeger, un collector…); sin él no se envía nada.
     /// </summary>
     public static IServiceCollection AddObservability(this IServiceCollection services, IConfiguration configuration)
@@ -21,7 +21,8 @@ public static class ObservabilityExtensions
             .WithMetrics(m => m
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
-                .AddRuntimeInstrumentation());
+                .AddRuntimeInstrumentation())
+            .WithLogging();
 
         if (!string.IsNullOrWhiteSpace(configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
             otel.UseOtlpExporter();

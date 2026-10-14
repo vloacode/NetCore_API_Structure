@@ -39,7 +39,7 @@ public static partial class {Entity}Log
 El header se expone por CORS (`standards/01`). ProblemDetails trae el mismo valor en `traceId`.
 
 ## OpenTelemetry
-Viene en la plantilla: `AddObservability()` en [`Extensions/ObservabilityExtensions.cs`](../templates/api/src/KitApi.Api/Extensions/ObservabilityExtensions.cs) registra trazas (ASP.NET Core sin `/health`, HttpClient), métricas (ASP.NET Core, HttpClient, runtime) y el exportador OTLP **solo si existe** `OTEL_EXPORTER_OTLP_ENDPOINT`.
+Viene en la plantilla: `AddObservability()` en [`Extensions/ObservabilityExtensions.cs`](../templates/api/src/KitApi.Api/Extensions/ObservabilityExtensions.cs) registra trazas (ASP.NET Core sin `/health`, HttpClient), métricas (ASP.NET Core, HttpClient, runtime), **logs** (`ILogger`, con el trace id de su request) y el exportador OTLP **solo si existe** `OTEL_EXPORTER_OTLP_ENDPOINT`.
 - Instrumentación de EF Core (opcional, prerelease): `OpenTelemetry.Instrumentation.EntityFrameworkCore`, con ADR.
 - El destino OTLP se configura con variables estándar: `OTEL_EXPORTER_OTLP_ENDPOINT`. En desarrollo, el dashboard de .NET Aspire o Seq sirven como receptor local.
 - **Azure Monitor / Application Insights**: reemplazar los exportadores OTLP por el paquete `Azure.Monitor.OpenTelemetry.AspNetCore` y `services.AddOpenTelemetry().UseAzureMonitor()`, con la connection string en la configuración.

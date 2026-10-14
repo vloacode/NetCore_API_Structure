@@ -15,7 +15,8 @@
 → Código: [`templates/api/Dockerfile`](../templates/api/Dockerfile)
 - Las imágenes oficiales de .NET escuchan en el puerto **8080** y traen un usuario sin privilegios (`$APP_UID`).
 - Alternativa sin Dockerfile: `dotnet publish -c Release /t:PublishContainer` (soporte de contenedores del SDK).
-- `.dockerignore` con `bin/`, `obj/`, `.git/`, `.vs/`, `**/appsettings.*.local.json`.
+- `.dockerignore` con `bin/`, `obj/`, `.git/`, `.vs/`, `tests/`, `**/appsettings.*.local.json`.
+- `HEALTHCHECK` contra `/health/live` sin `curl` (bash + `/dev/tcp`, disponible en la imagen `aspnet` Debian). Si se cambia a una imagen *chiseled* o Alpine sin bash, mover el chequeo al orquestador.
 
 `docker-compose.yml` para desarrollo local (API + base de datos del perfil). Variante SQL Server:
 → Código: [`templates/api/docker-compose.yml`](../templates/api/docker-compose.yml)
@@ -48,30 +49,11 @@ dotnet ef migrations script --idempotent -p src/{Project}.Api -o artifacts/migra
 ```
 - La migración corre **antes** de desplegar la nueva versión. Cambios destructivos (borrar o renombrar columnas) en dos despliegues: primero compatible hacia atrás, después la limpieza.
 
-## CI — `.github/workflows/ci.yml`
-```yaml
-name: ci
-on:
-  push: { branches: [main] }
-  pull_request:
+## CI y dependencias
+Vienen en la plantilla:
+- [`.github/workflows/ci.yml`](../templates/api/.github/workflows/ci.yml): restore → `dotnet format --verify-no-changes` → build Release (analizadores) → tests (Testcontainers usa el Docker del runner) → falla si hay paquetes NuGet vulnerables.
+- [`.github/dependabot.yml`](../templates/api/.github/dependabot.yml): actualizaciones semanales de NuGet y de las acciones, agrupadas; los saltos de versión mayor de Microsoft/EF Core se hacen con `upgrade-dotnet`, no automáticos.
 
-jobs:
-  build-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: "10.0.x"
-      - run: dotnet restore
-      - run: dotnet format --verify-no-changes --no-restore
-      - run: dotnet build --no-restore -c Release
-      - run: dotnet test --no-build -c Release --coverage --coverage-output-format cobertura   # Testcontainers usa el Docker del runner
-      - name: Paquetes vulnerables
-        run: |
-          dotnet list package --vulnerable --include-transitive | tee vuln.txt
-          ! grep -qiE "critical|high" vuln.txt
-```
 El despliegue (CD) va en otro workflow o job, que solo corre con la CI en verde: publicar → migrations bundle → desplegar.
 
 ## Destinos de despliegue

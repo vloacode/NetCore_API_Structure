@@ -5,6 +5,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [3.2.0] - 2026-10-14
+### Añadido (robustez para producción)
+- **Limpieza de refresh tokens vencidos** `[SEC]`: `RefreshTokenCleanupJob` diario; la tabla ya no crece sin límite.
+- **Llaves de Data Protection en la BD** `[SEC]` (`PersistKeysToDbContext`): los enlaces de email siguen siendo válidos tras reiniciar el contenedor y con varias instancias.
+- **Logs a OpenTelemetry** (`WithLogging`): salen junto a trazas y métricas, con el trace id del request.
+- **CI y Dependabot en el proyecto generado**: `.github/workflows/ci.yml` (formato, Release, tests con Testcontainers, paquetes vulnerables) y `.github/dependabot.yml` (NuGet y acciones, semanal; sin saltos mayores de Microsoft).
+- **Timeouts por request**: 30 s por defecto (`RequestTimeouts:DefaultSeconds`) → 504.
+- **Tests de arquitectura** (`ArchitectureTests`): controllers sin persistencia, services con interfaz y `Result`, entidades con `DbSet` y configuración, y permisos en cada acción `[SEC]`.
+- **`HEALTHCHECK` en el Dockerfile** contra `/health/live`, sin instalar `curl`.
+- `project-init`: borrar `kit-checks.yml` (CI del kit) en el proyecto.
+- Paquetes de Microsoft a 10.0.13: la 10.0.12 arrastra `System.Security.Cryptography.Xml` con vulnerabilidades altas (lo detectó el propio chequeo de paquetes vulnerables).
+
+### Verificado
+- PostgreSQL: con seguridad 26/26 tests (incluye arquitectura), pública 19/19, mínima con API key 15/15.
+- Imagen Docker: el `HEALTHCHECK` reporta `healthy`; comandos de la CI del proyecto probados.
+
 ## [3.1.1] - 2026-10-11
 ### Añadido
 - **Ramas por versión de .NET**: `Net10` es la rama activa del kit para .NET 10; `main` es una copia de la rama de la LTS más nueva (la que usa *Use this template*). Política en `standards/16` ("Ramas del kit"), README, `upgrade-kit` y `upgrade-dotnet`.

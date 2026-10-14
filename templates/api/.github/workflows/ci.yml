@@ -1,0 +1,38 @@
+# CI del proyecto (standards/13): formato, build con analizadores, tests contra el motor real y paquetes vulnerables.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore KitApi.slnx
+
+      - name: Formato
+        run: dotnet format KitApi.slnx --verify-no-changes --no-restore
+
+      - name: Build (Release, warnings como errores)
+        run: dotnet build KitApi.slnx -c Release --no-restore
+
+      # Testcontainers usa el Docker que traen los runners de GitHub.
+      - name: Tests
+        run: dotnet test --solution KitApi.slnx -c Release --no-build
+
+      - name: Paquetes vulnerables
+        run: |
+          dotnet list KitApi.slnx package --vulnerable --include-transitive 2>&1 | tee vulnerable.txt
+          if grep -q -i "has the following vulnerable packages" vulnerable.txt; then
+            echo "::error::Hay paquetes NuGet con vulnerabilidades conocidas"
+            exit 1
+          fi

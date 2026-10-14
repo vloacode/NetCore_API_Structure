@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -78,6 +79,12 @@ public static class SecurityExtensions
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<IRoleService, RoleService>();
+
+        // Llaves de Data Protection en la BD: los enlaces de email (confirmación, reset) siguen siendo válidos
+        // tras reiniciar el contenedor y entre varias instancias de la API.
+        services.AddDataProtection().PersistKeysToDbContext<AppDbContext>().SetApplicationName("KitApi");
+
+        services.AddHostedService<RefreshTokenCleanupJob>();   // borra los refresh tokens vencidos una vez al día
 
         return services;
     }
