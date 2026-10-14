@@ -49,9 +49,14 @@ def skip_build_output(path: pathlib.Path) -> bool:
 
 
 # 1. Enlaces
+# En un proyecto generado no existe templates/: los standards enlazan al código del kit, que en el proyecto
+# equivale a src/ y tests/. Esos enlaces solo se validan en el repositorio del kit.
+in_kit_repo = (ROOT / "templates").exists()
 for md in md_files():
     for target in re.findall(r"\]\(([^)#\s]+)(?:#[^)]*)?\)", md.read_text(encoding="utf-8")):
         if target.startswith(("http://", "https://", "mailto:")):
+            continue
+        if not in_kit_repo and "templates/" in target:
             continue
         if not (md.parent / target).exists():
             errors.append(f"Enlace roto en {md.relative_to(ROOT)}: {target}")

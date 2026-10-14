@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>NetCoreApiKit</RootNamespace>
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- .NET tool: `dnx NetCoreApiKit` (o `dotnet tool install -g NetCoreApiKit` → `netcoreapi-kit`). -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>netcoreapi-kit</ToolCommandName>
+    <PackageId>NetCoreApiKit</PackageId>
+    <Version>3.4.0</Version>
+    <Authors>NetCore_API_Structure</Authors>
+    <Description>Asistente paso a paso para crear APIs ASP.NET Core con el kit NetCore_API_Structure: Controllers, EF Core (Repository + Unit of Work), Identity local + JWT opcional, SQL Server o PostgreSQL, guía para IA incluida.</Description>
+    <PackageTags>aspnetcore;webapi;template;efcore;identity;jwt;scaffolding</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Sin esto NuGet omite los archivos que empiezan con punto (.editorconfig, .gitignore, .claude/, .template.config/…). -->
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <RepositoryUrl>https://github.com/vloacode/NetCore_API_Structure</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/vloacode/NetCore_API_Structure</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.57.2" />
+    <!-- Solo para probar la conexión a la base antes de guardar nada. -->
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <!-- SqlClient arrastra System.Security.Cryptography.Pkcs 9.0.x (vulnerable): se fija la versión parcheada. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <!-- El kit viaja dentro del paquete (carpeta kit/): plantillas + guía para IA. Siempre la misma versión que la herramienta. -->
+  <PropertyGroup>
+    <KitRoot>$(MSBuildThisFileDirectory)..\..\</KitRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <KitPayload Include="$(KitRoot)templates\**\*" Exclude="$(KitRoot)templates\**\bin\**;$(KitRoot)templates\**\obj\**" KitPath="templates\" />
+    <KitPayload Include="$(KitRoot)ai\**\*" KitPath="ai\" />
+    <KitPayload Include="$(KitRoot)standards\**\*" KitPath="standards\" />
+    <KitPayload Include="$(KitRoot)docs\**\*" KitPath="docs\" />
+    <KitPayload Include="$(KitRoot).claude\**\*" KitPath=".claude\" />
+    <KitPayload Include="$(KitRoot).cursor\**\*" KitPath=".cursor\" />
+    <KitPayload Include="$(KitRoot)scripts\hooks\**\*" Exclude="$(KitRoot)scripts\hooks\**\__pycache__\**" KitPath="scripts\hooks\" />
+    <KitPayload Include="$(KitRoot)scripts\check-kit.py" KitPath="scripts\" />
+    <KitPayload Include="$(KitRoot)AGENTS.md;$(KitRoot)CLAUDE.md;$(KitRoot)KIT_VERSION;$(KitRoot).mcp.json" KitPath="" />
+    <KitPayload Include="$(KitRoot).github\copilot-instructions.md" KitPath=".github\" />
+    <KitPayload Include="$(KitRoot).vscode\mcp.json" KitPath=".vscode\" />
+    <None Include="@(KitPayload)" Link="kit\%(KitPath)%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Pack="false" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

@@ -8,6 +8,7 @@ using KitApi.Extensions;
 using KitApi.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddLocalSettings();   // appsettings.{Entorno}.local.json: configuración de esta máquina, no se sube a git
 
 // Límites de Kestrel y sin header "Server" (standards/09).
 builder.WebHost.ConfigureKestrel(o =>

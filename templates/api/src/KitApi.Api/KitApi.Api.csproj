@@ -28,6 +28,8 @@
 <!--#endif -->
 <!--#if (smtpEmail) -->
     <PackageReference Include="MailKit" />
+<!--#endif -->
+<!--#if (sqlserver || smtpEmail) -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
 <!--#endif -->
 <!--#if (security) -->

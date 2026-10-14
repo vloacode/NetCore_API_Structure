@@ -2,9 +2,30 @@
 
 Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-> Versión **3.3.0** (ver `CHANGELOG.md`). El código vive en plantillas `dotnet new` (`templates/`) verificadas en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): generan, compilan en Release con analizadores, crean migraciones, pasan los tests de integración con Testcontainers y las pruebas de punta a punta contra bases reales (`scripts/verify/`).
+> Versión **3.4.0** (ver `CHANGELOG.md`). El código vive en plantillas `dotnet new` (`templates/`) verificadas en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): generan, compilan en Release con analizadores, crean migraciones, pasan los tests de integración con Testcontainers y las pruebas de punta a punta contra bases reales (`scripts/verify/`).
 
 **Stack:** Controllers · services con `Result<T>` · EF Core con Repository + Unit of Work + Specification · FluentValidation · `Program.cs` como índice con `Extensions/` por área · OpenTelemetry · Identity local + JWT (opcional). Sin MediatR ni AutoMapper.
+
+## Empezar en 1 minuto
+
+**Requisitos:** [.NET 10 SDK](https://dotnet.microsoft.com/download) · [Docker Desktop](https://www.docker.com/products/docker-desktop/) (si la base va en un contenedor) · Git (opcional).
+
+```bash
+dnx NetCoreApiKit
+```
+
+Un asistente paso a paso, como `npm create vue@latest`, pregunta:
+- el nombre;
+- si la API lleva usuarios con login JWT o es pública;
+- la base de datos (PostgreSQL o SQL Server) y **dónde está**: un contenedor Docker que crea él mismo, instalada en tu máquina, un servidor o "después";
+- los emails y las capacidades extra;
+- **dónde guardar los secretos**: user-secrets, variables de entorno o un appsettings local que no se sube a git.
+
+Después genera la solución, copia la guía para IA, prueba la conexión, guarda los secretos, compila, crea la migración y te muestra cómo correrla.
+
+- **Sin preguntas** (IA, CI, scripts): `dnx NetCoreApiKit -- --name MiApi --security --database postgresql --email smtp --db-location docker --yes` (ver `--help`).
+- **Antes de que esté publicado en NuGet**, o para probar cambios del kit: `dotnet run --project tools/NetCoreApiKit` desde este repositorio.
+- **Visual Studio**: con las plantillas instaladas (el asistente lo hace), *Archivo → Nuevo proyecto → "ASP.NET Core Web API (kit NetCore_API_Structure)"* muestra las mismas opciones.
 
 ## Qué incluye
 
@@ -12,6 +33,7 @@ Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) cons
 |---|---|
 | `AGENTS.md` | Entrada universal para cualquier IA: stack, reglas, mapa y Definition of Done |
 | `CLAUDE.md` | Lo mismo para Claude Code, más cómo usar sus comandos y subagentes |
+| `tools/NetCoreApiKit/` | El asistente `dnx NetCoreApiKit` (pasos interactivos o flags) |
 | `templates/` | Plantillas `dotnet new`: `kitapi` (la solución completa según el perfil) y `kit-entity` (cada entidad en `Features/{Entities}/`, 4 archivos + test). Son la fuente de verdad del código |
 | `standards/` | Las reglas: arquitectura, persistencia, API, autenticación, entidades, testing y despliegue. Cortos y enlazados al código real |
 | `ai/implementation-phases.md` | Construcción por fases: qué leer, producir y verificar en cada una, para no cargar todo el kit de una vez |
@@ -35,7 +57,7 @@ En los tres modos la IA sugiere de forma proactiva capacidades adicionales (vers
 ## Versiones y ramas
 Cada versión de .NET tiene su rama: **`Net10`** (activa) y, en el futuro, `Net11`, `Net12`… `main` es siempre una copia de la rama de la LTS más nueva y es la que usa **Use this template**. Para un proyecto con otra versión de .NET, crear el repositorio desde la rama correspondiente. Política completa en `standards/16-framework-versions.md`.
 
-## Cómo crear un proyecto nuevo
+## Otras formas de crear un proyecto
 1. En GitHub, pulsa **Use this template** → **Create a new repository** (o copia el contenido de este repositorio).
 2. Abre el repositorio nuevo con tu IA.
 3. Pídele que inicialice el proyecto:

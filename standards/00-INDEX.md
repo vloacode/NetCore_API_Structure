@@ -4,6 +4,8 @@ Los standards son las **reglas** del kit: qué se hace, por qué y qué evitar. 
 - [`templates/api/`](../templates/api/) → `dotnet new kitapi` (la solución completa según el perfil).
 - [`templates/entity/`](../templates/entity/) → `dotnet new kit-entity` (una entidad de negocio: 4 archivos + test).
 
+En un **proyecto** creado con el kit no existe `templates/`: el código equivalente es el del propio proyecto (`src/{Project}.Api/...` con la misma ruta, sin `KitApi`).
+
 **No se editan por proyecto.** Lo propio de cada proyecto vive en `docs/`. Si un proyecto necesita apartarse de un standard, se registra un ADR en `docs/decisions/`.
 
 Stack fijo: **.NET LTS vigente (hoy 10) · ASP.NET Core con Controllers · EF Core (Repository + Unit of Work) + SQL Server o PostgreSQL · FluentValidation · OpenAPI + Scalar · OpenTelemetry**. Con seguridad, además: **Identity local + JWT + refresh tokens**. Sin MediatR ni AutoMapper.

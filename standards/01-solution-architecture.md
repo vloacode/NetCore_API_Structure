@@ -22,6 +22,13 @@ En el código de la plantilla, las variantes se escriben con `#if (security)`, `
 **Campos del perfil que la plantilla no cubre** (vienen con su valor por defecto): `TwoFactor = enabled`, `PublicRegistration = enabled`, `PrimaryKey = int`, `SoftDelete = enabled`. Otro valor se ajusta a mano después de generar (por ejemplo, quitar `/api/auth/register` o los endpoints de 2FA) y se registra en un ADR.
 
 ## Crear el proyecto
+**Recomendado: el asistente.** Pregunta paso a paso y deja todo listo: proyecto, guía para IA, base (Docker, local o servidor, con prueba de conexión), secretos en el destino elegido (user-secrets, variables de entorno o `appsettings.Development.local.json`), build y migración inicial.
+```bash
+dnx NetCoreApiKit                                                   # interactivo
+dnx NetCoreApiKit -- --name {Project} --security --database postgresql --email smtp --db-location docker --yes   # sin preguntas (IA/CI)
+```
+
+**Manual (avanzado)**, con las plantillas directamente:
 ```bash
 dotnet new install ./templates/api            # una vez por máquina (desde la raíz del kit)
 dotnet new install ./templates/entity
@@ -36,6 +43,8 @@ dotnet ef migrations add InitialCreate -p src/{Project}.Api -o Infrastructure/Pe
 dotnet test                                                       # Testcontainers: requiere Docker en ejecución
 ```
 Llave aleatoria en PowerShell: `[Convert]::ToBase64String((1..64 | % { Get-Random -Max 256 }) -as [byte[]])`.
+
+**Dónde vive la configuración** (el último gana): `appsettings.json` → `appsettings.{Env}.json` → `appsettings.{Env}.local.json` (no se sube a git; lo carga `AddLocalSettings()`) → user-secrets → variables de entorno. Los secretos nunca van en `appsettings.json`.
 
 La plantilla trae fijadas versiones verificadas en `Directory.Packages.props`. Si hay acceso web, revisar en nuget.org si hay parches más nuevos de la misma versión mayor (`standards/16`).
 

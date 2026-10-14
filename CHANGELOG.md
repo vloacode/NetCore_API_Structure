@@ -5,6 +5,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [3.4.0] - 2026-10-14
+### Añadido
+- **Asistente `dnx NetCoreApiKit`** (`tools/NetCoreApiKit`, .NET tool), como `npm create vue@latest`:
+  - Pregunta paso a paso: nombre, tipo de API, API key, base de datos, emails y extras.
+  - Pregunta **dónde está la base**: Docker (la crea), instalada en la máquina, un servidor (con SSL/TrustServerCertificate) o después. Prueba la conexión antes de guardar nada; en un servidor no crea las tablas salvo que se pida.
+  - Pregunta **dónde guardar los secretos**: user-secrets, variables de entorno (scripts y, opcional, variables de usuario de Windows) y/o `appsettings.Development.local.json`.
+  - Genera la solución, copia la guía para IA, llena el Perfil, escribe un README, compila y crea la migración.
+  - Modo sin preguntas por flags para la IA y la CI. El kit viaja dentro del paquete.
+- `AddLocalSettings()`: carga `appsettings.{Env}.local.json` (ignorado por git) antes de user-secrets y de las variables de entorno.
+- `docker-compose`: puertos configurables (`DB_PORT`, `MAIL_UI_PORT`, `MAIL_SMTP_PORT`) para convivir con un motor ya instalado.
+- `ide.host.json`: las opciones de la plantilla aparecen en *Nuevo proyecto* de Visual Studio.
+- `publish-tool.yml`: publica en nuget.org al crear un tag `v*` (secreto `NUGET_API_KEY`).
+- `verify-wizard.py` y su job de CI.
+
+### Corregido
+- Proyectos con **SQL Server**: `Microsoft.Data.SqlClient` arrastra `System.Security.Cryptography.Pkcs` 9.0.x vulnerable; se fija la versión parcheada.
+- `check-kit.py` en un proyecto generado ya no marca como rotos los enlaces a `templates/` (solo existen en el repositorio del kit).
+
+### Verificado
+- Asistente empaquetado y ejecutado con `dnx`, 5 casos: pública + SQL Server (Release + format + check-kit); Docker + PostgreSQL + SMTP (tablas creadas, 10/10 tests); servidor existente con secretos en los 3 destinos (ignorados por git, tablas no creadas); secretos solo en appsettings local (la API arranca con ellos); contraseña incorrecta (error claro, no crea nada).
+- Matriz de plantillas SQL Server (con seguridad y pública): migración, format y Release.
+
 ## [3.3.0] - 2026-10-14
 ### Añadido
 - **`--email smtp`**: emails reales con MailKit (`SmtpEmailSender`, opciones validadas al arrancar, `Smtp:Password` en secretos). En desarrollo, `docker-compose` levanta Mailpit (bandeja en `http://localhost:8025`). Un fallo de envío se registra y no tumba la operación.

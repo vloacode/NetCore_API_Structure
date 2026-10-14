@@ -7,6 +7,7 @@ TestResults/
 .env
 .env.*
 appsettings.*.local.json
+env.local.*
 secrets.json
 __pycache__/
 .verify/

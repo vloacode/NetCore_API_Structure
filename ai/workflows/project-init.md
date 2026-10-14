@@ -16,6 +16,7 @@ Pasos 1–6 (fase 0): `AGENTS.md`, `ai/implementation-phases.md`, `ai/suggestion
 ---
 
 ## Paso 1 — Detectar el estado
+- Si ya existe `{Project}.slnx` / `src/` **y** el Perfil de `docs/00-MASTER_CONTEXT.md` está lleno pero el resto de `docs/` tiene `{{...}}`, el proyecto lo creó el asistente `dnx NetCoreApiKit`. La fase 1 ya está hecha: **no regenerar**. Confirmar el perfil con el usuario (pasos 2–3 solo para lo que falte: negocio, módulos, entidades), seguir con los pasos 4–6 y luego la fase 2.
 - Si `src/` ya tiene código o `docs/00-MASTER_CONTEXT.md` ya está lleno, **detenerse**: es un proyecto existente. Ofrecer `upgrade-kit` (si el kit es más nuevo) o un inventario del estado. No reinicializar.
 - Si el usuario adjunta un documento (brief, requerimientos, acta), leerlo completo: servirá para responder la entrevista sin preguntar lo que ya está escrito.
 
@@ -74,7 +75,11 @@ Escribir en `docs/ai/PROJECT_STATUS.md` el plan concreto (`ai/implementation-pha
 
 ## Paso 7 — Fase 1: esqueleto (punto de control 2)
 Delegar en **backend-developer**:
-1. Instalar las plantillas (una vez por máquina) y generar la solución **en la raíz del repositorio**, con las opciones del perfil:
+1. Generar con el asistente sin preguntas, en la raíz del repositorio (prueba la conexión, guarda secretos, compila y crea la migración):
+   ```bash
+   dnx NetCoreApiKit -- --name {Project} --output . --security|--public --database <postgresql|sqlserver> --email <smtp|log> [--analytics] [--apikey] --db-location <docker|local|server|later> --secrets user-secrets --yes
+   ```
+   Con `local`/`server`, la conexión va en la variable `KIT_DB_CONNECTION` (pedirla al usuario; nunca escribirla en archivos). Si el usuario prefiere no usar el asistente, generar a mano:
    ```bash
    dotnet new install ./templates/api
    dotnet new install ./templates/entity

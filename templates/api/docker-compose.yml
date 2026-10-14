@@ -1,4 +1,5 @@
-# Desarrollo local: API + base de datos. Las claves van en un archivo .env (no se sube al repositorio).
+# Desarrollo local: API + base de datos. Las claves y puertos van en un archivo .env (no se sube al repositorio).
+# DB_PORT permite usar otro puerto si ya tienes el motor instalado en esta máquina.
 services:
   db:
 #if (sqlserver)
@@ -6,7 +7,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "${SA_PASSWORD}"
-    ports: ["1433:1433"]
+    ports: ["${DB_PORT:-1433}:1433"]
     volumes: ["dbdata:/var/opt/mssql"]
 #else
     image: postgres:17
@@ -14,7 +15,7 @@ services:
       POSTGRES_DB: "kitapi_db"
       POSTGRES_USER: "kitapi_app"
       POSTGRES_PASSWORD: "${PG_PASSWORD}"
-    ports: ["5432:5432"]
+    ports: ["${DB_PORT:-5432}:5432"]
     volumes: ["dbdata:/var/lib/postgresql/data"]
 #endif
 
@@ -22,7 +23,7 @@ services:
   # Servidor SMTP de pruebas: atrapa todos los emails. Bandeja web en http://localhost:8025
   mail:
     image: axllent/mailpit:latest
-    ports: ["8025:8025", "1025:1025"]
+    ports: ["${MAIL_UI_PORT:-8025}:8025", "${MAIL_SMTP_PORT:-1025}:1025"]
 
 #endif
   api:
