@@ -5,13 +5,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
-## [Sin publicar]
+## [3.5.0] - 2026-10-15
 ### Añadido
 - **Adaptadores para opencode y Hermes Agent** (y cualquier herramienta del estándar agentskills.io), listos para usar con modelos en la nube, locales o privados:
   - `.agents/skills/` (Hermes, opencode, agentskills.io);
   - `.opencode/commands/` (`/project-init`…) y `.opencode/agents/` (los 9 roles; revisores en solo lectura);
   - `opencode.json` con el MCP de Microsoft Learn.
 - `ai/tools-setup.md`: qué lee cada herramienta (Claude Code, opencode, Hermes, Cursor, Copilot, Codex), `hermes skills trust`, MCP en Hermes y cómo servir modelos locales (contexto de 32K+, tool calling).
+- README de NuGet ampliado: qué pregunta el asistente, tabla de opciones, ejemplos sin preguntas, qué genera, uso con cada herramienta de IA y modelos locales.
 - `scripts/sync-adapters.py`: genera todos los adaptadores desde `ai/` y las descripciones de `.claude/`; `check-kit.py` falla si quedan desactualizados. El asistente `dnx NetCoreApiKit` los copia a cada proyecto.
 
 ### Cambiado

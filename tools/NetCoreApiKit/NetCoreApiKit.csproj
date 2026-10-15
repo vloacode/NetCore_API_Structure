@@ -13,7 +13,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>netcoreapi-kit</ToolCommandName>
     <PackageId>NetCoreApiKit</PackageId>
-    <Version>3.4.0</Version>
+    <Version>3.5.0</Version>
     <Authors>NetCore_API_Structure</Authors>
     <Description>Asistente paso a paso para crear APIs ASP.NET Core con el kit NetCore_API_Structure: Controllers, EF Core (Repository + Unit of Work), Identity local + JWT opcional, SQL Server o PostgreSQL, guía para IA incluida.</Description>
     <PackageTags>aspnetcore;webapi;template;efcore;identity;jwt;scaffolding</PackageTags>

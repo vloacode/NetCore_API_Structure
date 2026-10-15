@@ -2,7 +2,7 @@
 
 Kit para que una IA (Claude Code, opencode, Hermes Agent, Cursor, Copilot, Codex, con modelos en la nube o locales) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-> Versión **3.4.0** (novedades en `CHANGELOG.md`). Todas las combinaciones (con o sin seguridad × SQL Server o PostgreSQL) se verifican compilando, migrando y probando contra bases reales.
+> Versión **3.5.0** (novedades en `CHANGELOG.md`). Todas las combinaciones (con o sin seguridad × SQL Server o PostgreSQL) se verifican compilando, migrando y probando contra bases reales.
 
 **Stack:** Controllers · services con `Result<T>` · EF Core con Repository + Unit of Work + Specification · FluentValidation · `Program.cs` como índice con `Extensions/` por área · OpenTelemetry · Identity local + JWT (opcional). Sin MediatR ni AutoMapper.
 
