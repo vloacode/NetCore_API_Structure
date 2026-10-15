@@ -5,9 +5,8 @@
 # Configuración (una vez):
 #   1. nuget.org → tu usuario → Trusted Publishing → nueva política:
 #        Repository Owner: vloacode · Repository: NetCore_API_Structure · Workflow File: publish-tool.yml · Environment: nuget
-#   2. GitHub → Settings → Secrets and variables → Actions → secreto NUGET_USER = tu nombre de usuario de nuget.org
-#      (el nombre del perfil, NO el email).
-#   3. (Recomendado) GitHub → Settings → Environments → "nuget" → Required reviewers: alguien aprueba cada publicación.
+#   2. (Recomendado) GitHub → Settings → Environments → "nuget" → Required reviewers: alguien aprueba cada publicación.
+#   El usuario de nuget.org (nombre del perfil, no el email) va abajo en `user`: no es un secreto.
 name: publish-tool
 
 on:
@@ -50,7 +49,7 @@ jobs:
         uses: NuGet/login@v1
         id: login
         with:
-          user: ${{ secrets.NUGET_USER }}
+          user: VloaCode   # dueño del paquete en nuget.org (perfil, no email)
 
       - name: Publicar en nuget.org
         run: dotnet nuget push "artifacts/*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
