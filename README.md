@@ -25,6 +25,7 @@ Después genera la solución, copia la guía para IA, prueba la conexión, guard
 
 - **Sin preguntas** (IA, CI, scripts): `dnx NetCoreApiKit -- --name MiApi --security --database postgresql --email smtp --db-location docker --yes` (ver `--help`).
 - **Antes de que esté publicado en NuGet**, o para probar cambios del kit: `dotnet run --project tools/NetCoreApiKit` desde este repositorio.
+- **Publicar una versión** (mantenedores): tag `vX.Y.Z` igual a `KIT_VERSION`. `publish-tool.yml` verifica y publica con Trusted Publishing; la configuración está en el encabezado del workflow.
 - **Visual Studio**: con las plantillas instaladas (el asistente lo hace), *Archivo → Nuevo proyecto → "ASP.NET Core Web API (kit NetCore_API_Structure)"* muestra las mismas opciones.
 
 ## Qué incluye

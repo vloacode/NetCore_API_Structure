@@ -1,5 +1,13 @@
 # Publica el asistente `dnx NetCoreApiKit` en nuget.org al crear un tag v* (por ejemplo v3.4.0).
-# Requiere el secreto del repositorio NUGET_API_KEY (API key de nuget.org con permiso para el paquete NetCoreApiKit).
+# Usa Trusted Publishing (OIDC): no hay API key guardada. GitHub emite un token de un solo uso, nuget.org lo valida
+# contra la política de confianza y devuelve una API key temporal (1 hora).
+#
+# Configuración (una vez):
+#   1. nuget.org → tu usuario → Trusted Publishing → nueva política:
+#        Repository Owner: vloacode · Repository: NetCore_API_Structure · Workflow File: publish-tool.yml · Environment: nuget
+#   2. GitHub → Settings → Secrets and variables → Actions → secreto NUGET_USER = tu nombre de usuario de nuget.org
+#      (el nombre del perfil, NO el email).
+#   3. (Recomendado) GitHub → Settings → Environments → "nuget" → Required reviewers: alguien aprueba cada publicación.
 name: publish-tool
 
 on:
@@ -9,6 +17,10 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: nuget          # debe coincidir con el Environment de la política en nuget.org
+    permissions:
+      contents: read
+      id-token: write           # permite a GitHub emitir el token OIDC para este job
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -33,5 +45,12 @@ jobs:
       - name: Empaquetar
         run: dotnet pack tools/NetCoreApiKit -c Release -o artifacts -p:Version=${GITHUB_REF_NAME#v}
 
+      # Justo antes del push: la API key temporal vence en 1 hora y cada token sirve una sola vez.
+      - name: NuGet login (OIDC → API key temporal)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Publicar en nuget.org
-        run: dotnet nuget push "artifacts/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

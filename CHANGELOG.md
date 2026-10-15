@@ -16,7 +16,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - `AddLocalSettings()`: carga `appsettings.{Env}.local.json` (ignorado por git) antes de user-secrets y de las variables de entorno.
 - `docker-compose`: puertos configurables (`DB_PORT`, `MAIL_UI_PORT`, `MAIL_SMTP_PORT`) para convivir con un motor ya instalado.
 - `ide.host.json`: las opciones de la plantilla aparecen en *Nuevo proyecto* de Visual Studio.
-- `publish-tool.yml`: publica en nuget.org al crear un tag `v*` (secreto `NUGET_API_KEY`).
+- `publish-tool.yml`: publica en nuget.org al crear un tag `v*` con **Trusted Publishing** (OIDC, sin API key guardada; secreto `NUGET_USER` con el nombre de usuario y environment `nuget`).
 - `verify-wizard.py` y su job de CI.
 
 ### Corregido
