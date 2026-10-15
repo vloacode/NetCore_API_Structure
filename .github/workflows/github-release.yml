@@ -1,0 +1,51 @@
+# Crea (o actualiza) el GitHub Release de cada versión con sus notas del CHANGELOG.md.
+# Automático al subir un tag v* (junto con publish-tool.yml). También se puede correr a mano para un tag existente:
+# Actions → github-release → Run workflow → tag (ej. v3.5.0).
+name: github-release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag existente (ej. v3.5.0)"
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # crear el release
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Notas de la versión desde CHANGELOG.md
+        run: |
+          VERSION="${TAG#v}"
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "Ver CHANGELOG.md." > notes.md
+          fi
+          {
+            echo ""
+            echo "---"
+            echo "**Usar esta versión:** \`dnx NetCoreApiKit@$VERSION\` · [NuGet](https://www.nuget.org/packages/NetCoreApiKit/$VERSION)"
+          } >> notes.md
+
+      - name: Crear o actualizar el release
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release edit "$TAG" --title "Kit ${TAG#v}" --notes-file notes.md
+          else
+            gh release create "$TAG" --title "Kit ${TAG#v}" --notes-file notes.md --verify-tag
+          fi

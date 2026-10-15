@@ -58,6 +58,7 @@ dotnet run --project tools/NetCoreApiKit
    ```
 4. `.github/workflows/publish-tool.yml` verifica (`verify-wizard.py --quick`), empaqueta y publica en nuget.org con **Trusted Publishing** (OIDC, sin API key guardada). Es automático, sin aprobación.
 5. nuget.org tarda unos minutos en validar e indexar. Después funciona `dnx NetCoreApiKit`.
+6. En paralelo, `.github/workflows/github-release.yml` crea el **GitHub Release** con las notas de esa versión del `CHANGELOG.md` (por eso la entrada del CHANGELOG debe estar antes del tag). Para un tag ya existente: *Actions → github-release → Run workflow* con el tag.
 
 Configuración de Trusted Publishing (ya hecha): política en nuget.org con owner `vloacode`, repositorio `NetCore_API_Structure`, workflow `publish-tool.yml` y environment `nuget`; el usuario de nuget.org va en el workflow. Si el tag no coincide con `KIT_VERSION`, el workflow falla antes de publicar.
 
