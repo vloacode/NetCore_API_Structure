@@ -45,9 +45,11 @@
     <KitPayload Include="$(KitRoot)docs\**\*" KitPath="docs\" />
     <KitPayload Include="$(KitRoot).claude\**\*" KitPath=".claude\" />
     <KitPayload Include="$(KitRoot).cursor\**\*" KitPath=".cursor\" />
+    <KitPayload Include="$(KitRoot).agents\**\*" KitPath=".agents\" />
+    <KitPayload Include="$(KitRoot).opencode\**\*" KitPath=".opencode\" />
     <KitPayload Include="$(KitRoot)scripts\hooks\**\*" Exclude="$(KitRoot)scripts\hooks\**\__pycache__\**" KitPath="scripts\hooks\" />
-    <KitPayload Include="$(KitRoot)scripts\check-kit.py" KitPath="scripts\" />
-    <KitPayload Include="$(KitRoot)AGENTS.md;$(KitRoot)CLAUDE.md;$(KitRoot)KIT_VERSION;$(KitRoot).mcp.json" KitPath="" />
+    <KitPayload Include="$(KitRoot)scripts\check-kit.py;$(KitRoot)scripts\sync-adapters.py" KitPath="scripts\" />
+    <KitPayload Include="$(KitRoot)AGENTS.md;$(KitRoot)CLAUDE.md;$(KitRoot)KIT_VERSION;$(KitRoot).mcp.json;$(KitRoot)opencode.json" KitPath="" />
     <KitPayload Include="$(KitRoot).github\copilot-instructions.md" KitPath=".github\" />
     <KitPayload Include="$(KitRoot).vscode\mcp.json" KitPath=".vscode\" />
     <None Include="@(KitPayload)" Link="kit\%(KitPath)%(RecursiveDir)%(Filename)%(Extension)"

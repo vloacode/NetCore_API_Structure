@@ -19,8 +19,9 @@ public static partial class ProjectGenerator
     /// <summary>Elementos de la guía que se copian al proyecto. Lo propio del kit (templates/, scripts/verify/, su CI) no.</summary>
     private static readonly string[] GuideEntries =
     [
-        "AGENTS.md", "CLAUDE.md", "KIT_VERSION", ".mcp.json", "ai", "standards", "docs", ".claude", ".cursor",
-        Path.Combine("scripts", "hooks"), Path.Combine("scripts", "check-kit.py"),
+        "AGENTS.md", "CLAUDE.md", "KIT_VERSION", ".mcp.json", "opencode.json", "ai", "standards", "docs",
+        ".claude", ".agents", ".opencode", ".cursor",
+        Path.Combine("scripts", "hooks"), Path.Combine("scripts", "check-kit.py"), Path.Combine("scripts", "sync-adapters.py"),
         Path.Combine(".github", "copilot-instructions.md"), Path.Combine(".vscode", "mcp.json")
     ];
 

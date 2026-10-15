@@ -34,7 +34,7 @@ Este archivo es la **entrada universal**. Lo leen Claude Code, Cursor, Copilot, 
 | `ai/references.md` | Documentación oficial por tema y cómo buscar en ella | **No** |
 | `docs/` | Lo propio del proyecto: visión, requerimientos, dominio, módulos, decisiones, estado | **Sí**, siempre actualizado |
 | `src/`, `tests/`, `{Project}.slnx` | Código de la solución (generado con `kitapi`) | Sí |
-| `.claude/`, `.cursor/`, `.vscode/`, `.github/copilot-instructions.md`, `.mcp.json` | Adaptadores por herramienta y MCP de Microsoft Learn | No |
+| `.claude/`, `.agents/`, `.opencode/`, `opencode.json`, `.cursor/`, `.vscode/`, `.github/copilot-instructions.md`, `.mcp.json` | Adaptadores por herramienta (Claude Code, opencode, Hermes, Cursor, Copilot…) y MCP de Microsoft Learn. Qué lee cada una: `ai/tools-setup.md` | No |
 
 ## 4. Cómo trabajar una tarea
 1. **Clasifica** la tarea (inicializar proyecto, nuevo módulo, nueva entidad, endpoint, cambio de BD, revisión, incidente...).
@@ -90,6 +90,7 @@ dotnet user-secrets set "<Clave>" "<Valor>" --project src/{Project}.Api
 - Claude Code aplica además hooks automáticos (`.claude/settings.json`). Con otras IAs, cumplir lo mismo a mano: nada de secretos en `appsettings*.json`, no editar `standards/` ni `ai/` en un proyecto y no terminar sin `dotnet build`.
 
 ## 10. Para modelos con contexto limitado (IA local)
+- Configuración de cada herramienta (opencode, Hermes…) y del servidor del modelo (contexto de 32K+, tool calling): `ai/tools-setup.md`.
 - Lee **solo** el context pack de la tarea o la fase actual. Cada archivo de `ai/` y `standards/` se entiende por sí solo.
 - Sigue `ai/implementation-phases.md`: una fase o una entidad por sesión, guardando el avance en `PROJECT_STATUS.md`. Compila entre pasos.
 - Genera con las plantillas en lugar de escribir código largo: menos tokens y menos errores.

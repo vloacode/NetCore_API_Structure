@@ -19,6 +19,14 @@ Reglas:
 4. Una corrección que aplica a varias versiones se hace en la rama más antigua con soporte y se lleva a las demás (`git cherry-pick`).
 5. Cada rama tiene su propio `KIT_VERSION` y `CHANGELOG.md`; la rama nueva arranca con un MAJOR nuevo.
 
+## Adaptadores de las herramientas de IA
+Al agregar, renombrar o borrar un flujo (`ai/workflows/`) o un rol (`ai/roles/`):
+1. Crear o actualizar su adaptador de Claude Code (`.claude/skills/<flujo>/SKILL.md` o `.claude/agents/<rol>.md`); su `description` es la que usan las demás herramientas.
+2. Correr `python scripts/sync-adapters.py`: regenera `.agents/skills/` (Hermes, agentskills.io), `.opencode/commands/` y `.opencode/agents/`.
+3. `python scripts/check-kit.py` falla si alguno quedó desactualizado.
+
+Qué lee cada herramienta y cómo configurar modelos locales: `ai/tools-setup.md`.
+
 ## Versionado del kit
 `KIT_VERSION` + `CHANGELOG.md` (formato Keep a Changelog):
 - **MAJOR**: cambio incompatible para los proyectos (estructura, plantillas que obligan a migrar código).

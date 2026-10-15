@@ -6,6 +6,7 @@ Comprueba:
   3. Que cada skill (.claude/skills/<n>/SKILL.md) tenga frontmatter válido y su flujo en ai/workflows.
   4. Tamaño de los archivos de ai/ y standards/ (aviso > 300 líneas, error > 450) por modelos de contexto corto.
   5. Solo en el kit sin inicializar: que no queden nombres de proyectos o entidades de ejemplo (md y templates/).
+  7. Que los adaptadores de opencode / Hermes / agentskills.io (.agents/, .opencode/) estén al día con ai/.
   6. Que el código no vuelva a los md: bloques C# de más de 40 líneas en ai/, standards/ o docs/ son error
      (el código vive en templates/ y los standards lo enlazan).
 
@@ -123,6 +124,14 @@ for folder in ("ai", "standards", "docs"):
                     fence_open = False
             elif fence_open:
                 count += 1
+
+# 7. Adaptadores de opencode, Hermes y agentskills.io (generados por scripts/sync-adapters.py)
+sync = ROOT / "scripts" / "sync-adapters.py"
+if sync.exists():
+    import subprocess
+    result = subprocess.run([sys.executable, str(sync), "--check"], capture_output=True, text=True, encoding="utf-8")
+    for line in result.stdout.splitlines():
+        errors.append(f"{line} → correr python scripts/sync-adapters.py")
 
 for warning in warnings:
     print(f"AVISO  {warning}")

@@ -1,6 +1,6 @@
 # NetCore_API_Structure
 
-Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
+Kit para que una IA (Claude Code, opencode, Hermes Agent, Cursor, Copilot, Codex, con modelos en la nube o locales) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
 > Versión **3.4.0** (novedades en `CHANGELOG.md`). Todas las combinaciones (con o sin seguridad × SQL Server o PostgreSQL) se verifican compilando, migrando y probando contra bases reales.
 
@@ -32,6 +32,7 @@ Después genera la solución, copia la guía para IA, prueba la conexión, guard
 |---|---|
 | `AGENTS.md` | Entrada universal para cualquier IA: stack, reglas, mapa y Definition of Done |
 | `CLAUDE.md` | Lo mismo para Claude Code, más cómo usar sus comandos y subagentes |
+| Adaptadores por herramienta | Claude Code (`.claude/`), opencode (`.opencode/`, `opencode.json`), Hermes Agent y estándar agentskills.io (`.agents/skills/`), Cursor, Copilot. Funcionan igual con modelos en la nube, locales o privados: `ai/tools-setup.md` |
 | `tools/NetCoreApiKit/` | El asistente `dnx NetCoreApiKit` (pasos interactivos o flags) |
 | `templates/` | Plantillas `dotnet new`: `kitapi` (la solución completa según el perfil) y `kit-entity` (cada entidad en `Features/{Entities}/`, 4 archivos + test). Son la fuente de verdad del código |
 | `standards/` | Las reglas: arquitectura, persistencia, API, autenticación, entidades, testing y despliegue. Cortos y enlazados al código real |

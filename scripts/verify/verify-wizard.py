@@ -93,6 +93,9 @@ def case_quick():
     check("perfil lleno (Security, ApiKey, Database)",
           "| Security | disabled |" in profile and "| ApiKey | enabled |" in profile and "| Database | sqlserver |" in profile)
     check("guía para IA copiada", (project / "AGENTS.md").exists() and (project / "standards").exists() and (project / ".claude").exists())
+    check("adaptadores de opencode y Hermes copiados",
+          (project / "opencode.json").exists() and (project / ".opencode" / "agents").exists()
+          and (project / ".opencode" / "commands").exists() and (project / ".agents" / "skills" / "project-init" / "SKILL.md").exists())
     check("sin archivos propios del kit", not (project / "templates").exists() and not (project / "scripts" / "verify").exists())
     check("migración inicial creada", any((project / "src" / "WizQuick.Api" / "Infrastructure" / "Persistence" / "Migrations").glob("*InitialCreate.cs")))
     kit_check = run([sys.executable, "scripts/check-kit.py"], project, check=False)
