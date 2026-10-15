@@ -84,10 +84,9 @@ dotnet ef database update -p src/{Project}.Api
 dotnet user-secrets set "<Clave>" "<Valor>" --project src/{Project}.Api
 ```
 
-## 9. Verificación del kit
-- Ramas del kit: una por versión de .NET (`Net10`…); `main` copia la LTS más nueva. Los cambios del kit se hacen en la rama de la versión (`standards/16`).
-- `python scripts/check-kit.py` comprueba enlaces, que cada flujo y cada rol tengan su adaptador, y el tamaño de los archivos. Se ejecuta en CI (`.github/workflows/kit-checks.yml`).
-- `python scripts/verify/verify-template.py` genera las plantillas en la matriz perfil × motor (con `kit-entity`, migración, `format` y build Release) y, con `--run-tests` / `--smoke-sqlserver` / `--smoke-postgresql`, las prueba contra la base real. Úsalo al **modificar el kit** (ver `scripts/verify/README.md`).
+## 9. Verificación
+- `python scripts/check-kit.py` comprueba enlaces, que cada flujo y cada rol tengan su adaptador, y el tamaño de los archivos.
+- Si estás trabajando en el **repositorio del kit** (existe `templates/`), no en un proyecto: sigue `MAINTAINING.md` (ramas, verificación de plantillas y del asistente, publicación).
 - Claude Code aplica además hooks automáticos (`.claude/settings.json`). Con otras IAs, cumplir lo mismo a mano: nada de secretos en `appsettings*.json`, no editar `standards/` ni `ai/` en un proyecto y no terminar sin `dotnet build`.
 
 ## 10. Para modelos con contexto limitado (IA local)

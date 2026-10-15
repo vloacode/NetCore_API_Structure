@@ -5,6 +5,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [Sin publicar]
+### Cambiado
+- Instrucciones de mantenedor (ramas, verificación, publicación, adoptar una versión nueva de .NET) movidas a `MAINTAINING.md`. El `README.md`, `AGENTS.md` y `standards/16` quedan solo con lo que sirve a quien usa el kit (y a los proyectos generados, que no reciben `MAINTAINING.md`).
+
 ## [3.4.0] - 2026-10-14
 ### Añadido
 - **Asistente `dnx NetCoreApiKit`** (`tools/NetCoreApiKit`, .NET tool), como `npm create vue@latest`:

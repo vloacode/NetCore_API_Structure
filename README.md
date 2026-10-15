@@ -2,7 +2,7 @@
 
 Kit para que una IA (Claude Code, Cursor, Copilot, Codex o un modelo local) construya **APIs ASP.NET Core** (versión LTS vigente de .NET, hoy .NET 10) con **SQL Server o PostgreSQL**, siempre con la misma arquitectura, de principio a fin: desde la entrevista inicial hasta el código, las pruebas y la documentación.
 
-> Versión **3.4.0** (ver `CHANGELOG.md`). El código vive en plantillas `dotnet new` (`templates/`) verificadas en la matriz perfil (con/sin seguridad) × motor (SQL Server/PostgreSQL): generan, compilan en Release con analizadores, crean migraciones, pasan los tests de integración con Testcontainers y las pruebas de punta a punta contra bases reales (`scripts/verify/`).
+> Versión **3.4.0** (novedades en `CHANGELOG.md`). Todas las combinaciones (con o sin seguridad × SQL Server o PostgreSQL) se verifican compilando, migrando y probando contra bases reales.
 
 **Stack:** Controllers · services con `Result<T>` · EF Core con Repository + Unit of Work + Specification · FluentValidation · `Program.cs` como índice con `Extensions/` por área · OpenTelemetry · Identity local + JWT (opcional). Sin MediatR ni AutoMapper.
 
@@ -24,8 +24,6 @@ Un asistente paso a paso, como `npm create vue@latest`, pregunta:
 Después genera la solución, copia la guía para IA, prueba la conexión, guarda los secretos, compila, crea la migración y te muestra cómo correrla.
 
 - **Sin preguntas** (IA, CI, scripts): `dnx NetCoreApiKit -- --name MiApi --security --database postgresql --email smtp --db-location docker --yes` (ver `--help`).
-- **Antes de que esté publicado en NuGet**, o para probar cambios del kit: `dotnet run --project tools/NetCoreApiKit` desde este repositorio.
-- **Publicar una versión** (mantenedores): tag `vX.Y.Z` igual a `KIT_VERSION`. `publish-tool.yml` verifica y publica con Trusted Publishing; la configuración está en el encabezado del workflow.
 - **Visual Studio**: con las plantillas instaladas (el asistente lo hace), *Archivo → Nuevo proyecto → "ASP.NET Core Web API (kit NetCore_API_Structure)"* muestra las mismas opciones.
 
 ## Qué incluye
@@ -55,8 +53,8 @@ Después genera la solución, copia la guía para IA, prueba la conexión, guard
 
 En los tres modos la IA sugiere de forma proactiva capacidades adicionales (versionado, caché, archivos, jobs…) con referencias actuales.
 
-## Versiones y ramas
-Cada versión de .NET tiene su rama: **`Net10`** (activa) y, en el futuro, `Net11`, `Net12`… `main` es siempre una copia de la rama de la LTS más nueva y es la que usa **Use this template**. Para un proyecto con otra versión de .NET, crear el repositorio desde la rama correspondiente. Política completa en `standards/16-framework-versions.md`.
+## Versiones de .NET
+`dnx NetCoreApiKit` y **Use this template** crean proyectos para la versión LTS más nueva (hoy .NET 10). Cada versión de .NET tiene su rama (`Net10`, y en el futuro `Net11`, `Net12`…): para otra versión, usa la rama que corresponda.
 
 ## Otras formas de crear un proyecto
 1. En GitHub, pulsa **Use this template** → **Create a new repository** (o copia el contenido de este repositorio).
@@ -82,3 +80,6 @@ dotnet new kit-entity -n Customer --app MiApi --security true --database postgre
 
 ## Actualizar un proyecto existente al kit nuevo
 Compara `KIT_VERSION` del proyecto con el de este repositorio y ejecuta `/upgrade-kit`. Solo se actualizan `standards/`, `templates/`, `ai/` y los adaptadores; `docs/` y `src/` del proyecto no se tocan.
+
+## Contribuir
+Cómo se mantiene, verifica y publica el kit: `MAINTAINING.md`.
