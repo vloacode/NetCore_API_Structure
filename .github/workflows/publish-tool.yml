@@ -5,8 +5,9 @@
 # Configuración (una vez):
 #   1. nuget.org → tu usuario → Trusted Publishing → nueva política:
 #        Repository Owner: vloacode · Repository: NetCore_API_Structure · Workflow File: publish-tool.yml · Environment: nuget
-#   2. (Recomendado) GitHub → Settings → Environments → "nuget" → Required reviewers: alguien aprueba cada publicación.
 #   El usuario de nuget.org (nombre del perfil, no el email) va abajo en `user`: no es un secreto.
+# La publicación es automática al crear el tag. Si algún día se quiere aprobar cada versión antes de publicarla:
+#   GitHub → Settings → Environments → "nuget" → Required reviewers.
 name: publish-tool
 
 on:
