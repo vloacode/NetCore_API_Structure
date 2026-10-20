@@ -5,6 +5,7 @@ using KitApi.Application.Abstractions.Persistence;
 using KitApi.Application.Common.Results;
 using KitApi.Application.Common.Security;
 using KitApi.Application.Features.Auth;
+using KitApi.Domain.Common;
 using KitApi.Infrastructure.Persistence;
 
 namespace KitApi.Infrastructure.Identity;
@@ -24,9 +25,9 @@ public sealed class RoleService(RoleManager<AppRole> roleManager, AppDbContext d
         return Result.Success(result);
     }
 
-    public async Task<Result<RoleDetailDto>> GetByIdAsync(Guid id, CancellationToken ct)
+    public async Task<Result<RoleDetailDto>> GetByIdAsync(EntityKey id, CancellationToken ct)
     {
-        var role = await roleManager.FindByIdAsync(id.ToString());
+        var role = await roleManager.FindByIdAsync(id.ToInvariantString());
         return role is null ? RoleErrors.NotFound(id) : await ToDetailAsync(role);
     }
 
@@ -56,9 +57,9 @@ public sealed class RoleService(RoleManager<AppRole> roleManager, AppDbContext d
         return result.IsFailure ? result.Error : await ToDetailAsync(role);
     }
 
-    public async Task<Result<RoleDetailDto>> UpdateAsync(Guid id, UpdateRoleRequest request, CancellationToken ct)
+    public async Task<Result<RoleDetailDto>> UpdateAsync(EntityKey id, UpdateRoleRequest request, CancellationToken ct)
     {
-        var role = await roleManager.FindByIdAsync(id.ToString());
+        var role = await roleManager.FindByIdAsync(id.ToInvariantString());
         if (role is null) return RoleErrors.NotFound(id);
 
         var newName = request.Name.Trim();
@@ -73,9 +74,9 @@ public sealed class RoleService(RoleManager<AppRole> roleManager, AppDbContext d
         return result.Succeeded ? await ToDetailAsync(role) : Error.FromIdentity(result.Errors);
     }
 
-    public async Task<Result> DeleteAsync(Guid id, CancellationToken ct)
+    public async Task<Result> DeleteAsync(EntityKey id, CancellationToken ct)
     {
-        var role = await roleManager.FindByIdAsync(id.ToString());
+        var role = await roleManager.FindByIdAsync(id.ToInvariantString());
         if (role is null) return RoleErrors.NotFound(id);
         if (IsSystem(role.Name)) return RoleErrors.SystemRole;
         if (await db.UserRoles.AnyAsync(ur => ur.RoleId == id, ct)) return RoleErrors.HasUsers;
@@ -87,9 +88,9 @@ public sealed class RoleService(RoleManager<AppRole> roleManager, AppDbContext d
         return Result.Success();
     }
 
-    public async Task<Result<RoleDetailDto>> SetPermissionsAsync(Guid id, SetPermissionsRequest request, CancellationToken ct)
+    public async Task<Result<RoleDetailDto>> SetPermissionsAsync(EntityKey id, SetPermissionsRequest request, CancellationToken ct)
     {
-        var role = await roleManager.FindByIdAsync(id.ToString());
+        var role = await roleManager.FindByIdAsync(id.ToInvariantString());
         if (role is null) return RoleErrors.NotFound(id);
 
         var target = request.Permissions.Distinct().ToList();

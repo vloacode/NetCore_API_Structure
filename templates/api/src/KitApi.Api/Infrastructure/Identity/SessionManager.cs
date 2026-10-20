@@ -7,6 +7,7 @@ using KitApi.Application.Common.Results;
 using KitApi.Application.Common.Security;
 using KitApi.Application.Common.Specifications;
 using KitApi.Application.Features.Auth;
+using KitApi.Domain.Common;
 using KitApi.Infrastructure.Persistence;
 
 namespace KitApi.Infrastructure.Identity;
@@ -18,7 +19,7 @@ internal sealed class RefreshTokenByHashSpec : Specification<RefreshToken>
 
 internal sealed class ActiveRefreshTokensByUserSpec : Specification<RefreshToken>
 {
-    public ActiveRefreshTokensByUserSpec(Guid userId, DateTime now)
+    public ActiveRefreshTokensByUserSpec(EntityKey userId, DateTime now)
         : base(t => t.UserId == userId && t.RevokedAt == null && t.ExpiresAt > now)
         => OrderByDescending(t => t.CreatedAt);
 }
@@ -70,7 +71,7 @@ public sealed class SessionManager(
         if (stored.ExpiresAt <= Now)
             return AuthErrors.InvalidRefreshToken;
 
-        var user = await userManager.FindByIdAsync(stored.UserId.ToString());
+        var user = await userManager.FindByIdAsync(stored.UserId.ToInvariantString());
         if (user is null || !user.IsActive || await userManager.IsLockedOutAsync(user))
         {
             await RevokeFamilyAsync(stored.UserId, stored.FamilyId, "User not allowed", ct);
@@ -96,7 +97,7 @@ public sealed class SessionManager(
             await RevokeFamilyAsync(stored.UserId, stored.FamilyId, "Logout", ct);
     }
 
-    public Task<int> RevokeFamilyAsync(Guid userId, Guid familyId, string reason, CancellationToken ct)
+    public Task<int> RevokeFamilyAsync(EntityKey userId, Guid familyId, string reason, CancellationToken ct)
     {
         var now = Now;
         return _tokens.ExecuteUpdateAsync(
@@ -104,7 +105,7 @@ public sealed class SessionManager(
             s => s.SetProperty(t => t.RevokedAt, now).SetProperty(t => t.RevokedReason, reason), ct);
     }
 
-    public Task<int> RevokeAllAsync(Guid userId, string reason, CancellationToken ct)
+    public Task<int> RevokeAllAsync(EntityKey userId, string reason, CancellationToken ct)
     {
         var now = Now;
         return _tokens.ExecuteUpdateAsync(
@@ -112,7 +113,7 @@ public sealed class SessionManager(
             s => s.SetProperty(t => t.RevokedAt, now).SetProperty(t => t.RevokedReason, reason), ct);
     }
 
-    public Task<IReadOnlyList<SessionDto>> GetActiveSessionsAsync(Guid userId, CancellationToken ct)
+    public Task<IReadOnlyList<SessionDto>> GetActiveSessionsAsync(EntityKey userId, CancellationToken ct)
         => _tokens.ListAsync(new ActiveRefreshTokensByUserSpec(userId, Now),
             t => new SessionDto(t.FamilyId, t.CreatedAt, t.ExpiresAt, t.CreatedByIp, t.UserAgent), ct);
 

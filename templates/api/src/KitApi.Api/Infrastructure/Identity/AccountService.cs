@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using KitApi.Application.Abstractions.Services;
 using KitApi.Application.Common.Results;
 using KitApi.Application.Features.Auth;
+using KitApi.Domain.Common;
 
 namespace KitApi.Infrastructure.Identity;
 
@@ -173,7 +174,7 @@ public sealed class AccountService(
     }
 
     private async Task<AppUser?> GetCurrentUserAsync()
-        => currentUser.UserId is { } id ? await userManager.FindByIdAsync(id.ToString()) : null;
+        => currentUser.UserId is { } id ? await userManager.FindByIdAsync(id.ToInvariantString()) : null;
 
     private async Task<UserProfileDto> ToProfileAsync(AppUser user, CancellationToken ct)
     {

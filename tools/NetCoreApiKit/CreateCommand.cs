@@ -85,6 +85,11 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
 
         var database = s.Database ?? Choose("Base de datos:", "postgresql", ("PostgreSQL", "postgresql"), ("SQL Server", "sqlserver"));
 
+        var key = s.Key ?? Choose("Llave primaria de todas las tablas (usuarios, roles y entidades; las relaciones usan el mismo tipo):", "guid",
+            ("Guid v7 (por defecto: no revela cuántos registros hay y se ordena por fecha)", "guid"),
+            ("int (autoincremental)", "int"),
+            ("long / bigint (autoincremental, para tablas muy grandes)", "long"));
+
         var email = !security ? "log" : s.Email ?? Choose("Emails (confirmación de cuenta, reset de contraseña):", "smtp",
             ("SMTP real (con Mailpit para probar en local)", "smtp"), ("Solo al log (desarrollo)", "log"));
 
@@ -128,7 +133,7 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
         var existingDb = ExistingDbMode.None;
         if (connection is { } current)
         {
-            (connection, existingDb) = await ResolveExistingDatabaseAsync(database, current, s);
+            (connection, existingDb, key) = await ResolveExistingDatabaseAsync(database, current, key, s);
             if (connection is null)
                 location = DbLocation.Later;
         }
@@ -166,7 +171,7 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
 
         return new ProjectChoices
         {
-            Name = name, OutputDirectory = output, Security = security, ApiKey = apiKey, Database = database, Email = email,
+            Name = name, OutputDirectory = output, Security = security, ApiKey = apiKey, Database = database, Email = email, Key = key,
             Analytics = analytics, DbLocation = location, ConnectionString = connection, ApplyMigrations = applyMigrations, ExistingDb = existingDb,
             SecretStores = stores, PersistEnvironment = persistEnv, Git = git, TemplateHive = s.TemplateHive
         };
@@ -176,16 +181,42 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
     /// Si la base ya tiene tablas, muestra cuáles (Identity y otras, con filas) y pregunta qué hacer.
     /// Nunca se borra nada: o se respalda, o se reutiliza, o se usa otra base, o no se toca.
     /// </summary>
-    private async Task<(string? Connection, ExistingDbMode Mode)> ResolveExistingDatabaseAsync(string database, string connection, CreateSettings s)
+    private async Task<(string? Connection, ExistingDbMode Mode, string Key)> ResolveExistingDatabaseAsync(
+        string database, string connection, string key, CreateSettings s)
     {
         while (true)
         {
             var tables = await SchemaInspector.ListTablesAsync(database, connection);
             if (tables.Count == 0)
-                return (connection, ExistingDbMode.None);
+                return (connection, ExistingDbMode.None, key);
 
             var rows = await SchemaInspector.EstimateRowsAsync(database, connection);
             ShowExistingTables(tables, rows);
+
+            // Si Identity ya existe con otro tipo de llave, reutilizarla rompería las FK: se propone usar el mismo tipo.
+            var existingKey = SchemaInspector.DetectIdentityKey(tables);
+            var keyMismatch = existingKey is not null && existingKey != key;
+            if (keyMismatch)
+            {
+                AnsiConsole.MarkupLine($"  [yellow]![/] La base usa llave [bold]{KeyLabel(existingKey!)}[/] (AspNetUsers.Id) y el proyecto usaría [bold]{KeyLabel(key)}[/]: " +
+                                       "las relaciones con esas tablas no coincidirían.");
+                if (s.Key is null && !_interactive)
+                {
+                    key = existingKey!;
+                    keyMismatch = false;
+                    AnsiConsole.MarkupLine($"  [green]✔[/] Se usa {KeyLabel(key)} como llave del proyecto, igual que la base (usa --key para elegir otra).");
+                }
+                else if (_interactive)
+                {
+                    var adopt = $"Usar {KeyLabel(existingKey!)} en todo el proyecto (recomendado: permite reutilizar esta base)";
+                    var keep = $"Mantener {KeyLabel(key)} (solo se podrá respaldar lo existente y crear tablas nuevas)";
+                    if (AnsiConsole.Prompt(new SelectionPrompt<string>().Title("¿Qué llave primaria uso?").AddChoices(adopt, keep)) == adopt)
+                    {
+                        key = existingKey!;
+                        keyMismatch = false;
+                    }
+                }
+            }
 
             var flag = s.ExistingDb switch
             {
@@ -194,8 +225,11 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
                 "skip" => ExistingDbMode.Skip,
                 _ => (ExistingDbMode?)null
             };
+            if (flag == ExistingDbMode.Reuse && keyMismatch)
+                throw new StepFailedException($"No se puede reutilizar la base: usa llave {KeyLabel(existingKey!)} y elegiste {KeyLabel(key)}. " +
+                                              $"Usa --key {existingKey} para reutilizarla, o --existing-db backup para respaldarla y crear tablas nuevas.");
             if (flag is not null)
-                return (connection, flag.Value);
+                return (connection, flag.Value, key);
             if (!_interactive)
                 throw new StepFailedException("La base ya tiene tablas. Indica qué hacer con --existing-db backup (respaldarlas y crear nuevas), " +
                                               "--existing-db reuse (usar las existentes y crear lo que falte) o --existing-db skip (no tocarla).");
@@ -206,10 +240,10 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
             const string skip = "No tocar la base (solo dejar la migración lista)";
             var answer = AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("La base ya tiene tablas. ¿Qué hago? [grey](nada se borra; antes de aplicar te muestro el detalle)[/]")
-                .AddChoices(backup, reuse, other, skip));
-            if (answer == backup) return (connection, ExistingDbMode.Backup);
-            if (answer == reuse) return (connection, ExistingDbMode.Reuse);
-            if (answer == skip) return (connection, ExistingDbMode.Skip);
+                .AddChoices(keyMismatch ? [backup, other, skip] : [backup, reuse, other, skip]));
+            if (answer == backup) return (connection, ExistingDbMode.Backup, key);
+            if (answer == reuse) return (connection, ExistingDbMode.Reuse, key);
+            if (answer == skip) return (connection, ExistingDbMode.Skip, key);
 
             var newName = AnsiConsole.Prompt(new TextPrompt<string>("  Nombre de la otra base:"));
             connection = DatabaseSetup.WithDatabase(database, connection, newName);
@@ -217,13 +251,15 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
             if (!check.Ok)
             {
                 AnsiConsole.MarkupLine($"  [red]✘ No se pudo conectar:[/] {Markup.Escape(check.Message)}");
-                return (null, ExistingDbMode.None);
+                return (null, ExistingDbMode.None, key);
             }
             AnsiConsole.MarkupLine($"  [green]✔[/] {Markup.Escape(check.Message)}");
         }
     }
 
-    private static void ShowExistingTables(Dictionary<string, HashSet<string>> tables, Dictionary<string, long> rows)
+    private static string KeyLabel(string key) => key switch { "int" => "int", "long" => "long (bigint)", _ => "Guid" };
+
+    private static void ShowExistingTables(Dictionary<string, Dictionary<string, string>> tables, Dictionary<string, long> rows)
     {
         var table = new Table().Border(TableBorder.Rounded).Title("[yellow]La base ya tiene tablas[/]")
             .AddColumn("Tabla").AddColumn(new TableColumn("Filas").RightAligned()).AddColumn("");
@@ -293,6 +329,7 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
         var table = new Table().Border(TableBorder.Rounded).HideHeaders().AddColumn("").AddColumn("");
         table.AddRow("Proyecto", $"[bold]{c.Name}[/] → {Markup.Escape(c.OutputDirectory)}");
         table.AddRow("Tipo", c.Security ? "Con seguridad (Identity + JWT + 2FA + permisos)" : c.ApiKey ? "Pública con API key en escrituras" : "Pública");
+        table.AddRow("Llave primaria", $"{KeyLabel(c.Key)} en todas las tablas y relaciones");
         table.AddRow("Base de datos", $"{(c.PostgreSql ? "PostgreSQL" : "SQL Server")} — {LocationLabel(c.DbLocation)}{(c.ApplyMigrations ? ", se crean las tablas" : "")}");
         if (c.Security)
             table.AddRow("Emails", c.Smtp ? "SMTP (Mailpit en local)" : "Al log");
@@ -395,7 +432,26 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
         var rows = await SchemaInspector.EstimateRowsAsync(c.Database, c.ConnectionString!);
         var schema = SchemaInspector.BackupSchemaName();
 
-        if (c.ExistingDb == ExistingDbMode.Backup)
+        // Reutilizar exige que Id y FK tengan el mismo tipo que el proyecto; si no, solo queda respaldar y crear nuevas.
+        var mode = c.ExistingDb;
+        if (mode == ExistingDbMode.Reuse && plan.KeyConflicts.Count > 0)
+        {
+            var conflicts = new Table().Border(TableBorder.Rounded).Title("[red]Llaves con otro tipo: estas tablas no se pueden reutilizar[/]")
+                .AddColumn("Tabla").AddColumn("Columna").AddColumn("En la base").AddColumn("El proyecto usa");
+            foreach (var conflict in plan.KeyConflicts)
+                conflicts.AddRow(Markup.Escape(conflict.Table), Markup.Escape(conflict.Column), KeyLabel(conflict.Existing), KeyLabel(conflict.Expected));
+            AnsiConsole.Write(conflicts);
+            if (!_interactive)
+                throw new StepFailedException("No se puede reutilizar la base: hay llaves con otro tipo (ver la tabla). La base no se tocó y el proyecto " +
+                                              "quedó generado con la migración lista. Usa --existing-db backup o crea el proyecto con el --key que usa la base.");
+            const string toBackup = "Respaldar las tablas existentes y crear nuevas";
+            if (AnsiConsole.Prompt(new SelectionPrompt<string>().Title("¿Qué hago?")
+                    .AddChoices(toBackup, "No aplicar (dejar la migración lista)")) != toBackup)
+                return (false, null);
+            mode = ExistingDbMode.Backup;
+        }
+
+        if (mode == ExistingDbMode.Backup)
         {
             if (plan.ExistingTables.Count == 0)
             {

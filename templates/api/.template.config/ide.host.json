@@ -4,6 +4,7 @@
   "symbolInfo": [
     { "id": "security", "name": { "text": "Seguridad: usuarios, login JWT, 2FA, roles y permisos" }, "isVisible": true },
     { "id": "database", "name": { "text": "Base de datos" }, "isVisible": true },
+    { "id": "key", "name": { "text": "Llave primaria de todas las tablas (Guid, int o long)" }, "isVisible": true },
     { "id": "email", "name": { "text": "Emails (log o SMTP con MailKit)" }, "isVisible": true },
     { "id": "analytics", "name": { "text": "Analítica de uso del producto" }, "isVisible": true },
     { "id": "apikey", "name": { "text": "API key en escrituras (solo API pública)" }, "isVisible": true },

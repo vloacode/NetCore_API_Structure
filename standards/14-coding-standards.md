@@ -60,7 +60,7 @@ Si otro analizador choca con un patrón del kit, se baja su severidad en `.edito
 | **Primary constructors** para inyección de dependencias | `public sealed class {Entity}Service(IUnitOfWork uow) : I{Entity}Service` |
 | Clases `sealed` por defecto; solo se abren si hay herencia real | `public sealed class ...` |
 | `record` para DTOs, requests y valores inmutables | `public sealed record {Entity}Dto(...)` |
-| Sufijo `Async` en métodos asíncronos; `CancellationToken ct` como último parámetro | `Task<Result> DeleteAsync(int id, CancellationToken ct)` |
+| Sufijo `Async` en métodos asíncronos; `CancellationToken ct` como último parámetro | `Task<Result> DeleteAsync(EntityKey id, CancellationToken ct)` |
 | `var` cuando el tipo es evidente | `var entity = request.ToEntity();` |
 | Cláusulas de guarda y retorno temprano; sin anidar `if` | `if (entity is null) return {Entity}Errors.NotFound(id);` |
 | Nada de strings mágicos repetidos: constantes o `nameof` | `Permissions.{Entities}.Read`, `nameof(GetById)` |

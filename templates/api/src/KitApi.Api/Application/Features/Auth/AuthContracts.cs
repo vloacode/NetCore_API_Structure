@@ -6,13 +6,13 @@ namespace KitApi.Application.Features.Auth;
 // =====================  DTOs: autenticación (anónimos)  =====================
 
 public sealed record RegisterRequest(string Email, string Password, string? FirstName, string? LastName);
-public sealed record ConfirmEmailRequest(Guid UserId, string Token);
+public sealed record ConfirmEmailRequest(EntityKey UserId, string Token);
 public sealed record EmailRequest(string Email);
 public sealed record LoginRequest(string Email, string Password);
 public sealed record TwoFactorLoginRequest(string TwoFactorToken, string Code, bool IsRecoveryCode = false);
 public sealed record RefreshTokenRequest(string RefreshToken);
 public sealed record ResetPasswordRequest(string Email, string Token, string NewPassword);
-public sealed record ConfirmEmailChangeRequest(Guid UserId, string NewEmail, string Token);
+public sealed record ConfirmEmailChangeRequest(EntityKey UserId, string NewEmail, string Token);
 
 public sealed record AuthTokens(
     string AccessToken,
@@ -31,7 +31,7 @@ public sealed record LoginResponse(bool RequiresTwoFactor, string? TwoFactorToke
 // =====================  DTOs: cuenta del usuario autenticado  =====================
 
 public sealed record UserProfileDto(
-    Guid Id, string Email, string? FirstName, string? LastName, string? PhoneNumber,
+    EntityKey Id, string Email, string? FirstName, string? LastName, string? PhoneNumber,
     bool EmailConfirmed, bool TwoFactorEnabled, IReadOnlyList<string> Roles, IReadOnlyList<string> Permissions);
 
 public sealed record UpdateProfileRequest(string? FirstName, string? LastName, string? PhoneNumber);
@@ -53,10 +53,10 @@ public sealed class UserFilter : PaginationParams
     public string? Role { get; init; }
 }
 
-public sealed record UserSummaryDto(Guid Id, string Email, string FullName, bool IsActive, bool EmailConfirmed,
+public sealed record UserSummaryDto(EntityKey Id, string Email, string FullName, bool IsActive, bool EmailConfirmed,
     bool IsLockedOut, IReadOnlyList<string> Roles);
 
-public sealed record UserDetailDto(Guid Id, string Email, string? FirstName, string? LastName, string? PhoneNumber,
+public sealed record UserDetailDto(EntityKey Id, string Email, string? FirstName, string? LastName, string? PhoneNumber,
     bool IsActive, bool EmailConfirmed, bool TwoFactorEnabled, DateTimeOffset? LockoutEnd, int AccessFailedCount,
     DateTime CreatedAt, DateTime? LastLoginAt, IReadOnlyList<string> Roles);
 
@@ -64,8 +64,8 @@ public sealed record CreateUserRequest(string Email, string? FirstName, string? 
 public sealed record LockUserRequest(DateTimeOffset? Until);
 public sealed record SetRolesRequest(IReadOnlyList<string> Roles);
 
-public sealed record RoleDto(Guid Id, string Name, string? Description, int UserCount, bool IsSystem);
-public sealed record RoleDetailDto(Guid Id, string Name, string? Description, bool IsSystem, IReadOnlyList<string> Permissions);
+public sealed record RoleDto(EntityKey Id, string Name, string? Description, int UserCount, bool IsSystem);
+public sealed record RoleDetailDto(EntityKey Id, string Name, string? Description, bool IsSystem, IReadOnlyList<string> Permissions);
 public sealed record CreateRoleRequest(string Name, string? Description, IReadOnlyList<string> Permissions);
 public sealed record UpdateRoleRequest(string Name, string? Description);
 public sealed record SetPermissionsRequest(IReadOnlyList<string> Permissions);
@@ -93,14 +93,14 @@ public static class AuthErrors
 
 public static class UserAdminErrors
 {
-    public static Error NotFound(Guid id) => Error.NotFound("User.NotFound", $"No existe el usuario {id}.");
+    public static Error NotFound(EntityKey id) => Error.NotFound("User.NotFound", $"No existe el usuario {id}.");
     public static Error RolesNotFound(IEnumerable<string> roles) => Error.Validation("User.RolesNotFound", $"Roles inexistentes: {string.Join(", ", roles)}.");
     public static readonly Error CannotModifySelf = Error.Forbidden("User.CannotModifySelf", "No puede aplicar esta acción sobre su propia cuenta.");
 }
 
 public static class RoleErrors
 {
-    public static Error NotFound(Guid id) => Error.NotFound("Role.NotFound", $"No existe el rol {id}.");
+    public static Error NotFound(EntityKey id) => Error.NotFound("Role.NotFound", $"No existe el rol {id}.");
     public static Error NameInUse(string name) => Error.Conflict("Role.NameInUse", $"Ya existe el rol '{name}'.");
     public static Error UnknownPermissions(IEnumerable<string> p) => Error.Validation("Role.UnknownPermissions", $"Permisos inexistentes: {string.Join(", ", p)}.");
     public static readonly Error SystemRole = Error.Forbidden("Role.SystemRole", "Los roles de sistema no se pueden renombrar ni eliminar.");
@@ -143,23 +143,23 @@ public interface IAccountService
 public interface IUserAdminService
 {
     Task<Result<PagedResult<UserSummaryDto>>> GetPagedAsync(UserFilter filter, CancellationToken ct);
-    Task<Result<UserDetailDto>> GetByIdAsync(Guid id, CancellationToken ct);
+    Task<Result<UserDetailDto>> GetByIdAsync(EntityKey id, CancellationToken ct);
     Task<Result<UserDetailDto>> CreateAsync(CreateUserRequest request, CancellationToken ct);
-    Task<Result> LockAsync(Guid id, LockUserRequest request, CancellationToken ct);
-    Task<Result> UnlockAsync(Guid id, CancellationToken ct);
-    Task<Result> SetActiveAsync(Guid id, bool isActive, CancellationToken ct);
-    Task<Result> SetRolesAsync(Guid id, SetRolesRequest request, CancellationToken ct);
-    Task<Result> SendPasswordResetAsync(Guid id, CancellationToken ct);
-    Task<Result> RevokeSessionsAsync(Guid id, CancellationToken ct);
+    Task<Result> LockAsync(EntityKey id, LockUserRequest request, CancellationToken ct);
+    Task<Result> UnlockAsync(EntityKey id, CancellationToken ct);
+    Task<Result> SetActiveAsync(EntityKey id, bool isActive, CancellationToken ct);
+    Task<Result> SetRolesAsync(EntityKey id, SetRolesRequest request, CancellationToken ct);
+    Task<Result> SendPasswordResetAsync(EntityKey id, CancellationToken ct);
+    Task<Result> RevokeSessionsAsync(EntityKey id, CancellationToken ct);
 }
 
 public interface IRoleService
 {
     Task<Result<IReadOnlyList<RoleDto>>> GetAllAsync(CancellationToken ct);
-    Task<Result<RoleDetailDto>> GetByIdAsync(Guid id, CancellationToken ct);
+    Task<Result<RoleDetailDto>> GetByIdAsync(EntityKey id, CancellationToken ct);
     Task<Result<RoleDetailDto>> CreateAsync(CreateRoleRequest request, CancellationToken ct);
-    Task<Result<RoleDetailDto>> UpdateAsync(Guid id, UpdateRoleRequest request, CancellationToken ct);
-    Task<Result> DeleteAsync(Guid id, CancellationToken ct);
-    Task<Result<RoleDetailDto>> SetPermissionsAsync(Guid id, SetPermissionsRequest request, CancellationToken ct);
+    Task<Result<RoleDetailDto>> UpdateAsync(EntityKey id, UpdateRoleRequest request, CancellationToken ct);
+    Task<Result> DeleteAsync(EntityKey id, CancellationToken ct);
+    Task<Result<RoleDetailDto>> SetPermissionsAsync(EntityKey id, SetPermissionsRequest request, CancellationToken ct);
     IReadOnlyList<string> GetAvailablePermissions();
 }

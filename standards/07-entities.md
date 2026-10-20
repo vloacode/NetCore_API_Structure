@@ -43,6 +43,7 @@ dotnet new kit-entity -n Address --plural Addresses --parent Customer --app {Pro
 5. `dotnet format` → `dotnet build` → `dotnet ef migrations add Add{Entity}` (revisar el SQL) → `dotnet test`.
 
 ## Reglas del molde
+- **Llaves:** `Id` y toda FK (`{Parent}Id`, `CustomerId`…) son `EntityKey`, el tipo elegido para el proyecto (`PrimaryKey` en el perfil). Nunca `int`/`long`/`Guid` a mano: así las relaciones coinciden siempre con la tabla a la que apuntan, incluidos los usuarios. FK opcional → `EntityKey?`; validación de FK obligatoria → `NotEmpty()`; rutas `{id}` sin restricción de tipo.
 - El **validador** revisa forma (vacíos, longitudes, rangos). El **service** revisa lo que necesita BD (duplicados, existencia de FKs, estados).
 - La búsqueda de texto usa `Contains` en SQL Server (collation sin mayúsculas) e `ILike` en PostgreSQL (`pg_trgm` en tablas grandes).
 - Update con concurrencia optimista: el cliente devuelve `RowVersion` tal como lo leyó; si no coincide → 409 `{Entity}.Concurrency`.

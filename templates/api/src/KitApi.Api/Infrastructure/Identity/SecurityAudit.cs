@@ -17,8 +17,8 @@ public class SecurityEvent
     public Guid Id { get; set; } = Guid.CreateVersion7();
     public DateTime OccurredAt { get; set; }
     public string Type { get; set; } = string.Empty;
-    public Guid? UserId { get; set; }
-    public Guid? ActorId { get; set; }          // quién hizo la acción (un admin, o el mismo usuario)
+    public EntityKey? UserId { get; set; }
+    public EntityKey? ActorId { get; set; }          // quién hizo la acción (un admin, o el mismo usuario)
     public string? IpAddress { get; set; }
     public string? Details { get; set; }
 }
@@ -47,7 +47,7 @@ public sealed class SecurityAuditLog(
     TimeProvider clock,
     ILogger<SecurityAuditLog> logger) : ISecurityAuditLog
 {
-    public async Task WriteAsync(string type, Guid? userId, string? details = null, CancellationToken ct = default)
+    public async Task WriteAsync(string type, EntityKey? userId, string? details = null, CancellationToken ct = default)
     {
         try
         {

@@ -21,6 +21,7 @@ Diseñar y cuidar el **modelo de datos con EF Core en SQL Server o PostgreSQL** 
 
 ## Reglas
 1. Toda entidad de negocio hereda `BaseEntity` y tiene su `{Entity}Configuration : BaseEntityConfiguration<{Entity}>`.
+1b. `Id` y todas las FK (también las que apuntan a usuarios) son `EntityKey`: el tipo del Perfil (`PrimaryKey`). Nunca `int`/`long`/`Guid` a mano (`standards/02`).
 2. Strings siempre con `HasMaxLength`; decimales con `HasPrecision`; nada de texto sin longitud máxima sin motivo.
 3. FKs de negocio con `OnDelete(DeleteBehavior.Restrict)`: con soft delete, nunca `Cascade`.
 4. Índices únicos **filtrados** por soft delete (`HasFilter(SqlDialect.NotDeleted)`). Índices en las columnas de filtro y orden de las specs.

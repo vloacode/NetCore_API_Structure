@@ -29,7 +29,7 @@ Para logs que se ejecutan muchas veces, usar el generador de código:
 public static partial class {Entity}Log
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "{Entity} {Id} creado por {UserId}")]
-    public static partial void Created(ILogger logger, int id, Guid? userId);
+    public static partial void Created(ILogger logger, EntityKey id, EntityKey? userId);
 }
 // Uso: {Entity}Log.Created(logger, entity.Id, currentUser.UserId);
 ```

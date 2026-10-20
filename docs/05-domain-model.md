@@ -36,13 +36,13 @@ que vienen de BaseEntity. Lo llena product-analyst con database-architect. new-e
 erDiagram
     PARENT ||--o{ ENTITY : "tiene"
     PARENT {
-        int Id
+        EntityKey Id
         string Name
     }
     ENTITY {
-        int Id
+        EntityKey Id
         string Name
-        int ParentId
+        EntityKey ParentId
     }
 ```
 <!-- IA: reemplazar PARENT/ENTITY por los nombres reales. Mantener el diagrama sincronizado con las tablas de arriba. -->

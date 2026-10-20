@@ -90,7 +90,7 @@ Con seguridad, el catálogo de Auth (`Auth.*`, `User.*`, `Role.*`) está en `sta
 ```csharp
 public static class {Entity}Errors
 {
-    public static Error NotFound(int id) => Error.NotFound("{Entity}.NotFound", $"No existe el registro {id}.");
+    public static Error NotFound(EntityKey id) => Error.NotFound("{Entity}.NotFound", $"No existe el registro {id}.");
     public static Error CodeAlreadyExists(string code) => Error.Conflict("{Entity}.CodeAlreadyExists", $"Ya existe un registro con código '{code}'.");
     public static readonly Error ConcurrencyConflict =
         Error.Conflict("{Entity}.Concurrency", "El registro fue modificado por otro usuario. Recargue e intente de nuevo.");

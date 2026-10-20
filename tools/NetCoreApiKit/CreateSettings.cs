@@ -30,6 +30,10 @@ public sealed class CreateSettings : CommandSettings
     [Description("postgresql | sqlserver")]
     public string? Database { get; init; }
 
+    [CommandOption("--key <TIPO>")]
+    [Description("Llave primaria de todas las tablas y sus FK: guid (por defecto) | int | long")]
+    public string? Key { get; init; }
+
     [CommandOption("--email <MODO>")]
     [Description("Solo con seguridad: smtp (MailKit + Mailpit) | log")]
     public string? Email { get; init; }
@@ -88,6 +92,8 @@ public sealed class CreateSettings : CommandSettings
             return ValidationResult.Error("Usa --security o --public, no ambos.");
         if (Database is not null and not ("postgresql" or "sqlserver"))
             return ValidationResult.Error("--database debe ser postgresql o sqlserver.");
+        if (Key is not null and not ("guid" or "int" or "long"))
+            return ValidationResult.Error("--key debe ser guid, int o long.");
         if (Email is not null and not ("smtp" or "log"))
             return ValidationResult.Error("--email debe ser smtp o log.");
         if (DbLocation is not null and not ("docker" or "local" or "server" or "later"))

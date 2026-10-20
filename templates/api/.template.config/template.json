@@ -42,6 +42,26 @@
       "defaultValue": "sqlserver",
       "description": "Motor de base de datos."
     },
+    "key": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "guid",
+          "description": "Guid v7 (ordenable por fecha; no revela cuántos registros hay)"
+        },
+        {
+          "choice": "int",
+          "description": "int identity"
+        },
+        {
+          "choice": "long",
+          "description": "long (bigint) identity"
+        }
+      ],
+      "defaultValue": "guid",
+      "description": "Tipo de la llave primaria de TODAS las tablas (usuarios, roles y entidades) y, por lo tanto, de sus FK. Queda como alias global EntityKey."
+    },
     "analytics": {
       "type": "parameter",
       "datatype": "bool",
@@ -102,6 +122,18 @@
     "useApiKey": {
       "type": "computed",
       "value": "(apikey && !security)"
+    },
+    "keyGuid": {
+      "type": "computed",
+      "value": "(key == \"guid\")"
+    },
+    "keyInt": {
+      "type": "computed",
+      "value": "(key == \"int\")"
+    },
+    "keyLong": {
+      "type": "computed",
+      "value": "(key == \"long\")"
     },
     "smtpEmail": {
       "type": "computed",

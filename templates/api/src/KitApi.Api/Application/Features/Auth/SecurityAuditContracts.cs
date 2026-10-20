@@ -36,23 +36,23 @@ public interface ISecurityAuditLog
     /// <param name="type">Constante de <see cref="SecurityEventTypes"/>.</param>
     /// <param name="userId">Usuario afectado (null si no se conoce, por ejemplo un email inexistente).</param>
     /// <param name="details">Texto corto sin datos sensibles (nunca contraseñas, tokens ni códigos).</param>
-    Task WriteAsync(string type, Guid? userId, string? details = null, CancellationToken ct = default);
+    Task WriteAsync(string type, EntityKey? userId, string? details = null, CancellationToken ct = default);
 }
 
 public sealed record SecurityEventDto(
     Guid Id,
     DateTime OccurredAt,
     string Type,
-    Guid? UserId,
+    EntityKey? UserId,
     string? UserEmail,
-    Guid? ActorId,
+    EntityKey? ActorId,
     string? IpAddress,
     string? Details);
 
 /// <summary>Filtros de la bitácora (query string). Orden: más recientes primero.</summary>
 public sealed class SecurityEventFilter : PaginationParams
 {
-    public Guid? UserId { get; init; }
+    public EntityKey? UserId { get; init; }
     public string? Type { get; init; }
     public DateTime? From { get; init; }
     public DateTime? To { get; init; }

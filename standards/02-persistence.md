@@ -8,7 +8,7 @@
 
 | Pieza | Archivo | Qué hace |
 |---|---|---|
-| `BaseEntity` | `Domain/Common/BaseEntity.cs` | `Id` int, auditoría (`CreatedAt/By`, `UpdatedAt/By`), soft delete (`IsDeleted`, `DeletedAt/By`), `RowVersion` (Guid) |
+| `BaseEntity` | `Domain/Common/BaseEntity.cs` | `Id` (`EntityKey`), auditoría (`CreatedAt/By`, `UpdatedAt/By`), soft delete (`IsDeleted`, `DeletedAt/By`), `RowVersion` (Guid) |
 | `IRepository<T>` / `Repository<T>` | `Abstractions/Persistence`, `Repositories/Repository.cs` | Lecturas con spec y proyección, `AnyAsync`, `Add`, `Remove`, `ExecuteUpdate/DeleteAsync`. **No guarda.** |
 | `SpecificationEvaluator` | `Repositories/SpecificationEvaluator.cs` | Aplica filtro, includes, orden, paginación, tracking y split query de la spec |
 | `IUnitOfWork` / `UnitOfWork` | `UnitOfWork.cs` | `Repository<T>()`, `SaveChangesAsync`, `ExecuteInTransactionAsync` (con la estrategia de reintentos del proveedor) |
@@ -18,6 +18,17 @@
 | `BaseEntityConfiguration<T>` | `Configurations/` | Clave, auditoría, `RowVersion` como token de concurrencia |
 
 **Por qué funciona la transacción:** `IUnitOfWork` es scoped. En un request, todos los services comparten el **mismo `AppDbContext`**, y `UserManager`/`RoleManager` de Identity también. Una transacción abierta con `ExecuteInTransactionAsync` cubre todo, incluido Identity.
+
+## Llave primaria (`EntityKey`)
+**Llave primaria = `EntityKey`.** El tipo (`Guid` v7, `int` o `long`) se elige al crear la solución (`--key`) y queda en `Directory.Build.props` como alias global `EntityKey` y en el Perfil (`PrimaryKey`). Es el mismo para **todas** las tablas (usuarios, roles, entidades) y por lo tanto para **todas** las FK. En el código nunca se escribe `int`, `long` ni `Guid` para un Id o una FK: siempre `EntityKey` (y `EntityKey?` si la FK es opcional). Rutas sin restricción de tipo (`{id}`, no `{id:int}`); FK obligatorias validadas con `NotEmpty()`; conversión a texto con `ToInvariantString()` / `EntityKeys.TryParse`.
+
+| `PrimaryKey` | `EntityKey` es | Cómo se genera el valor | JSON |
+|---|---|---|---|
+| `Guid` (por defecto) | `System.Guid` | En la aplicación (v7, ordenable por fecha; no revela cuántos registros hay) | string |
+| `int` | `System.Int32` | Identity de la base (autoincremental) | número |
+| `long` | `System.Int64` | Identity de la base (`bigint`) | número (en JavaScript, exacto hasta 2^53) |
+
+Usuarios (`AppUser`) y roles (`AppRole`) usan el mismo `EntityKey`, igual que `CreatedBy/UpdatedBy/DeletedBy` de la auditoría y el `UserId` de refresh tokens y eventos de seguridad. Las tablas técnicas sin relaciones entrantes (`RefreshToken`, `SecurityEvent`, eventos de analítica) conservan su `Id` Guid v7 propio.
 
 ## Reglas
 1. Toda entidad de negocio hereda `BaseEntity` y tiene su `{Entity}Configuration : BaseEntityConfiguration<{Entity}>` (en el mismo archivo `{Entity}.cs`, `standards/07`).

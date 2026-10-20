@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Identity;
 
 namespace KitApi.Infrastructure.Identity;
 
-public class AppUser : IdentityUser<Guid>
+public class AppUser : IdentityUser<EntityKey>
 {
+#if (keyGuid)
     public AppUser() => Id = Guid.CreateVersion7();
+#endif
 
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
@@ -17,10 +19,18 @@ public class AppUser : IdentityUser<Guid>
     public string FullName => $"{FirstName} {LastName}".Trim();
 }
 
-public class AppRole : IdentityRole<Guid>
+public class AppRole : IdentityRole<EntityKey>
 {
+#if (keyGuid)
     public AppRole() => Id = Guid.CreateVersion7();
     public AppRole(string name) : this() => Name = name;
+#else
+    public AppRole()
+    {
+    }
+
+    public AppRole(string name) => Name = name;
+#endif
 
     public string? Description { get; set; }
 }
@@ -32,7 +42,7 @@ public class AppRole : IdentityRole<Guid>
 public class RefreshToken
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
-    public Guid UserId { get; set; }
+    public EntityKey UserId { get; set; }
     public AppUser User { get; set; } = null!;
 
     public string TokenHash { get; set; } = string.Empty;

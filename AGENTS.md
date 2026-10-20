@@ -17,6 +17,7 @@ Este archivo es la **entrada universal**. Lo leen Claude Code, Cursor, Copilot, 
 - FluentValidation, ProblemDetails (RFC 9457), OpenAPI (`Microsoft.AspNetCore.OpenApi`) + Scalar, OpenTelemetry.
 - Con seguridad (`Security = enabled`): ASP.NET Core Identity **local** + JWT propio + refresh tokens. Sin proveedores externos.
 - Pruebas: xUnit. Contenedores: Docker. Despliegue opcional: Azure (App Service / Container Apps) o IIS.
+- **Llaves:** `Id` y FK siempre `EntityKey` (el tipo de `PrimaryKey` del perfil: Guid, int o long, igual en todas las tablas). Nunca `int`/`long`/`Guid` a mano para un Id.
 - **El código se genera con las plantillas del kit**: `dotnet new kitapi` (solución) y `dotnet new kit-entity` (cada entidad). No se copia código desde los md.
 - **Prohibido**: AutoMapper, MediatR (salvo ADR), lógica en controllers, `DateTime.Now`, SQL concatenado, secretos en `appsettings.json`.
 

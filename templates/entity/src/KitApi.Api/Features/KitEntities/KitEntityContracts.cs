@@ -8,7 +8,7 @@ namespace KitApi.Features.KitEntities;
 // ---------- DTOs y requests ----------
 
 public sealed record KitEntityDto(
-    int Id,
+    EntityKey Id,
     string Name,
 #if (code)
     string Code,
@@ -17,7 +17,7 @@ public sealed record KitEntityDto(
     bool IsActive,
 #endif
 #if (hasParent)
-    int KitParentId,
+    EntityKey KitParentId,
     string KitParentName,
 #endif
     DateTime CreatedAt,
@@ -31,7 +31,7 @@ public sealed record CreateKitEntityRequest
     public string Code { get; init; } = string.Empty;
 #endif
 #if (hasParent)
-    public int KitParentId { get; init; }
+    public EntityKey KitParentId { get; init; }
 #endif
 }
 
@@ -42,7 +42,7 @@ public sealed record UpdateKitEntityRequest
     public bool IsActive { get; init; }
 #endif
 #if (hasParent)
-    public int KitParentId { get; init; }
+    public EntityKey KitParentId { get; init; }
 #endif
     public string RowVersion { get; init; } = string.Empty;
 }
@@ -52,7 +52,7 @@ public sealed class KitEntityFilter : PaginationParams
 {
     public string? Search { get; init; }
 #if (hasParent)
-    public int? KitParentId { get; init; }
+    public EntityKey? KitParentId { get; init; }
 #endif
 #if (active)
     public bool? IsActive { get; init; }
@@ -65,12 +65,12 @@ public sealed class KitEntityFilter : PaginationParams
 
 public static class KitEntityErrors
 {
-    public static Error NotFound(int id) => Error.NotFound("KitEntity.NotFound", $"No existe el registro {id}.");
+    public static Error NotFound(EntityKey id) => Error.NotFound("KitEntity.NotFound", $"No existe el registro {id}.");
 #if (code)
     public static Error CodeAlreadyExists(string code) => Error.Conflict("KitEntity.CodeAlreadyExists", $"Ya existe un registro con código '{code}'.");
 #endif
 #if (hasParent)
-    public static Error KitParentNotFound(int id) => Error.Validation("KitEntity.KitParentNotFound", $"El KitParent {id} no existe.");
+    public static Error KitParentNotFound(EntityKey id) => Error.Validation("KitEntity.KitParentNotFound", $"El KitParent {id} no existe.");
 #endif
     public static readonly Error ConcurrencyConflict =
         Error.Conflict("KitEntity.Concurrency", "El registro fue modificado por otro usuario. Recargue e intente de nuevo.");
@@ -132,7 +132,7 @@ public sealed class CreateKitEntityRequestValidator : AbstractValidator<CreateKi
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
 #endif
 #if (hasParent)
-        RuleFor(x => x.KitParentId).GreaterThan(0);
+        RuleFor(x => x.KitParentId).NotEmpty();
 #endif
     }
 }
@@ -143,7 +143,7 @@ public sealed class UpdateKitEntityRequestValidator : AbstractValidator<UpdateKi
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
 #if (hasParent)
-        RuleFor(x => x.KitParentId).GreaterThan(0);
+        RuleFor(x => x.KitParentId).NotEmpty();
 #endif
         RuleFor(x => x.RowVersion).NotEmpty().Must(v => Guid.TryParse(v, out _)).WithMessage("Token de concurrencia inválido.");
     }

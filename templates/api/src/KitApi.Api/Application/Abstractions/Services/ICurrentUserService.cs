@@ -2,7 +2,7 @@ namespace KitApi.Application.Abstractions.Services;
 
 public interface ICurrentUserService
 {
-    Guid? UserId { get; }
+    EntityKey? UserId { get; }
     string? Email { get; }
     bool IsAuthenticated { get; }
     bool IsInRole(string role);

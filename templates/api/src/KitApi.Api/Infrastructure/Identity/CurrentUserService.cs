@@ -1,5 +1,6 @@
 using KitApi.Application.Abstractions.Services;
 using KitApi.Application.Common.Security;
+using KitApi.Domain.Common;
 
 namespace KitApi.Infrastructure.Identity;
 
@@ -7,7 +8,7 @@ public sealed class CurrentUserService(IHttpContextAccessor accessor) : ICurrent
 {
     private HttpContext? Context => accessor.HttpContext;
 
-    public Guid? UserId => Guid.TryParse(Context?.User.FindFirst(ClaimNames.Subject)?.Value, out var id) ? id : null;
+    public EntityKey? UserId => EntityKeys.TryParse(Context?.User.FindFirst(ClaimNames.Subject)?.Value, out var id) ? id : null;
     public string? Email => Context?.User.FindFirst(ClaimNames.Email)?.Value;
     public bool IsAuthenticated => Context?.User.Identity?.IsAuthenticated ?? false;
     public bool IsInRole(string role) => Context?.User.IsInRole(role) ?? false;

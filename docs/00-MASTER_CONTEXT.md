@@ -15,7 +15,7 @@ Lo crea project-init y lo actualiza docs-sync. Mientras existan marcadores {{...
 | TwoFactor | {{enabled}} | `enabled` · `disabled` (solo si Security = enabled) |
 | PublicRegistration | {{enabled}} | `enabled` (cualquiera se registra) · `disabled` (solo admin crea usuarios) |
 | ApiKey | {{disabled}} | `enabled` · `disabled` |
-| PrimaryKey | {{int}} | `int` · `Guid` (entidades de negocio) |
+| PrimaryKey | {{Guid}} | `Guid` (v7, por defecto) · `int` · `long` — de **todas** las tablas (usuarios, roles, entidades) y de sus FK; en el código es `EntityKey` |
 | SoftDelete | {{enabled}} | `enabled` · `disabled` |
 | Database | {{sqlserver}} | `sqlserver` · `postgresql` |
 | TargetFramework | {{net10.0}} | versión de .NET (LTS vigente por defecto; `standards/16`) |

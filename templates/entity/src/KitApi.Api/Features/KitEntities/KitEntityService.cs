@@ -13,11 +13,11 @@ namespace KitApi.Features.KitEntities;
 
 public interface IKitEntityService
 {
-    Task<Result<KitEntityDto>> GetByIdAsync(int id, CancellationToken ct);
+    Task<Result<KitEntityDto>> GetByIdAsync(EntityKey id, CancellationToken ct);
     Task<Result<PagedResult<KitEntityDto>>> GetPagedAsync(KitEntityFilter filter, CancellationToken ct);
     Task<Result<KitEntityDto>> CreateAsync(CreateKitEntityRequest request, CancellationToken ct);
-    Task<Result<KitEntityDto>> UpdateAsync(int id, UpdateKitEntityRequest request, CancellationToken ct);
-    Task<Result> DeleteAsync(int id, CancellationToken ct);
+    Task<Result<KitEntityDto>> UpdateAsync(EntityKey id, UpdateKitEntityRequest request, CancellationToken ct);
+    Task<Result> DeleteAsync(EntityKey id, CancellationToken ct);
 }
 
 /// <summary>Se registra solo (AddApplication busca I{Nombre}Service en Features/).</summary>
@@ -28,7 +28,7 @@ public sealed class KitEntityService(IUnitOfWork uow) : IKitEntityService
     private readonly IRepository<KitParent> _parents = uow.Repository<KitParent>();
 #endif
 
-    public async Task<Result<KitEntityDto>> GetByIdAsync(int id, CancellationToken ct)
+    public async Task<Result<KitEntityDto>> GetByIdAsync(EntityKey id, CancellationToken ct)
     {
         var dto = await _repo.FirstOrDefaultAsync(new KitEntityByIdSpec(id), KitEntityMappings.Projection, ct);
         return dto is null ? KitEntityErrors.NotFound(id) : dto;
@@ -57,7 +57,7 @@ public sealed class KitEntityService(IUnitOfWork uow) : IKitEntityService
         return await GetByIdAsync(entity.Id, ct);
     }
 
-    public async Task<Result<KitEntityDto>> UpdateAsync(int id, UpdateKitEntityRequest request, CancellationToken ct)
+    public async Task<Result<KitEntityDto>> UpdateAsync(EntityKey id, UpdateKitEntityRequest request, CancellationToken ct)
     {
         var entity = await _repo.FirstOrDefaultAsync(new KitEntityByIdSpec(id, tracking: true), ct);
         if (entity is null)
@@ -78,7 +78,7 @@ public sealed class KitEntityService(IUnitOfWork uow) : IKitEntityService
         return await GetByIdAsync(id, ct);
     }
 
-    public async Task<Result> DeleteAsync(int id, CancellationToken ct)
+    public async Task<Result> DeleteAsync(EntityKey id, CancellationToken ct)
     {
         var entity = await _repo.GetByIdAsync(id, ct);
         if (entity is null)
@@ -94,7 +94,7 @@ public sealed class KitEntityService(IUnitOfWork uow) : IKitEntityService
 
 public sealed class KitEntityByIdSpec : Specification<KitEntity>
 {
-    public KitEntityByIdSpec(int id, bool tracking = false) : base(e => e.Id == id)
+    public KitEntityByIdSpec(EntityKey id, bool tracking = false) : base(e => e.Id == id)
     {
 #if (hasParent)
         Include(e => e.KitParent);

@@ -7,12 +7,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 
 ## [Sin publicar]
 ### Añadido
+- **Llave primaria elegible: `Guid` (por defecto), `int` o `long`** para **todas** las tablas (usuarios, roles y entidades) y, por lo tanto, para todas las relaciones:
+  - Plantilla: `dotnet new kitapi --key guid|int|long`. El tipo queda como alias global `EntityKey` en `Directory.Build.props`; `AppUser`, `AppRole`, `BaseEntity`, la auditoría (`CreatedBy`…) y los `UserId` usan `EntityKey`.
+  - `kit-entity` genera `Id` y FK con `EntityKey`, rutas `{id}` sin restricción de tipo y FK validadas con `NotEmpty()`: sirve igual para cualquier llave.
+  - Asistente: pregunta la llave (`--key` sin preguntas), la muestra en el resumen y la escribe en el Perfil (`PrimaryKey`).
+  - Base existente: si Identity ya existe con otro tipo de llave, lo detecta y propone usar ese tipo; "reutilizar" se bloquea si algún Id o FK tiene otro tipo (solo queda respaldar y crear nuevas).
+  - Guías para la IA (`AGENTS.md`, `standards/02`, `07`, `15`, `database-architect`, `project-init`): Id y FK siempre `EntityKey`, nunca `int`/`long`/`Guid` a mano.
+  - `verify-template.py` recorre las tres llaves en la matriz (`--key` fuerza una).
 - **Validación previa de bases existentes** en `dnx NetCoreApiKit` (antes fallaba con "la tabla ya existe" si la base tenía Identity de otra app):
   - Al conectar, muestra las tablas existentes (las 7 de Identity con ✔/✘ y las demás) con sus filas, y pregunta qué hacer.
   - **Respaldar y crear nuevas**: mueve intactas las tablas que chocan a un esquema `kit_backup_<fecha>` de la misma base y aplica la migración.
   - **Usar las existentes y crear lo que falte**: compara tabla por tabla y columna por columna con el script real de la migración, crea solo lo que falta (las columnas NOT NULL con un valor por defecto para las filas existentes), copia antes las tablas que modifica a `kit_backup_<fecha>` y registra `InitialCreate` como aplicada.
   - **Otra base** u **omitir**.
   - Siempre muestra el plan (y el SQL, si se pide) antes de aplicar; todo en una transacción. Opción `--existing-db backup|reuse|skip` para el modo sin preguntas; sin ella, se detiene sin tocar nada.
+- Aviso claro cuando Windows (Smart App Control) bloquea la DLL recién compilada y `dotnet ef` falla con "Could not load assembly".
+
+### Cambiado (incompatible)
+- Las entidades de negocio ya no son `int` fijo: usan la llave del proyecto, que por defecto es `Guid`. Para seguir con `int`: `--key int`.
+- Proyectos creados antes de esta versión: para usar el nuevo `kit-entity`, agregar en `Directory.Build.props` `<ItemGroup><Using Include="System.Int32" Alias="EntityKey" /></ItemGroup>` (sus entidades eran `int`).
 
 ## [3.5.0] - 2026-10-15
 ### Añadido

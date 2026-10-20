@@ -8,6 +8,9 @@ namespace NetCoreApiKit;
 /// <summary>Una tabla del modelo que ya existe en la base pero le faltan columnas.</summary>
 public sealed record MissingColumn(string Table, string Column, string Sql);
 
+/// <summary>Una llave (Id o FK) que existe con otro tipo: reutilizar la tabla rompería las relaciones.</summary>
+public sealed record KeyTypeConflict(string Table, string Column, string Existing, string Expected);
+
 /// <summary>
 /// Qué hay que hacer para que una base existente quede como la necesita el proyecto, sin tocar lo que ya está:
 /// crear las tablas que faltan, agregar las columnas que faltan y registrar la migración InitialCreate como aplicada.
@@ -18,6 +21,7 @@ public sealed class SchemaPlan
     public required IReadOnlyList<string> ExistingTables { get; init; }
     public required IReadOnlyList<string> MissingTables { get; init; }
     public required IReadOnlyList<MissingColumn> MissingColumns { get; init; }
+    public required IReadOnlyList<KeyTypeConflict> KeyConflicts { get; init; }
     public required IReadOnlyList<string> Statements { get; init; }      // en orden: tablas, columnas, historial
     public bool NothingToCreate => MissingTables.Count == 0 && MissingColumns.Count == 0;
 }
@@ -28,10 +32,10 @@ public static partial class SchemaInspector
     public static readonly string[] IdentityTables =
         ["AspNetRoles", "AspNetUsers", "AspNetRoleClaims", "AspNetUserClaims", "AspNetUserLogins", "AspNetUserRoles", "AspNetUserTokens"];
 
-    /// <summary>Tablas y columnas del esquema público (PostgreSQL) o dbo (SQL Server). Vacío si la base no existe.</summary>
-    public static async Task<Dictionary<string, HashSet<string>>> ListTablesAsync(string database, string connectionString)
+    /// <summary>Tablas → columnas → tipo, del esquema público (PostgreSQL) o dbo (SQL Server). Vacío si la base no existe.</summary>
+    public static async Task<Dictionary<string, Dictionary<string, string>>> ListTablesAsync(string database, string connectionString)
     {
-        var result = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        var result = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
         await using var connection = Open(database, connectionString);
         try
         {
@@ -44,10 +48,10 @@ public static partial class SchemaInspector
 
         await using var command = connection.CreateCommand();
         command.CommandText = database == "postgresql"
-            ? "SELECT c.table_name, c.column_name FROM information_schema.columns c JOIN information_schema.tables t " +
+            ? "SELECT c.table_name, c.column_name, c.data_type FROM information_schema.columns c JOIN information_schema.tables t " +
               "ON t.table_schema = c.table_schema AND t.table_name = c.table_name " +
               "WHERE c.table_schema = 'public' AND t.table_type = 'BASE TABLE'"
-            : "SELECT c.TABLE_NAME, c.COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS c JOIN INFORMATION_SCHEMA.TABLES t " +
+            : "SELECT c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS c JOIN INFORMATION_SCHEMA.TABLES t " +
               "ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME " +
               "WHERE c.TABLE_SCHEMA = 'dbo' AND t.TABLE_TYPE = 'BASE TABLE'";
         await using var reader = await command.ExecuteReaderAsync();
@@ -55,11 +59,24 @@ public static partial class SchemaInspector
         {
             var table = reader.GetString(0);
             if (!result.TryGetValue(table, out var columns))
-                result[table] = columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            columns.Add(reader.GetString(1));
+                result[table] = columns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            columns[reader.GetString(1)] = reader.GetString(2);
         }
         return result;
     }
+
+    /// <summary>Tipo de llave (guid | int | long) de una base que ya tiene Identity, según AspNetUsers.Id. Null si no hay o no se reconoce.</summary>
+    public static string? DetectIdentityKey(Dictionary<string, Dictionary<string, string>> tables)
+        => tables.TryGetValue("AspNetUsers", out var columns) && columns.TryGetValue("Id", out var type) ? KeyKind(type) : null;
+
+    /// <summary>guid | int | long según el tipo SQL (information_schema o el script de la migración); null si no es un tipo de llave.</summary>
+    public static string? KeyKind(string sqlType) => sqlType.Trim().ToLowerInvariant() switch
+    {
+        "uuid" or "uniqueidentifier" => "guid",
+        "integer" or "int" or "int4" => "int",
+        "bigint" or "int8" => "long",
+        _ => null
+    };
 
     /// <summary>
     /// Compara el script real de la migración inicial (<c>dotnet ef migrations script</c>) con lo que hay en la base
@@ -89,7 +106,7 @@ public static partial class SchemaInspector
         }
     }
 
-    public static SchemaPlan Plan(string database, string script, Dictionary<string, HashSet<string>> existing)
+    public static SchemaPlan Plan(string database, string script, Dictionary<string, Dictionary<string, string>> existing)
     {
         var statements = Split(database, script);
         var createTables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -103,12 +120,23 @@ public static partial class SchemaInspector
         var expected = createTables.Keys.ToList();
         var missingTables = expected.Where(t => !existing.ContainsKey(t)).ToList();
         var missingColumns = new List<MissingColumn>();
+        var keyConflicts = new List<KeyTypeConflict>();
         foreach (var table in expected.Where(existing.ContainsKey))
         {
             foreach (var (column, definition) in Columns(createTables[table]))
             {
-                if (!existing[table].Contains(column))
+                if (!existing[table].TryGetValue(column, out var existingType))
+                {
                     missingColumns.Add(new MissingColumn(table, column, AddColumnSql(database, table, column, definition)));
+                    continue;
+                }
+                // Id y FK (…Id / …_id): si el tipo cambia, las relaciones con las tablas nuevas no coincidirían.
+                if (!IsKeyColumn(column))
+                    continue;
+                var expectedKind = KeyKind(ColumnType(definition));
+                var existingKind = KeyKind(existingType);
+                if (expectedKind is not null && existingKind is not null && expectedKind != existingKind)
+                    keyConflicts.Add(new KeyTypeConflict(table, column, existingKind, expectedKind));
             }
         }
 
@@ -146,6 +174,7 @@ public static partial class SchemaInspector
             ExistingTables = expected.Where(existing.ContainsKey).ToList(),
             MissingTables = missingTables,
             MissingColumns = missingColumns,
+            KeyConflicts = keyConflicts,
             Statements = plan
         };
     }
@@ -275,6 +304,17 @@ public static partial class SchemaInspector
         }
     }
 
+    private static bool IsKeyColumn(string column)
+        => column.Equals("Id", StringComparison.OrdinalIgnoreCase)
+           || column.EndsWith("Id", StringComparison.Ordinal) || column.EndsWith("_id", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Primer token del tipo en la definición de una columna: <c>"Id" uuid NOT NULL</c> → <c>uuid</c>.</summary>
+    private static string ColumnType(string definition)
+    {
+        var match = ColumnTypeRegex().Match(definition);
+        return match.Success ? match.Groups[1].Value : "";
+    }
+
     /// <summary>ALTER TABLE ... ADD con la misma definición; si es NOT NULL sin DEFAULT, agrega un valor por defecto para las filas que ya existen.</summary>
     private static string AddColumnSql(string database, string tableName, string column, string definition)
     {
@@ -320,6 +360,9 @@ public static partial class SchemaInspector
 
     [GeneratedRegex(@"^" + IdentPattern + @"\s+\S+", RegexOptions.IgnoreCase)]
     private static partial Regex ColumnRegex();
+
+    [GeneratedRegex(@"^(?:\[[^\]]+\]|""[^""]+""|\S+)\s+(\w+)")]
+    private static partial Regex ColumnTypeRegex();
 
     [GeneratedRegex(@"INSERT INTO\s+(?:\[__EFMigrationsHistory\]|""__EFMigrationsHistory"")", RegexOptions.IgnoreCase)]
     private static partial Regex InsertHistoryRegex();

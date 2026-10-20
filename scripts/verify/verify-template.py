@@ -5,6 +5,7 @@ Uso:
       Genera las combinaciones (secure/public × sqlserver/postgresql, con analytics) y una mínima
       (pública + PostgreSQL + API key + email SMTP, sin analytics). En cada una: kit-entity (4 entidades: sin opciones, padre + código + activo, solo código, activo + padre),
       migración InitialCreate, dotnet format --verify-no-changes y build Release (analizadores, warnings como errores).
+      Cada combo usa un tipo de llave primaria distinto (guid / int / long) para cubrir los tres; --key fuerza uno.
   python scripts/verify/verify-template.py --profiles public --databases postgresql
   python scripts/verify/verify-template.py --framework net11.0
   python scripts/verify/verify-template.py --run-tests
@@ -110,13 +111,13 @@ public sealed class VerifyParentSeeder(IServiceProvider services, IConfiguration
         encoding="utf-8")
 
 
-def build(name, profile, database, analytics, apikey, framework, with_entities=True, email="log"):
+def build(name, profile, database, analytics, apikey, framework, with_entities=True, email="log", key="guid"):
     folder = WORK / name
     if folder.exists():
         shutil.rmtree(folder)
     folder.mkdir(parents=True)
     options = ["--security", str(profile == "secure").lower(), "--database", database,
-               "--analytics", str(analytics).lower(), "--apikey", str(apikey).lower(), "--email", email, "--framework", framework]
+               "--analytics", str(analytics).lower(), "--apikey", str(apikey).lower(), "--email", email, "--framework", framework, "--key", key]
     dotnet_new(["kitapi", "-n", APP, "-o", APP, *options], folder)
     root = folder / APP
     api = root / "src" / f"{APP}.Api"
@@ -137,7 +138,7 @@ def build(name, profile, database, analytics, apikey, framework, with_entities=T
     run(["dotnet", "format", str(root / f"{APP}.slnx")], root, check=False)
     run(["dotnet", "format", str(root / f"{APP}.slnx"), "--verify-no-changes"], root)
     run(["dotnet", "build", "-c", "Release", "-nologo"], root)
-    print("  generado + kit-entity + migración + format + build Release (API + tests): OK")
+    print(f"  generado (llave {key}) + kit-entity + migración + format + build Release (API + tests): OK")
     return root
 
 
@@ -214,6 +215,7 @@ def main():
     parser.add_argument("--no-minimal", action="store_true", help="omite la combinación mínima (pública + API key, sin analytics)")
     parser.add_argument("--smoke-sqlserver", metavar="CONEXION_SIN_DATABASE")
     parser.add_argument("--smoke-postgresql", metavar="CONEXION_SIN_DATABASE")
+    parser.add_argument("--key", choices=["guid", "int", "long"], help="fuerza un tipo de llave en todos los combos")
     parser.add_argument("--run-tests", action="store_true", help="ejecuta los tests con Testcontainers (requiere Docker)")
     args = parser.parse_args()
     smoke_bases = {"sqlserver": args.smoke_sqlserver, "postgresql": args.smoke_postgresql}
@@ -225,13 +227,18 @@ def main():
     if not args.no_minimal:
         combos.append(("minimal-public-apikey", "public", databases[-1], False, True))
 
+    # Cada tipo de llave primaria pasa por Identity (perfil secure) y por entidades con FK en algún combo.
+    keys = {"secure-sqlserver": "int", "secure-postgresql": "guid", "public-sqlserver": "long",
+            "public-postgresql": "int", "minimal-public-apikey": "long"}
+
     failures = []
     for name, profile, database, analytics, apikey in combos:
-        label = f"{name} / {args.framework}"
+        key = args.key or keys.get(name, "guid")
+        label = f"{name} / {key} / {args.framework}"
         print(f"== {label}")
         try:
             root = build(name, profile, database, analytics, apikey, args.framework,
-                         email="smtp" if name.startswith("minimal") else "log")
+                         email="smtp" if name.startswith("minimal") else "log", key=key)
             if args.run_tests:
                 run_tests(root)
             base = smoke_bases.get(database)

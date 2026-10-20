@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using KitApi.Application.Common.Results;
 using KitApi.Application.Common.Security;
 using KitApi.Application.Features.Auth;
+using KitApi.Domain.Common;
 
 namespace KitApi.Infrastructure.Identity;
 
@@ -49,7 +50,7 @@ public sealed class AuthService(
 
     public async Task<Result> ConfirmEmailAsync(ConfirmEmailRequest request, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(request.UserId.ToString());
+        var user = await userManager.FindByIdAsync(request.UserId.ToInvariantString());
         var token = AccountEmails.DecodeToken(request.Token);
         if (user is null || token is null)
             return AuthErrors.InvalidToken;
@@ -116,7 +117,7 @@ public sealed class AuthService(
         if (userId is null)
             return AuthErrors.InvalidTwoFactorToken;
 
-        var user = await userManager.FindByIdAsync(userId.Value.ToString());
+        var user = await userManager.FindByIdAsync(userId.Value.ToInvariantString());
         if (user is null || !user.TwoFactorEnabled)
             return AuthErrors.InvalidTwoFactorToken;
 
@@ -192,7 +193,7 @@ public sealed class AuthService(
 
     public async Task<Result> ConfirmEmailChangeAsync(ConfirmEmailChangeRequest request, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(request.UserId.ToString());
+        var user = await userManager.FindByIdAsync(request.UserId.ToInvariantString());
         var token = AccountEmails.DecodeToken(request.Token);
         if (user is null || token is null)
             return AuthErrors.InvalidToken;

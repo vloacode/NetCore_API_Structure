@@ -14,7 +14,7 @@
 | Fechas con hora | ISO 8601 en **UTC con `Z`** (`2026-10-09T14:30:00Z`); el cliente convierte a hora local |
 | Fechas sin hora | `DateOnly` → `"2026-10-09"` (cumpleaños, vencimientos) |
 | Decimales | Número JSON. Montos con `HasPrecision(18, 2)` en BD |
-| Ids | `int` en entidades de negocio; `Guid` (string) en usuarios y roles |
+| Ids | Mismo tipo en todas las tablas, según `PrimaryKey` del perfil: `Guid` → string; `int`/`long` → número (con `long`, tratar como string en el cliente si pueden pasar de 2^53) |
 | `null` | Las propiedades nulas **se envían** como `null` (forma estable para tipar en TypeScript) |
 | Errores | ProblemDetails con `code`, `title`, `traceId` y `errors` por campo (`standards/08`) |
 | Paginación | Objeto `PagedResult` en el body (abajo) |

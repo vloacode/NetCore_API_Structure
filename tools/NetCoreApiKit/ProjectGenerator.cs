@@ -43,7 +43,7 @@ public static partial class ProjectGenerator
         [
             "new", "kitapi", "-n", choices.Name, "-o", choices.OutputDirectory,
             "--security", Bool(choices.Security), "--database", choices.Database, "--analytics", Bool(choices.Analytics),
-            "--apikey", Bool(choices.ApiKey), "--email", choices.Smtp ? "smtp" : "log", "--framework", "net10.0",
+            "--apikey", Bool(choices.ApiKey), "--email", choices.Smtp ? "smtp" : "log", "--key", choices.Key, "--framework", "net10.0",
             .. intoExistingKit ? new[] { "--force" } : [],
             .. HiveArgs(choices)
         ];
@@ -97,7 +97,7 @@ public static partial class ProjectGenerator
             ["TwoFactor"] = choices.Security ? "enabled" : "disabled",
             ["PublicRegistration"] = choices.Security ? "enabled" : "disabled",
             ["ApiKey"] = choices.ApiKey && !choices.Security ? "enabled" : "disabled",
-            ["PrimaryKey"] = "int",
+            ["PrimaryKey"] = choices.Key switch { "int" => "int", "long" => "long", _ => "Guid" },
             ["SoftDelete"] = "enabled",
             ["Database"] = choices.Database,
             ["TargetFramework"] = "net10.0",

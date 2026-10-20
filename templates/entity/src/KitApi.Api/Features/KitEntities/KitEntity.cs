@@ -30,7 +30,7 @@ public class KitEntity : BaseEntity
 #endif
 #if (hasParent)
 
-    public int KitParentId { get; set; }
+    public EntityKey KitParentId { get; set; }
     public KitParent KitParent { get; set; } = null!;
 #endif
 }

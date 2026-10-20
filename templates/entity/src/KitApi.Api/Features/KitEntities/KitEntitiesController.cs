@@ -25,12 +25,12 @@ public sealed class KitEntitiesController(IKitEntityService service) : ApiContro
         => HandleResult(await service.GetPagedAsync(filter, ct));
 
 #if (security)
-    [HttpGet("{id:int}"), HasPermission(Permissions.KitEntities.Read)]
+    [HttpGet("{id}"), HasPermission(Permissions.KitEntities.Read)]
 #else
-    [HttpGet("{id:int}")]
+    [HttpGet("{id}")]
 #endif
     [ProducesResponseType<KitEntityDto>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetById(int id, CancellationToken ct)
+    public async Task<IActionResult> GetById(EntityKey id, CancellationToken ct)
         => HandleResult(await service.GetByIdAsync(id, ct));
 
 #if (security)
@@ -45,23 +45,23 @@ public sealed class KitEntitiesController(IKitEntityService service) : ApiContro
         => HandleCreated(await service.CreateAsync(request, ct), nameof(GetById), dto => new { id = dto.Id });
 
 #if (security)
-    [HttpPut("{id:int}"), HasPermission(Permissions.KitEntities.Write)]
+    [HttpPut("{id}"), HasPermission(Permissions.KitEntities.Write)]
 #elif (useApiKey)
-    [HttpPut("{id:int}"), Authorize]
+    [HttpPut("{id}"), Authorize]
 #else
-    [HttpPut("{id:int}")]
+    [HttpPut("{id}")]
 #endif
     [ProducesResponseType<KitEntityDto>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Update(int id, UpdateKitEntityRequest request, CancellationToken ct)
+    public async Task<IActionResult> Update(EntityKey id, UpdateKitEntityRequest request, CancellationToken ct)
         => HandleResult(await service.UpdateAsync(id, request, ct));
 
 #if (security)
-    [HttpDelete("{id:int}"), HasPermission(Permissions.KitEntities.Delete)]
+    [HttpDelete("{id}"), HasPermission(Permissions.KitEntities.Delete)]
 #elif (useApiKey)
-    [HttpDelete("{id:int}"), Authorize]
+    [HttpDelete("{id}"), Authorize]
 #else
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id}")]
 #endif
-    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    public async Task<IActionResult> Delete(EntityKey id, CancellationToken ct)
         => HandleResult(await service.DeleteAsync(id, ct));
 }

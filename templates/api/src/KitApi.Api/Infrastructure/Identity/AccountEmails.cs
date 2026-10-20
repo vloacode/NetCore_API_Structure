@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using KitApi.Application.Abstractions.Services;
+using KitApi.Domain.Common;
 
 namespace KitApi.Infrastructure.Identity;
 
@@ -24,7 +25,7 @@ public sealed class AccountEmails(IEmailSender sender, IOptions<AppUrlOptions> o
 
     public Task SendConfirmationAsync(AppUser user, string token, CancellationToken ct)
         => Send(user.Email!, "Confirma tu cuenta",
-            $"Confirma tu cuenta: {Link("confirm-email", ("userId", user.Id.ToString()), ("token", EncodeToken(token)))}", ct);
+            $"Confirma tu cuenta: {Link("confirm-email", ("userId", user.Id.ToInvariantString()), ("token", EncodeToken(token)))}", ct);
 
     public Task SendPasswordResetAsync(AppUser user, string token, CancellationToken ct)
         => Send(user.Email!, "Restablecer contraseña",
@@ -36,7 +37,7 @@ public sealed class AccountEmails(IEmailSender sender, IOptions<AppUrlOptions> o
 
     public Task SendChangeEmailAsync(AppUser user, string newEmail, string token, CancellationToken ct)
         => Send(newEmail, "Confirma tu nuevo email",
-            $"Confirma el cambio de email: {Link("confirm-email-change", ("userId", user.Id.ToString()), ("newEmail", newEmail), ("token", EncodeToken(token)))}", ct);
+            $"Confirma el cambio de email: {Link("confirm-email-change", ("userId", user.Id.ToInvariantString()), ("newEmail", newEmail), ("token", EncodeToken(token)))}", ct);
 
     public Task SendAccountExistsAsync(string email, CancellationToken ct)
         => Send(email, "Intento de registro",

@@ -52,7 +52,7 @@ public sealed class KitEntitiesApiTests(ApiFactory factory) : IAsyncLifetime
         var ct = TestContext.Current.CancellationToken;
         var client = await CreateClientAsync();
 
-        var response = await client.GetAsync($"{Route}/999999", ct);
+        var response = await client.GetAsync($"{Route}/{default(EntityKey)}", ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var problem = await response.Content.ReadFromJsonAsync<JsonElement>(ct);

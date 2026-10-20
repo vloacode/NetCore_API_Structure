@@ -14,12 +14,13 @@ El **perfil** está en `docs/00-MASTER_CONTEXT.md`. Cada campo se traduce en una
 | `Database = sqlserver / postgresql` | `--database sqlserver/postgresql` | Proveedor EF Core; en PostgreSQL, `snake_case` (las tablas de Identity conservan `AspNet*`) y búsquedas con `ILike` |
 | `Capabilities` incluye `product-analytics` | `--analytics true` | Módulo de analítica de uso (`standards/17`) |
 | `ApiKey = yes` (solo sin seguridad) | `--apikey true` | Escrituras protegidas con `X-Api-Key` (`standards/09`) |
+| `PrimaryKey = Guid / int / long` | `--key guid/int/long` | Tipo de la llave de **todas** las tablas (usuarios, roles, entidades) y de sus FK. Queda como alias global `EntityKey` en `Directory.Build.props` (`standards/02`). Cambiarlo después exige reescribir todas las llaves: se decide al crear |
 | `Email = log / smtp` | `--email log/smtp` | Emails al log (desarrollo) o SMTP real con MailKit + Mailpit en `docker-compose` (`standards/09`) |
 | `TargetFramework` | `--framework net10.0` | Versión de .NET (`standards/16`) |
 
 En el código de la plantilla, las variantes se escriben con `#if (security)`, `#if (postgresql)`, etc. El proyecto generado ya no las contiene: solo queda lo del perfil.
 
-**Campos del perfil que la plantilla no cubre** (vienen con su valor por defecto): `TwoFactor = enabled`, `PublicRegistration = enabled`, `PrimaryKey = int`, `SoftDelete = enabled`. Otro valor se ajusta a mano después de generar (por ejemplo, quitar `/api/auth/register` o los endpoints de 2FA) y se registra en un ADR.
+**Campos del perfil que la plantilla no cubre** (vienen con su valor por defecto): `TwoFactor = enabled`, `PublicRegistration = enabled`, `SoftDelete = enabled`. Otro valor se ajusta a mano después de generar (por ejemplo, quitar `/api/auth/register` o los endpoints de 2FA) y se registra en un ADR.
 
 ## Crear el proyecto
 **Recomendado: el asistente.** Pregunta paso a paso y deja todo listo: proyecto, guía para IA, base (Docker, local o servidor, con prueba de conexión), secretos en el destino elegido (user-secrets, variables de entorno o `appsettings.Development.local.json`), build y migración inicial.
@@ -32,7 +33,7 @@ dnx NetCoreApiKit -- --name {Project} --security --database postgresql --email s
 ```bash
 dotnet new install ./templates/api            # una vez por máquina (desde la raíz del kit)
 dotnet new install ./templates/entity
-dotnet new kitapi -n {Project} --security true --database postgresql --analytics false
+dotnet new kitapi -n {Project} --security true --database postgresql --key guid --analytics false
 cd {Project}
 dotnet user-secrets set "Jwt:SigningKey" "<64+ caracteres aleatorios>" --project src/{Project}.Api   # con seguridad
 dotnet user-secrets set "Seed:AdminPassword" "<contraseña fuerte>" --project src/{Project}.Api       # con seguridad
@@ -109,4 +110,4 @@ La plantilla trae fijadas versiones verificadas en `Directory.Packages.props`. S
 | Controller | `{Entities}Controller` → ruta `api/{entities}` |
 | Permisos (con seguridad) | `Permissions.{Entities}.Read/Write/Delete` → `"{entities}.read"` |
 
-Marcadores en los standards y docs: `{Project}`, `{Entity}`, `{Entities}`, `{entity}`/`{entities}` (minúsculas), `{Parent}`. `Name` y `Code` son campos **representativos**: se reemplazan por los reales. `{id:int}` en una ruta no es un marcador: es una restricción de ASP.NET Core.
+Marcadores en los standards y docs: `{Project}`, `{Entity}`, `{Entities}`, `{entity}`/`{entities}` (minúsculas), `{Parent}`. `Name` y `Code` son campos **representativos**: se reemplazan por los reales. Las rutas usan `{id}` sin restricción de tipo: el binding a `EntityKey` ya valida el formato.

@@ -5,14 +5,15 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using KitApi.Application.Common.Security;
+using KitApi.Domain.Common;
 
 namespace KitApi.Infrastructure.Identity;
 
 public interface ITokenService
 {
     (string Token, DateTime ExpiresAt) CreateAccessToken(AppUser user, IEnumerable<string> roles, IEnumerable<string> permissions);
-    string CreateTwoFactorChallengeToken(Guid userId);
-    Task<Guid?> ValidateTwoFactorChallengeTokenAsync(string token);
+    string CreateTwoFactorChallengeToken(EntityKey userId);
+    Task<EntityKey?> ValidateTwoFactorChallengeTokenAsync(string token);
     string GenerateRefreshToken();
     string HashToken(string rawToken);
 }
@@ -31,7 +32,7 @@ public sealed class TokenService(IOptions<JwtOptions> options, TimeProvider cloc
 
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToInvariantString()),
             new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new(JwtRegisteredClaimNames.Name, user.FullName),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -53,12 +54,12 @@ public sealed class TokenService(IOptions<JwtOptions> options, TimeProvider cloc
         return (token, expires);
     }
 
-    public string CreateTwoFactorChallengeToken(Guid userId)
+    public string CreateTwoFactorChallengeToken(EntityKey userId)
     {
         var now = clock.GetUtcNow().UtcDateTime;
         return _handler.CreateToken(new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity([new Claim(JwtRegisteredClaimNames.Sub, userId.ToString())]),
+            Subject = new ClaimsIdentity([new Claim(JwtRegisteredClaimNames.Sub, userId.ToInvariantString())]),
             Issuer = _jwt.Issuer,
             Audience = _jwt.TwoFactorAudience,      // audiencia distinta: el JwtBearer de la API lo rechaza
             IssuedAt = now,
@@ -68,7 +69,7 @@ public sealed class TokenService(IOptions<JwtOptions> options, TimeProvider cloc
         });
     }
 
-    public async Task<Guid?> ValidateTwoFactorChallengeTokenAsync(string token)
+    public async Task<EntityKey?> ValidateTwoFactorChallengeTokenAsync(string token)
     {
         var result = await _handler.ValidateTokenAsync(token, new TokenValidationParameters
         {
@@ -82,7 +83,7 @@ public sealed class TokenService(IOptions<JwtOptions> options, TimeProvider cloc
         if (!result.IsValid || !result.Claims.TryGetValue(JwtRegisteredClaimNames.Sub, out var sub))
             return null;
 
-        return Guid.TryParse(sub?.ToString(), out var userId) ? userId : null;
+        return EntityKeys.TryParse(sub?.ToString(), out var userId) ? userId : null;
     }
 
     public string GenerateRefreshToken() => Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(64));

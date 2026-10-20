@@ -38,7 +38,7 @@ El módulo viene **completo** en la plantilla. En un proyecto normal no se reesc
 
 | Pieza | Responsabilidad |
 |---|---|
-| `AppUser`, `AppRole`, `RefreshToken` (`IdentityEntities.cs`) | Usuario (`Guid`), rol con descripción (los de sistema están en `AppRoles.System`), sesiones |
+| `AppUser`, `AppRole`, `RefreshToken` (`IdentityEntities.cs`) | Usuario y rol con la llave del proyecto (`EntityKey`: Guid, int o long), rol con descripción (los de sistema están en `AppRoles.System`), sesiones |
 | `JwtOptions`, `AppUrlOptions`, `SeedOptions` (`Options.cs`) | Configuración validada al arrancar (`ValidateOnStart`) |
 | `TokenService` | Firma access tokens, tokens de 2FA y genera/hashea refresh tokens |
 | `SessionManager` | Crea, rota, revoca y detecta reuso de refresh tokens |

@@ -17,9 +17,10 @@ Requisitos: **.NET 10 SDK**. Docker solo si la base de datos va en un contenedor
 1. **Nombre** del proyecto (PascalCase, ej. `MiApi`).
 2. **Tipo de API**: con usuarios (login JWT, refresh tokens, 2FA, roles y permisos) o pública. Si es pública, si las escrituras se protegen con **API key**.
 3. **Base de datos**: PostgreSQL o SQL Server.
-4. **Emails** (con usuarios): SMTP real con MailKit (más Mailpit para probar en local) o solo al log.
-5. **Extras**: analítica de uso del producto.
-6. **Dónde está la base**:
+4. **Llave primaria** de todas las tablas (usuarios, roles y entidades): `Guid` v7 (por defecto), `int` o `long`. Las relaciones usan el mismo tipo.
+5. **Emails** (con usuarios): SMTP real con MailKit (más Mailpit para probar en local) o solo al log.
+6. **Extras**: analítica de uso del producto.
+7. **Dónde está la base**:
    - **Docker**: crea el contenedor, con clave aleatoria y un puerto libre;
    - **instalada en tu máquina** (PostgreSQL, SQL Server, LocalDB o Express, con autenticación de Windows si quieres);
    - **un servidor** (host, usuario, contraseña oculta, SSL / TrustServerCertificate);
@@ -30,11 +31,12 @@ Requisitos: **.NET 10 SDK**. Docker solo si la base de datos va en un contenedor
    Si la base **ya tiene tablas** (por ejemplo, Identity creado por otra app), te muestra cuáles hay y cuántas filas tienen, y pregunta qué hacer. **Nada se borra**:
    - **Respaldar y crear nuevas** (recomendado si hay datos): las tablas que chocan se mueven intactas, con datos, índices y relaciones, a un esquema `kit_backup_<fecha>` de la misma base, y se crean las nuevas.
    - **Usar las existentes y crear lo que falte**: crea solo las tablas y columnas que faltan, copia antes en `kit_backup_<fecha>` las tablas que modifica y registra la migración como aplicada.
+   - Si Identity ya existe con **otro tipo de llave** (Guid, int o long), te lo dice y propone usar ese mismo tipo; reutilizar tablas con llaves de otro tipo no se permite porque rompería las relaciones.
    - **Usar otra base** (otro nombre) o **no tocarla**.
 
    Antes de aplicar te muestra el plan, con la opción de ver el SQL exacto, y todo va en una transacción.
-7. **Dónde guardar los secretos**: user-secrets, variables de entorno y/o `appsettings.Development.local.json` (ignorado por git). Puedes marcar uno, varios o todos.
-8. **Git**: inicializar el repositorio o no.
+8. **Dónde guardar los secretos**: user-secrets, variables de entorno y/o `appsettings.Development.local.json` (ignorado por git). Puedes marcar uno, varios o todos.
+9. **Git**: inicializar el repositorio o no.
 
 Luego genera la solución, copia la guía para IA, levanta la base, guarda los secretos, compila, crea la migración inicial y te muestra cómo correrla, incluida la contraseña del admin, que se ve **una sola vez**.
 
@@ -60,6 +62,7 @@ dnx NetCoreApiKit -- --name MiApi --security --database postgresql --db-location
 | `--security` / `--public` | API con usuarios o pública | con usuarios |
 | `--apikey` | Escrituras con `X-Api-Key` (solo pública) | no |
 | `--database` | `postgresql` · `sqlserver` | `postgresql` |
+| `--key` | `guid` · `int` · `long`: llave primaria de todas las tablas y sus FK | `guid` |
 | `--email` | `smtp` · `log` (solo con usuarios) | `smtp` |
 | `--analytics` | Analítica de uso | no |
 | `--db-location` | `docker` · `local` · `server` · `later` | `docker` |

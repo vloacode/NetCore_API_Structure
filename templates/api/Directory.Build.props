@@ -9,4 +9,18 @@
     <!-- Warnings como errores en Release (CI); en Debug no bloquean el desarrollo. -->
     <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
   </PropertyGroup>
+  <!--
+    Tipo de la llave primaria de TODAS las tablas (usuarios, roles, entidades) y de sus FK.
+    Se usa como EntityKey en el código; no escribir Guid/int/long a mano para Ids ni FK.
+    Cambiarlo después exige una migración que reescribe todas las llaves: decidirlo al crear el proyecto.
+  -->
+  <ItemGroup>
+<!--#if (keyInt) -->
+    <Using Include="System.Int32" Alias="EntityKey" />
+<!--#elif (keyLong) -->
+    <Using Include="System.Int64" Alias="EntityKey" />
+<!--#else -->
+    <Using Include="System.Guid" Alias="EntityKey" />
+<!--#endif -->
+  </ItemGroup>
 </Project>

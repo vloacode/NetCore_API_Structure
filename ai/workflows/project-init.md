@@ -30,8 +30,8 @@ Presentar exactamente estas tres opciones:
 
 | Modo | Perfil inicial |
 |---|---|
-| 1 | `Mode=1-standard-secure`, `Security=enabled`, `TwoFactor=enabled`, `PublicRegistration=enabled`, `ApiKey=disabled`, `PrimaryKey=int`, `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
-| 2 | `Mode=2-standard-public`, `Security=disabled`, `TwoFactor=disabled`, `PublicRegistration=disabled`, `ApiKey=disabled` (se pregunta), `PrimaryKey=int`, `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
+| 1 | `Mode=1-standard-secure`, `Security=enabled`, `TwoFactor=enabled`, `PublicRegistration=enabled`, `ApiKey=disabled`, `PrimaryKey=Guid` (se pregunta), `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
+| 2 | `Mode=2-standard-public`, `Security=disabled`, `TwoFactor=disabled`, `PublicRegistration=disabled`, `ApiKey=disabled` (se pregunta), `PrimaryKey=Guid` (se pregunta), `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
 | 3 | Parte del modo 1 y cada valor se ajusta con la entrevista |
 
 ## Paso 3 — Recoger información
@@ -49,7 +49,7 @@ Preguntar en **rondas cortas** (3 a 6 preguntas), con opciones cuando se pueda. 
 ### Entrevista completa (modo 3), además del mínimo
 - **Ronda A — Negocio:** problema y objetivos; actores; módulos; reglas de negocio importantes; estados y flujos; qué queda fuera de alcance.
 - **Ronda B — Seguridad:** ¿hay usuarios? (si no, `Security=disabled`); ¿registro público o solo los crea un admin?; ¿2FA?; roles además de Admin y User, y qué puede hacer cada uno; ¿hay datos que solo puede ver su dueño?; ¿API key para sistemas externos?
-- **Ronda C — Datos:** motor (SQL Server o PostgreSQL) y versión del motor; ¿int o Guid como PK?; ¿soft delete?; ¿historial de cambios (auditoría detallada)?; volumen esperado; datos sensibles y retención.
+- **Ronda C — Datos:** motor (SQL Server o PostgreSQL) y versión del motor; ¿qué llave primaria para **todas** las tablas: `Guid` (por defecto), `int` o `long`? (las FK usan el mismo tipo; no se cambia después); ¿soft delete?; ¿historial de cambios (auditoría detallada)?; volumen esperado; datos sensibles y retención.
 - **Ronda D — Capacidades e integraciones:** emails reales; archivos; tareas programadas; integraciones con terceros; tiempo real; caché; versionado; multi-empresa; idiomas; analítica de uso ("¿qué quieren saber de cómo se usa el producto?" → `product-analytics`). Usar los disparadores de `ai/suggestions-catalog.md` para guiar las preguntas.
 - **Ronda E — Infraestructura:** dónde se despliega (Docker, servidor Linux/VM con Nginx, Azure App Service, Container Apps, IIS); entornos; destino de logs; objetivos de rendimiento y disponibilidad (si no los sabe, proponer los valores por defecto de `docs/04`).
 
@@ -77,13 +77,13 @@ Escribir en `docs/ai/PROJECT_STATUS.md` el plan concreto (`ai/implementation-pha
 Delegar en **backend-developer**:
 1. Generar con el asistente sin preguntas, en la raíz del repositorio (prueba la conexión, guarda secretos, compila y crea la migración):
    ```bash
-   dnx NetCoreApiKit -- --name {Project} --output . --security|--public --database <postgresql|sqlserver> --email <smtp|log> [--analytics] [--apikey] --db-location <docker|local|server|later> --secrets user-secrets --yes
+   dnx NetCoreApiKit -- --name {Project} --output . --security|--public --database <postgresql|sqlserver> --key <guid|int|long> --email <smtp|log> [--analytics] [--apikey] --db-location <docker|local|server|later> --secrets user-secrets --yes
    ```
    Con `local`/`server`, la conexión va en la variable `KIT_DB_CONNECTION` (pedirla al usuario; nunca escribirla en archivos). Si el usuario prefiere no usar el asistente, generar a mano:
    ```bash
    dotnet new install ./templates/api
    dotnet new install ./templates/entity
-   dotnet new kitapi -n {Project} -o . --force --security <true|false> --database <sqlserver|postgresql> --analytics <true|false> --apikey <true|false> --email <log|smtp> --framework <TargetFramework>
+   dotnet new kitapi -n {Project} -o . --force --security <true|false> --database <sqlserver|postgresql> --key <guid|int|long> --analytics <true|false> --apikey <true|false> --email <log|smtp> --framework <TargetFramework>
    ```
    `--force` solo reemplaza el `.gitignore` del kit por el del proyecto (que ya ignora `bin/`, `obj/`, secretos y `.env`).
 2. Verificar que se crearon `{Project}.slnx`, `src/{Project}.Api/`, `tests/{Project}.IntegrationTests/` y `.github/workflows/ci.yml`, y que `docs/`, `ai/`, `standards/` y `AGENTS.md` siguen en su lugar. Borrar `.github/workflows/kit-checks.yml` (es la CI del kit, no la del proyecto).

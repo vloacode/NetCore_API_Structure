@@ -6,6 +6,7 @@ using KitApi.Application.Common.Paging;
 using KitApi.Application.Common.Results;
 using KitApi.Application.Common.Security;
 using KitApi.Application.Features.Auth;
+using KitApi.Domain.Common;
 using KitApi.Infrastructure.Persistence;
 
 namespace KitApi.Infrastructure.Identity;
@@ -65,9 +66,9 @@ public sealed class UserAdminService(
         return new PagedResult<UserSummaryDto>(items, filter.PageNumber, filter.PageSize, total);
     }
 
-    public async Task<Result<UserDetailDto>> GetByIdAsync(Guid id, CancellationToken ct)
+    public async Task<Result<UserDetailDto>> GetByIdAsync(EntityKey id, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(id.ToString());
+        var user = await userManager.FindByIdAsync(id.ToInvariantString());
         return user is null ? UserAdminErrors.NotFound(id) : await ToDetailAsync(user);
     }
 
@@ -115,10 +116,10 @@ public sealed class UserAdminService(
         return await ToDetailAsync(user);
     }
 
-    public async Task<Result> LockAsync(Guid id, LockUserRequest request, CancellationToken ct)
+    public async Task<Result> LockAsync(EntityKey id, LockUserRequest request, CancellationToken ct)
     {
         if (id == currentUser.UserId) return UserAdminErrors.CannotModifySelf;
-        var user = await userManager.FindByIdAsync(id.ToString());
+        var user = await userManager.FindByIdAsync(id.ToInvariantString());
         if (user is null) return UserAdminErrors.NotFound(id);
 
         await userManager.SetLockoutEnabledAsync(user, true);
@@ -128,9 +129,9 @@ public sealed class UserAdminService(
         return Result.Success();
     }
 
-    public async Task<Result> UnlockAsync(Guid id, CancellationToken ct)
+    public async Task<Result> UnlockAsync(EntityKey id, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(id.ToString());
+        var user = await userManager.FindByIdAsync(id.ToInvariantString());
         if (user is null) return UserAdminErrors.NotFound(id);
 
         await userManager.SetLockoutEndDateAsync(user, null);
@@ -139,10 +140,10 @@ public sealed class UserAdminService(
         return Result.Success();
     }
 
-    public async Task<Result> SetActiveAsync(Guid id, bool isActive, CancellationToken ct)
+    public async Task<Result> SetActiveAsync(EntityKey id, bool isActive, CancellationToken ct)
     {
         if (!isActive && id == currentUser.UserId) return UserAdminErrors.CannotModifySelf;
-        var user = await userManager.FindByIdAsync(id.ToString());
+        var user = await userManager.FindByIdAsync(id.ToInvariantString());
         if (user is null) return UserAdminErrors.NotFound(id);
 
         user.IsActive = isActive;
@@ -155,9 +156,9 @@ public sealed class UserAdminService(
         return Result.Success();
     }
 
-    public async Task<Result> SetRolesAsync(Guid id, SetRolesRequest request, CancellationToken ct)
+    public async Task<Result> SetRolesAsync(EntityKey id, SetRolesRequest request, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(id.ToString());
+        var user = await userManager.FindByIdAsync(id.ToInvariantString());
         if (user is null) return UserAdminErrors.NotFound(id);
 
         var target = request.Roles.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -193,9 +194,9 @@ public sealed class UserAdminService(
         return result;
     }
 
-    public async Task<Result> SendPasswordResetAsync(Guid id, CancellationToken ct)
+    public async Task<Result> SendPasswordResetAsync(EntityKey id, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(id.ToString());
+        var user = await userManager.FindByIdAsync(id.ToInvariantString());
         if (user is null) return UserAdminErrors.NotFound(id);
 
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -203,9 +204,9 @@ public sealed class UserAdminService(
         return Result.Success();
     }
 
-    public async Task<Result> RevokeSessionsAsync(Guid id, CancellationToken ct)
+    public async Task<Result> RevokeSessionsAsync(EntityKey id, CancellationToken ct)
     {
-        if (await userManager.FindByIdAsync(id.ToString()) is null) return UserAdminErrors.NotFound(id);
+        if (await userManager.FindByIdAsync(id.ToInvariantString()) is null) return UserAdminErrors.NotFound(id);
         await sessions.RevokeAllAsync(id, "Revoked by admin", ct);
         await audit.WriteAsync(SecurityEventTypes.SessionsRevoked, id, "Por un administrador", ct);
         return Result.Success();

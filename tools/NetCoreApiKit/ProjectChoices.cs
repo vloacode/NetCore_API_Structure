@@ -22,6 +22,7 @@ public sealed class ProjectChoices
     public bool ApiKey { get; init; }
     public required string Database { get; init; }          // postgresql | sqlserver
     public required string Email { get; init; }             // smtp | log
+    public required string Key { get; init; }               // guid | int | long: PK de todas las tablas y sus FK
     public bool Analytics { get; init; }
     public DbLocation DbLocation { get; init; }
     public string? ConnectionString { get; set; }            // local/server (docker se arma después de levantar el contenedor)

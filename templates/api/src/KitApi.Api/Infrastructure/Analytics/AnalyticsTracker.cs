@@ -6,6 +6,7 @@ using System.Threading.Channels;
 using Microsoft.Extensions.Options;
 using KitApi.Application.Abstractions.Analytics;
 using KitApi.Application.Abstractions.Services;
+using KitApi.Domain.Common;
 
 namespace KitApi.Infrastructure.Analytics;
 
@@ -53,7 +54,7 @@ public sealed partial class AnalyticsTracker(
     /// <summary>Usuario autenticado o X-Anonymous-Id del frontend (GUID), siempre con HMAC: nunca el valor real.</summary>
     private string? ResolveAnonymousId()
     {
-        var raw = currentUser.UserId?.ToString();
+        var raw = currentUser.UserId?.ToInvariantString();
         if (raw is null && Guid.TryParse(accessor.HttpContext?.Request.Headers[AnonymousIdHeader].ToString(), out var anonymous))
             raw = anonymous.ToString();
         if (raw is null) return null;

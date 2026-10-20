@@ -18,7 +18,7 @@ namespace KitApi.Infrastructure.Persistence;
 // Con seguridad hereda de IdentityDbContext (tablas AspNet*); sin seguridad, de DbContext.
 public class AppDbContext(DbContextOptions<AppDbContext> options)
 #if (security)
-    : IdentityDbContext<AppUser, AppRole, Guid>(options), IDataProtectionKeyContext
+    : IdentityDbContext<AppUser, AppRole, EntityKey>(options), IDataProtectionKeyContext
 #endif
 #if (!security)
     : DbContext(options)
