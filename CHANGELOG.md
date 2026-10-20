@@ -5,7 +5,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
-## [Sin publicar]
+## [4.0.0] - 2026-10-20
 ### Añadido
 - **Llave primaria elegible: `Guid` (por defecto), `int` o `long`** para **todas** las tablas (usuarios, roles y entidades) y, por lo tanto, para todas las relaciones:
   - Plantilla: `dotnet new kitapi --key guid|int|long`. El tipo queda como alias global `EntityKey` en `Directory.Build.props`; `AppUser`, `AppRole`, `BaseEntity`, la auditoría (`CreatedBy`…) y los `UserId` usan `EntityKey`.
