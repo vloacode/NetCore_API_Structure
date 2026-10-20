@@ -53,6 +53,10 @@ public sealed class CreateSettings : CommandSettings
     [CommandOption("--no-apply-migrations")]
     public bool NoApplyMigrations { get; init; }
 
+    [CommandOption("--existing-db <ACCION>")]
+    [Description("Si la base ya tiene tablas: backup (moverlas a un esquema de respaldo y crear nuevas) | reuse (usar las existentes y crear lo que falte) | skip (no tocarla).")]
+    public string? ExistingDb { get; init; }
+
     [CommandOption("--secrets <DESTINOS>")]
     [Description("Dónde guardar lo sensible: user-secrets,env,appsettings (uno o varios). Por defecto: user-secrets.")]
     public string? SecretStores { get; init; }
@@ -91,6 +95,8 @@ public sealed class CreateSettings : CommandSettings
         if (SecretStores is not null && SecretStores.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                 .Any(s => s is not ("user-secrets" or "env" or "appsettings")))
             return ValidationResult.Error("--secrets acepta user-secrets, env y appsettings (separados por coma).");
+        if (ExistingDb is not null and not ("backup" or "reuse" or "skip"))
+            return ValidationResult.Error("--existing-db debe ser backup, reuse o skip.");
         if (ApplyMigrations && NoApplyMigrations)
             return ValidationResult.Error("Usa --apply-migrations o --no-apply-migrations, no ambos.");
         if (Git && NoGit)

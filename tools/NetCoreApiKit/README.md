@@ -26,6 +26,13 @@ Requisitos: **.NET 10 SDK**. Docker solo si la base de datos va en un contenedor
    - **después**.
 
    Antes de guardar nada, **prueba la conexión** y dice qué falló si no conecta.
+
+   Si la base **ya tiene tablas** (por ejemplo, Identity creado por otra app), te muestra cuáles hay y cuántas filas tienen, y pregunta qué hacer. **Nada se borra**:
+   - **Respaldar y crear nuevas** (recomendado si hay datos): las tablas que chocan se mueven intactas, con datos, índices y relaciones, a un esquema `kit_backup_<fecha>` de la misma base, y se crean las nuevas.
+   - **Usar las existentes y crear lo que falte**: crea solo las tablas y columnas que faltan, copia antes en `kit_backup_<fecha>` las tablas que modifica y registra la migración como aplicada.
+   - **Usar otra base** (otro nombre) o **no tocarla**.
+
+   Antes de aplicar te muestra el plan, con la opción de ver el SQL exacto, y todo va en una transacción.
 7. **Dónde guardar los secretos**: user-secrets, variables de entorno y/o `appsettings.Development.local.json` (ignorado por git). Puedes marcar uno, varios o todos.
 8. **Git**: inicializar el repositorio o no.
 
@@ -58,6 +65,7 @@ dnx NetCoreApiKit -- --name MiApi --security --database postgresql --db-location
 | `--db-location` | `docker` · `local` · `server` · `later` | `docker` |
 | `--connection` | Cadena de conexión (mejor: variable `KIT_DB_CONNECTION`) | — |
 | `--apply-migrations` / `--no-apply-migrations` | Crear las tablas | sí en docker/local, **no** en server |
+| `--existing-db` | Si la base ya tiene tablas: `backup` · `reuse` · `skip` | se pregunta (sin preguntas: obligatorio) |
 | `--secrets` | `user-secrets`, `env`, `appsettings` (separados por coma) | `user-secrets` |
 | `--persist-env` | Con `env` en Windows: guardar también como variables de usuario | no |
 | `--git` / `--no-git` | Inicializar git | sí |

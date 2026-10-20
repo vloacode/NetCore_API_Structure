@@ -17,7 +17,7 @@ dnx NetCoreApiKit
 Un asistente paso a paso, como `npm create vue@latest`, pregunta:
 - el nombre;
 - si la API lleva usuarios con login JWT o es pública;
-- la base de datos (PostgreSQL o SQL Server) y **dónde está**: un contenedor Docker que crea él mismo, instalada en tu máquina, un servidor o "después";
+- la base de datos (PostgreSQL o SQL Server) y **dónde está**: un contenedor Docker que crea él mismo, instalada en tu máquina, un servidor o "después". Si la base ya tiene tablas, te las muestra y ofrece respaldarlas o reutilizarlas: **nunca borra datos**;
 - los emails y las capacidades extra;
 - **dónde guardar los secretos**: user-secrets, variables de entorno o un appsettings local que no se sube a git.
 

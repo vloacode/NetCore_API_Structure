@@ -11,6 +11,9 @@ Casos:
             secretos en user-secrets + variables (scripts) + appsettings local, archivos ignorados por git, tablas NO creadas.
   appsettings  igual pero con secretos solo en appsettings local: la API arranca y /health/ready responde (AddLocalSettings).
   bad-password  conexión con contraseña incorrecta: el asistente falla con un error claro y no crea nada.
+  existing-*    base creada por "otra app" (Identity incompleta, sin historial, con datos): reutilizar (crea lo que falta,
+                agrega columnas, conserva datos y respalda lo que modifica), respaldar (mueve las tablas a kit_backup_* y crea
+                nuevas) y, sin --existing-db en modo no interactivo, detenerse sin tocar nada.
 
 Todo se hace en .verify/wizard (ignorada por git). Las plantillas se instalan en un hive propio y los user-secrets
 de prueba se borran al final. Código de salida 1 si algo falla.
@@ -199,6 +202,76 @@ def case_appsettings(password):
         cleanup_secrets(project, "WizLocal")
 
 
+def psql(database, sql):
+    return run(["docker", "exec", PG_CONTAINER, "psql", "-U", "postgres", "-d", database, "-tAc", sql], WORK, check=False).stdout.strip()
+
+
+def prepare_legacy_databases():
+    """Simula una base creada por otra app: parte de la base de appsettings (Identity + admin), clonada dos veces y alterada."""
+    for name in ("legacy_reuse", "legacy_backup"):
+        psql("postgres", f'DROP DATABASE IF EXISTS {name} WITH (FORCE)')
+        psql("postgres", f"CREATE DATABASE {name} TEMPLATE wizlocal_db")
+        psql(name, 'DROP TABLE "AspNetUserTokens"')
+        psql(name, 'DROP TABLE "__EFMigrationsHistory"')
+        psql(name, 'ALTER TABLE "AspNetUsers" DROP COLUMN last_login_at')
+
+
+def case_existing_reuse(password):
+    print("== existing-reuse: base con Identity incompleta y datos; usar lo existente y crear lo que falte")
+    users_before = psql("legacy_reuse", 'SELECT count(*) FROM "AspNetUsers"')
+    connection = f"Host=localhost;Port=5435;Database=legacy_reuse;Username=postgres;Password={password}"
+    project = WORK / "WizReuse"
+    try:
+        out = wizard(["--name", "WizReuse", "--security", "--database", "postgresql", "--email", "log",
+                      "--db-location", "server", "--existing-db", "reuse"],
+                     env=dict(os.environ, KIT_DB_CONNECTION=connection), check=False)
+        check("termina bien", out.returncode == 0, out.stdout[-800:])
+        check("muestra las tablas existentes antes de decidir", "La base ya tiene tablas" in out.stdout)
+        check("tabla faltante creada (AspNetUserTokens)", psql("legacy_reuse", "SELECT to_regclass('public.\"AspNetUserTokens\"') IS NOT NULL") == "t")
+        check("columna faltante agregada (last_login_at)",
+              psql("legacy_reuse", "SELECT count(*) FROM information_schema.columns WHERE table_name='AspNetUsers' AND column_name='last_login_at'") == "1")
+        check(f"datos existentes intactos (usuarios: {users_before})", psql("legacy_reuse", 'SELECT count(*) FROM "AspNetUsers"') == users_before)
+        backup = psql("legacy_reuse", "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'kit_backup_%'")
+        check("copia de respaldo de la tabla modificada", bool(backup)
+              and psql("legacy_reuse", f'SELECT count(*) FROM "{backup}"."AspNetUsers"') == users_before)
+        check("migración registrada como aplicada",
+              psql("legacy_reuse", 'SELECT count(*) FROM "__EFMigrationsHistory" WHERE migration_id LIKE \'%InitialCreate\'') == "1")
+        pending = run(["dotnet", "ef", "migrations", "list", "-p", "src/WizReuse.Api", "--connection", connection], project, check=False)
+        check("dotnet ef no ve migraciones pendientes", "(Pending)" not in pending.stdout, pending.stdout[-400:])
+    finally:
+        cleanup_secrets(project, "WizReuse")
+
+
+def case_existing_backup(password):
+    print("== existing-backup: respaldar las tablas existentes y crear nuevas")
+    users_before = psql("legacy_backup", 'SELECT count(*) FROM "AspNetUsers"')
+    connection = f"Host=localhost;Port=5435;Database=legacy_backup;Username=postgres;Password={password}"
+    project = WORK / "WizBackup"
+    try:
+        out = wizard(["--name", "WizBackup", "--security", "--database", "postgresql", "--email", "log",
+                      "--db-location", "server", "--existing-db", "backup"],
+                     env=dict(os.environ, KIT_DB_CONNECTION=connection), check=False)
+        check("termina bien", out.returncode == 0, out.stdout[-800:])
+        backup = psql("legacy_backup", "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'kit_backup_%'")
+        check("tablas originales en el esquema de respaldo, con sus datos",
+              bool(backup) and psql("legacy_backup", f'SELECT count(*) FROM "{backup}"."AspNetUsers"') == users_before)
+        check("tablas nuevas creadas y vacías", psql("legacy_backup", 'SELECT count(*) FROM public."AspNetUsers"') == "0"
+              and psql("legacy_backup", "SELECT to_regclass('public.\"AspNetUserTokens\"') IS NOT NULL") == "t")
+    finally:
+        cleanup_secrets(project, "WizBackup")
+
+
+def case_existing_requires_decision(password):
+    print("== existing-sin-decision: base con tablas en modo no interactivo sin --existing-db")
+    connection = f"Host=localhost;Port=5435;Database=wizlocal_db;Username=postgres;Password={password}"
+    tables_before = psql("wizlocal_db", "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+    out = wizard(["--name", "WizNoDecision", "--security", "--database", "postgresql", "--db-location", "server"],
+                 env=dict(os.environ, KIT_DB_CONNECTION=connection), check=False)
+    check("se detiene pidiendo --existing-db", out.returncode != 0 and "--existing-db" in out.stdout, out.stdout[-400:])
+    check("no crea el proyecto ni toca la base", not (WORK / "WizNoDecision").exists()
+          and psql("wizlocal_db", "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'") == tables_before)
+
+
 def case_bad_password():
     print("== bad-password: contraseña incorrecta")
     connection = "Host=localhost;Port=5435;Database=wizbad_db;Username=postgres;Password=incorrecta"
@@ -222,6 +295,10 @@ def main():
                 case_server(password)
                 case_appsettings(password)
                 case_bad_password()
+                prepare_legacy_databases()
+                case_existing_reuse(password)
+                case_existing_backup(password)
+                case_existing_requires_decision(password)
             finally:
                 run(["docker", "rm", "-f", PG_CONTAINER], WORK, check=False)
     except RuntimeError as error:

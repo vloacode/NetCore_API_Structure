@@ -5,6 +5,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [Sin publicar]
+### Añadido
+- **Validación previa de bases existentes** en `dnx NetCoreApiKit` (antes fallaba con "la tabla ya existe" si la base tenía Identity de otra app):
+  - Al conectar, muestra las tablas existentes (las 7 de Identity con ✔/✘ y las demás) con sus filas, y pregunta qué hacer.
+  - **Respaldar y crear nuevas**: mueve intactas las tablas que chocan a un esquema `kit_backup_<fecha>` de la misma base y aplica la migración.
+  - **Usar las existentes y crear lo que falte**: compara tabla por tabla y columna por columna con el script real de la migración, crea solo lo que falta (las columnas NOT NULL con un valor por defecto para las filas existentes), copia antes las tablas que modifica a `kit_backup_<fecha>` y registra `InitialCreate` como aplicada.
+  - **Otra base** u **omitir**.
+  - Siempre muestra el plan (y el SQL, si se pide) antes de aplicar; todo en una transacción. Opción `--existing-db backup|reuse|skip` para el modo sin preguntas; sin ella, se detiene sin tocar nada.
+
 ## [3.5.0] - 2026-10-15
 ### Añadido
 - **Adaptadores para opencode y Hermes Agent** (y cualquier herramienta del estándar agentskills.io), listos para usar con modelos en la nube, locales o privados:

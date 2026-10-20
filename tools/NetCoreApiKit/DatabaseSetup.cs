@@ -77,6 +77,12 @@ public static class DatabaseSetup
         return builder.ConnectionString;
     }
 
+    /// <summary>La misma conexión apuntando a otra base del mismo servidor.</summary>
+    public static string WithDatabase(string database, string connectionString, string databaseName)
+        => database == "postgresql"
+            ? new NpgsqlConnectionStringBuilder(connectionString) { Database = databaseName }.ConnectionString
+            : new SqlConnectionStringBuilder(connectionString) { InitialCatalog = databaseName }.ConnectionString;
+
     /// <summary>
     /// Entra a la base del sistema del servidor (postgres / master) para validar host y credenciales sin depender
     /// de que la base del proyecto exista, y luego revisa si existe.
