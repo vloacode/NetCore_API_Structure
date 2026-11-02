@@ -22,6 +22,7 @@ public sealed class ProjectChoices
     public bool ApiKey { get; init; }
     public required string Database { get; init; }          // postgresql | sqlserver
     public required string Email { get; init; }             // smtp | log
+    public required string Docs { get; init; }              // scalar | swagger: también es la ruta de la pantalla
     public required string Key { get; init; }               // guid | int | long: PK de todas las tablas y sus FK
     public bool Analytics { get; init; }
     public DbLocation DbLocation { get; init; }

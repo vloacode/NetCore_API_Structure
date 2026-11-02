@@ -74,6 +74,22 @@
       "defaultValue": "false",
       "description": "Solo sin seguridad: protege las escrituras con una API key (header X-Api-Key)."
     },
+    "docs": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "scalar",
+          "description": "Scalar (/scalar)"
+        },
+        {
+          "choice": "swagger",
+          "description": "Swagger UI (/swagger)"
+        }
+      ],
+      "defaultValue": "scalar",
+      "description": "Pantalla de documentación interactiva de la API (solo en Development). El documento OpenAPI es el mismo: /openapi/v1.json."
+    },
     "email": {
       "type": "parameter",
       "datatype": "choice",
@@ -134,6 +150,10 @@
     "keyLong": {
       "type": "computed",
       "value": "(key == \"long\")"
+    },
+    "docsSwagger": {
+      "type": "computed",
+      "value": "(docs == \"swagger\")"
     },
     "smtpEmail": {
       "type": "computed",

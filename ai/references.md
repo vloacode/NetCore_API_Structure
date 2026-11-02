@@ -142,4 +142,5 @@ Fuentes que la IA debe consultar para trabajar con información **actual** y no 
 | NuGet (versiones de paquetes) | https://www.nuget.org/ |
 | FluentValidation | https://docs.fluentvalidation.net/ |
 | Scalar (UI de OpenAPI) | https://github.com/scalar/scalar |
+| Swagger UI para ASP.NET Core (Swashbuckle) | https://github.com/domaindrivendev/Swashbuckle.AspNetCore |
 | Guía de diseño de APIs (Azure Architecture Center) | https://learn.microsoft.com/azure/architecture/best-practices/api-design |

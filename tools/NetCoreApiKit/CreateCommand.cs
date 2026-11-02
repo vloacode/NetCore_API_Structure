@@ -90,6 +90,9 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
             ("int (autoincremental)", "int"),
             ("long / bigint (autoincremental, para tablas muy grandes)", "long"));
 
+        var docs = s.Docs ?? Choose("Documentación interactiva de la API (solo en desarrollo):", "scalar",
+            ("Scalar (/scalar)", "scalar"), ("Swagger UI (/swagger)", "swagger"));
+
         var email = !security ? "log" : s.Email ?? Choose("Emails (confirmación de cuenta, reset de contraseña):", "smtp",
             ("SMTP real (con Mailpit para probar en local)", "smtp"), ("Solo al log (desarrollo)", "log"));
 
@@ -171,7 +174,7 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
 
         return new ProjectChoices
         {
-            Name = name, OutputDirectory = output, Security = security, ApiKey = apiKey, Database = database, Email = email, Key = key,
+            Name = name, OutputDirectory = output, Security = security, ApiKey = apiKey, Database = database, Email = email, Key = key, Docs = docs,
             Analytics = analytics, DbLocation = location, ConnectionString = connection, ApplyMigrations = applyMigrations, ExistingDb = existingDb,
             SecretStores = stores, PersistEnvironment = persistEnv, Git = git, TemplateHive = s.TemplateHive
         };
@@ -330,6 +333,7 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
         table.AddRow("Proyecto", $"[bold]{c.Name}[/] → {Markup.Escape(c.OutputDirectory)}");
         table.AddRow("Tipo", c.Security ? "Con seguridad (Identity + JWT + 2FA + permisos)" : c.ApiKey ? "Pública con API key en escrituras" : "Pública");
         table.AddRow("Llave primaria", $"{KeyLabel(c.Key)} en todas las tablas y relaciones");
+        table.AddRow("Documentación", c.Docs == "swagger" ? "Swagger UI (/swagger)" : "Scalar (/scalar)");
         table.AddRow("Base de datos", $"{(c.PostgreSql ? "PostgreSQL" : "SQL Server")} — {LocationLabel(c.DbLocation)}{(c.ApplyMigrations ? ", se crean las tablas" : "")}");
         if (c.Security)
             table.AddRow("Emails", c.Smtp ? "SMTP (Mailpit en local)" : "Al log");
@@ -543,7 +547,7 @@ public sealed partial class CreateCommand : AsyncCommand<CreateSettings>
         {
             "[bold]Siguientes pasos[/]",
             $"  cd {Markup.Escape(relative)}",
-            $"  dotnet run --project src/{c.Name}.Api      → https://localhost:7100/scalar"
+            $"  dotnet run --project src/{c.Name}.Api      → https://localhost:7100/{c.Docs}"
         };
         if (r.AdminPassword is not null)
             lines.Add($"  Admin: admin@{c.LowerName}.local / [yellow]{Markup.Escape(r.AdminPassword)}[/]  [grey](guárdala: no se vuelve a mostrar)[/]");

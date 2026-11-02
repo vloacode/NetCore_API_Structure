@@ -15,6 +15,7 @@ El **perfil** está en `docs/00-MASTER_CONTEXT.md`. Cada campo se traduce en una
 | `Capabilities` incluye `product-analytics` | `--analytics true` | Módulo de analítica de uso (`standards/17`) |
 | `ApiKey = yes` (solo sin seguridad) | `--apikey true` | Escrituras protegidas con `X-Api-Key` (`standards/09`) |
 | `PrimaryKey = Guid / int / long` | `--key guid/int/long` | Tipo de la llave de **todas** las tablas (usuarios, roles, entidades) y de sus FK. Queda como alias global `EntityKey` en `Directory.Build.props` (`standards/02`). Cambiarlo después exige reescribir todas las llaves: se decide al crear |
+| `ApiDocs = scalar / swagger` | `--docs scalar/swagger` | Pantalla de documentación en Development: Scalar (`/scalar`) o Swagger UI (`/swagger`). El documento `/openapi/v1.json` es el mismo (`standards/04`) |
 | `Email = log / smtp` | `--email log/smtp` | Emails al log (desarrollo) o SMTP real con MailKit + Mailpit en `docker-compose` (`standards/09`) |
 | `TargetFramework` | `--framework net10.0` | Versión de .NET (`standards/16`) |
 
@@ -89,7 +90,7 @@ La plantilla trae fijadas versiones verificadas en `Directory.Packages.props`. S
 ## Arranque: `Program.cs` + `Extensions/`
 `Program.cs` se lee de arriba abajo como un índice:
 1. **Servicios**, una línea por área: `AddPersistence` → `AddSecurity` (con seguridad) → `AddApplication` → `AddApi` → `AddObservability`. Cada método vive en `Extensions/{Área}Extensions.cs`.
-2. **Pipeline HTTP** (el orden importa): Forwarded Headers (si `ReverseProxy:Enabled`) → manejo de excepciones → `X-Trace-Id` → headers de seguridad → OpenAPI/Scalar (solo Development) → HTTPS → CORS → autenticación → rate limiting → autorización → controllers → health checks.
+2. **Pipeline HTTP** (el orden importa): Forwarded Headers (si `ReverseProxy:Enabled`) → manejo de excepciones → `X-Trace-Id` → headers de seguridad → OpenAPI y su pantalla de documentación (solo Development) → HTTPS → CORS → autenticación → rate limiting → autorización → controllers → health checks.
 3. **Arranque**: migraciones si `Database:ApplyMigrationsOnStartup` (solo desarrollo y tests) y, con seguridad, el seeder de roles/admin.
 
 - **Registro automático:** `AddApplication()` registra como scoped cada clase `*Service` de `Features/` que implemente `I*Service`. Una entidad nueva **no toca** `Program.cs` ni `Extensions/`.

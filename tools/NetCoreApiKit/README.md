@@ -18,9 +18,10 @@ Requisitos: **.NET 10 SDK**. Docker solo si la base de datos va en un contenedor
 2. **Tipo de API**: con usuarios (login JWT, refresh tokens, 2FA, roles y permisos) o pública. Si es pública, si las escrituras se protegen con **API key**.
 3. **Base de datos**: PostgreSQL o SQL Server.
 4. **Llave primaria** de todas las tablas (usuarios, roles y entidades): `Guid` v7 (por defecto), `int` o `long`. Las relaciones usan el mismo tipo.
-5. **Emails** (con usuarios): SMTP real con MailKit (más Mailpit para probar en local) o solo al log.
-6. **Extras**: analítica de uso del producto.
-7. **Dónde está la base**:
+5. **Documentación interactiva**: Scalar (`/scalar`) o Swagger UI (`/swagger`). Solo existe en desarrollo.
+6. **Emails** (con usuarios): SMTP real con MailKit (más Mailpit para probar en local) o solo al log.
+7. **Extras**: analítica de uso del producto.
+8. **Dónde está la base**:
    - **Docker**: crea el contenedor, con clave aleatoria y un puerto libre;
    - **instalada en tu máquina** (PostgreSQL, SQL Server, LocalDB o Express, con autenticación de Windows si quieres);
    - **un servidor** (host, usuario, contraseña oculta, SSL / TrustServerCertificate);
@@ -35,8 +36,8 @@ Requisitos: **.NET 10 SDK**. Docker solo si la base de datos va en un contenedor
    - **Usar otra base** (otro nombre) o **no tocarla**.
 
    Antes de aplicar te muestra el plan, con la opción de ver el SQL exacto, y todo va en una transacción.
-8. **Dónde guardar los secretos**: user-secrets, variables de entorno y/o `appsettings.Development.local.json` (ignorado por git). Puedes marcar uno, varios o todos.
-9. **Git**: inicializar el repositorio o no.
+9. **Dónde guardar los secretos**: user-secrets, variables de entorno y/o `appsettings.Development.local.json` (ignorado por git). Puedes marcar uno, varios o todos.
+10. **Git**: inicializar el repositorio o no.
 
 Luego genera la solución, copia la guía para IA, levanta la base, guarda los secretos, compila, crea la migración inicial y te muestra cómo correrla, incluida la contraseña del admin, que se ve **una sola vez**.
 
@@ -63,6 +64,7 @@ dnx NetCoreApiKit -- --name MiApi --security --database postgresql --db-location
 | `--apikey` | Escrituras con `X-Api-Key` (solo pública) | no |
 | `--database` | `postgresql` · `sqlserver` | `postgresql` |
 | `--key` | `guid` · `int` · `long`: llave primaria de todas las tablas y sus FK | `guid` |
+| `--docs` | `scalar` · `swagger`: documentación interactiva de la API | `scalar` |
 | `--email` | `smtp` · `log` (solo con usuarios) | `smtp` |
 | `--analytics` | Analítica de uso | no |
 | `--db-location` | `docker` · `local` · `server` · `later` | `docker` |
@@ -92,7 +94,7 @@ MiApi/
 └── AGENTS.md · ai/ · standards/ · docs/ · adaptadores para cada IA
 ```
 
-- **Arquitectura**: Controllers → services con `Result<T>` → Repository + Unit of Work + Specification sobre EF Core. FluentValidation, ProblemDetails (RFC 9457), OpenAPI + Scalar. Sin MediatR ni AutoMapper.
+- **Arquitectura**: Controllers → services con `Result<T>` → Repository + Unit of Work + Specification sobre EF Core. FluentValidation, ProblemDetails (RFC 9457), OpenAPI + Scalar o Swagger UI. Sin MediatR ni AutoMapper.
 - **Seguridad** (opcional): ASP.NET Core Identity local + JWT, refresh tokens con rotación y detección de reuso, 2FA TOTP, permisos por rol, bitácora de seguridad (`/api/security-events`), llaves de Data Protection persistentes.
 - **Robustez**: auditoría y soft delete automáticos, concurrencia optimista, rate limiting por usuario o IP, timeouts por request, health checks, OpenTelemetry (trazas, métricas y logs), headers de seguridad, Forwarded Headers para proxies.
 - **Calidad**: analizadores con warnings como errores en Release, `dotnet format`, tests con la base real, CI con chequeo de paquetes vulnerables.
@@ -101,7 +103,7 @@ MiApi/
 
 ```bash
 cd MiApi
-dotnet run --project src/MiApi.Api                     # https://localhost:7100/scalar
+dotnet run --project src/MiApi.Api                     # https://localhost:7100/scalar (o /swagger)
 dotnet new kit-entity -n Customer --app MiApi --security true --database postgresql
 dotnet test                                            # requiere Docker (Testcontainers)
 ```

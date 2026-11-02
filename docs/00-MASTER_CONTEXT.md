@@ -19,6 +19,7 @@ Lo crea project-init y lo actualiza docs-sync. Mientras existan marcadores {{...
 | SoftDelete | {{enabled}} | `enabled` · `disabled` |
 | Database | {{sqlserver}} | `sqlserver` · `postgresql` |
 | TargetFramework | {{net10.0}} | versión de .NET (LTS vigente por defecto; `standards/16`) |
+| ApiDocs | {{scalar}} | `scalar` (`/scalar`) · `swagger` (`/swagger`): pantalla de documentación de la API, solo en Development |
 | Email | {{log}} | `log` (desarrollo) · `smtp` · `<proveedor>` |
 | Deployment | {{docker}} | `docker` · `nginx` (Linux/VM + Docker + Nginx) · `azure-app-service` · `azure-container-apps` · `iis` |
 | FrontendOrigins | {{https://localhost:5173}} | orígenes CORS separados por coma |

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+#if (!docsSwagger)
 using Scalar.AspNetCore;
+#endif
 #if (useApiKey)
 using KitApi.Api.Authentication;
 #endif
@@ -44,7 +46,15 @@ app.UseSecurityHeaders();                    // nosniff, frame, referrer, CSP (s
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();               // /openapi/v1.json
+#if (docsSwagger)
+    app.UseSwaggerUI(options =>     // /swagger (lee el mismo documento; no usa el generador de Swashbuckle)
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "v1");
+        options.EnablePersistAuthorization();
+    });
+#else
     app.MapScalarApiReference();    // /scalar
+#endif
 }
 else
 {

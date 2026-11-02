@@ -15,7 +15,7 @@
 | **API5** Autorización a nivel de función | `[HasPermission]` en cada acción `[SEC]` | Ninguna acción de escritura sin permiso (o sin API key en perfil público) |
 | **API6** Acceso sin control a flujos sensibles | Rate limit estricto en Auth, respuestas genéricas | Flujos de negocio abusables (cupones, reservas) con límite propio |
 | **API7** SSRF | — | Nunca hacer `HttpClient` a URLs que vengan del usuario sin lista blanca |
-| **API8** Configuración insegura | Headers, HTTPS/HSTS, ProblemDetails sin detalles, OpenAPI solo en Development | No exponer `/scalar` ni `/openapi` en producción sin protección |
+| **API8** Configuración insegura | Headers, HTTPS/HSTS, ProblemDetails sin detalles, OpenAPI solo en Development | No exponer `/scalar`, `/swagger` ni `/openapi` en producción sin protección |
 | **API9** Inventario deficiente | OpenAPI generado, versionado opcional | Documentar endpoints en el módulo; eliminar los obsoletos |
 | **API10** Consumo inseguro de APIs | `HttpClient` tipado con resiliencia | Validar respuestas de terceros como si fueran input del usuario |
 

@@ -34,6 +34,10 @@ public sealed class CreateSettings : CommandSettings
     [Description("Llave primaria de todas las tablas y sus FK: guid (por defecto) | int | long")]
     public string? Key { get; init; }
 
+    [CommandOption("--docs <PANTALLA>")]
+    [Description("Documentación interactiva de la API: scalar (por defecto) | swagger")]
+    public string? Docs { get; init; }
+
     [CommandOption("--email <MODO>")]
     [Description("Solo con seguridad: smtp (MailKit + Mailpit) | log")]
     public string? Email { get; init; }
@@ -94,6 +98,8 @@ public sealed class CreateSettings : CommandSettings
             return ValidationResult.Error("--database debe ser postgresql o sqlserver.");
         if (Key is not null and not ("guid" or "int" or "long"))
             return ValidationResult.Error("--key debe ser guid, int o long.");
+        if (Docs is not null and not ("scalar" or "swagger"))
+            return ValidationResult.Error("--docs debe ser scalar o swagger.");
         if (Email is not null and not ("smtp" or "log"))
             return ValidationResult.Error("--email debe ser smtp o log.");
         if (DbLocation is not null and not ("docker" or "local" or "server" or "later"))

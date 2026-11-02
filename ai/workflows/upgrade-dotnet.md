@@ -27,7 +27,7 @@ Llevar un proyecto existente a una versión más nueva de .NET (por ejemplo, de 
    - `Dockerfile` (`ARG DOTNET_VERSION`), CI (`dotnet-version`) y la herramienta `dotnet-ef` (`dotnet tool update --global dotnet-ef`).
 7. **Compilar** (`dotnet build -c Release`) y corregir errores y warnings nuevos (analizadores nuevos incluidos), apoyándose en la lista de breaking changes.
 8. **Migraciones**: `dotnet ef migrations add UpgradeDotnet<version>`. Si el modelo no cambió, la migración debe quedar vacía; si genera cambios, revisarlos (algunas versiones cambian convenciones) con `database-change`.
-9. **Pruebas**: `dotnet test` completo y arrancar la API para una prueba manual de los endpoints clave en `/scalar`.
+9. **Pruebas**: `dotnet test` completo y arrancar la API para una prueba manual de los endpoints clave en `/scalar` o `/swagger` (según `ApiDocs`).
 10. **Rendimiento** (opcional pero recomendado): comparar los endpoints críticos antes y después (`performance-review`).
 11. **Documentar**:
     - `TargetFramework` en el perfil.

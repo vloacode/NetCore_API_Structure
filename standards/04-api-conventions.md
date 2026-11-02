@@ -40,7 +40,7 @@ Todas las respuestas de error son **ProblemDetails** (RFC 9457) con `code` y `tr
 Nunca se expone `exception.Message` al cliente.
 
 ## OpenAPI
-`Microsoft.AspNetCore.OpenApi` (`/openapi/v1.json`) + Scalar (`/scalar`), solo en Development. Con seguridad, `BearerSecuritySchemeTransformer` agrega el esquema Bearer. .NET 10 usa **Microsoft.OpenApi 2.x** (namespace `Microsoft.OpenApi`, sin `.Models`).
+`Microsoft.AspNetCore.OpenApi` (`/openapi/v1.json`) + la pantalla elegida en `ApiDocs` del perfil: Scalar (`/scalar`) o Swagger UI (`/swagger`, solo el paquete `Swashbuckle.AspNetCore.SwaggerUI`; el documento lo sigue generando `Microsoft.AspNetCore.OpenApi`, nunca se agrega el generador de Swashbuckle). Solo en Development. Con seguridad, `BearerSecuritySchemeTransformer` agrega el esquema Bearer. .NET 10 usa **Microsoft.OpenApi 2.x** (namespace `Microsoft.OpenApi`, sin `.Models`).
 
 ## JSON
 camelCase (default) + enums como texto (`JsonStringEnumConverter`). Fechas UTC con `Z` (`standards/15`).

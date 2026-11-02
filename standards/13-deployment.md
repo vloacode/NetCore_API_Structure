@@ -79,7 +79,7 @@ El despliegue (CD) va en otro workflow o job, que solo corre con la CI en verde:
 - Variables de entorno y secretos en la configuración del sitio o del sistema, nunca en archivos del repositorio.
 
 ## Checklist de producción
-- [ ] `ASPNETCORE_ENVIRONMENT=Production`; OpenAPI y Scalar no expuestos públicamente (solo en Development, o protegidos).
+- [ ] `ASPNETCORE_ENVIRONMENT=Production`; OpenAPI y su pantalla (Scalar o Swagger UI) no expuestos públicamente (solo en Development, o protegidos).
 - [ ] Cadena de conexión con un usuario de BD de **mínimos privilegios** (sin DDL; las migraciones usan otro usuario).
 - [ ] HTTPS y HSTS activos; CORS solo con los orígenes reales.
 - [ ] Rate limiting ajustado a `docs/04-non-functional-requirements.md`; `ReverseProxy:Enabled` + `KnownProxies`/`KnownNetworks` si hay proxy o balanceador (`standards/13a`).

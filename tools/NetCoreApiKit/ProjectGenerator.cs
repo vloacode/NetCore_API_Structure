@@ -43,7 +43,7 @@ public static partial class ProjectGenerator
         [
             "new", "kitapi", "-n", choices.Name, "-o", choices.OutputDirectory,
             "--security", Bool(choices.Security), "--database", choices.Database, "--analytics", Bool(choices.Analytics),
-            "--apikey", Bool(choices.ApiKey), "--email", choices.Smtp ? "smtp" : "log", "--key", choices.Key, "--framework", "net10.0",
+            "--apikey", Bool(choices.ApiKey), "--email", choices.Smtp ? "smtp" : "log", "--key", choices.Key, "--docs", choices.Docs, "--framework", "net10.0",
             .. intoExistingKit ? new[] { "--force" } : [],
             .. HiveArgs(choices)
         ];
@@ -101,6 +101,7 @@ public static partial class ProjectGenerator
             ["SoftDelete"] = "enabled",
             ["Database"] = choices.Database,
             ["TargetFramework"] = "net10.0",
+            ["ApiDocs"] = choices.Docs,
             ["Email"] = choices.Smtp ? "smtp" : "log",
             ["Deployment"] = "docker",
             ["FrontendOrigins"] = "https://localhost:5173",
@@ -130,7 +131,7 @@ public static partial class ProjectGenerator
             "```bash",
             $"dotnet run --project {api}",
             "```",
-            "- Documentación interactiva: `https://localhost:7100/scalar`",
+            $"- Documentación interactiva: `https://localhost:7100/{choices.Docs}`",
             "- Salud: `/health/live` y `/health/ready`"
         };
         if (choices.Security)

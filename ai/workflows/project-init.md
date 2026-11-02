@@ -30,8 +30,8 @@ Presentar exactamente estas tres opciones:
 
 | Modo | Perfil inicial |
 |---|---|
-| 1 | `Mode=1-standard-secure`, `Security=enabled`, `TwoFactor=enabled`, `PublicRegistration=enabled`, `ApiKey=disabled`, `PrimaryKey=Guid` (se pregunta), `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
-| 2 | `Mode=2-standard-public`, `Security=disabled`, `TwoFactor=disabled`, `PublicRegistration=disabled`, `ApiKey=disabled` (se pregunta), `PrimaryKey=Guid` (se pregunta), `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
+| 1 | `Mode=1-standard-secure`, `Security=enabled`, `TwoFactor=enabled`, `PublicRegistration=enabled`, `ApiKey=disabled`, `PrimaryKey=Guid` (se pregunta), `ApiDocs=scalar` (se pregunta), `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
+| 2 | `Mode=2-standard-public`, `Security=disabled`, `TwoFactor=disabled`, `PublicRegistration=disabled`, `ApiKey=disabled` (se pregunta), `PrimaryKey=Guid` (se pregunta), `ApiDocs=scalar` (se pregunta), `SoftDelete=enabled`, `Database=sqlserver` (o el elegido), `TargetFramework=` LTS vigente, `Email=log`, `Deployment=docker` |
 | 3 | Parte del modo 1 y cada valor se ajusta con la entrevista |
 
 ## Paso 3 — Recoger información
@@ -77,13 +77,13 @@ Escribir en `docs/ai/PROJECT_STATUS.md` el plan concreto (`ai/implementation-pha
 Delegar en **backend-developer**:
 1. Generar con el asistente sin preguntas, en la raíz del repositorio (prueba la conexión, guarda secretos, compila y crea la migración):
    ```bash
-   dnx NetCoreApiKit -- --name {Project} --output . --security|--public --database <postgresql|sqlserver> --key <guid|int|long> --email <smtp|log> [--analytics] [--apikey] --db-location <docker|local|server|later> --secrets user-secrets --yes
+   dnx NetCoreApiKit -- --name {Project} --output . --security|--public --database <postgresql|sqlserver> --key <guid|int|long> --docs <scalar|swagger> --email <smtp|log> [--analytics] [--apikey] --db-location <docker|local|server|later> --secrets user-secrets --yes
    ```
    Con `local`/`server`, la conexión va en la variable `KIT_DB_CONNECTION` (pedirla al usuario; nunca escribirla en archivos). Si el usuario prefiere no usar el asistente, generar a mano:
    ```bash
    dotnet new install ./templates/api
    dotnet new install ./templates/entity
-   dotnet new kitapi -n {Project} -o . --force --security <true|false> --database <sqlserver|postgresql> --key <guid|int|long> --analytics <true|false> --apikey <true|false> --email <log|smtp> --framework <TargetFramework>
+   dotnet new kitapi -n {Project} -o . --force --security <true|false> --database <sqlserver|postgresql> --key <guid|int|long> --docs <scalar|swagger> --analytics <true|false> --apikey <true|false> --email <log|smtp> --framework <TargetFramework>
    ```
    `--force` solo reemplaza el `.gitignore` del kit por el del proyecto (que ya ignora `bin/`, `obj/`, secretos y `.env`).
 2. Verificar que se crearon `{Project}.slnx`, `src/{Project}.Api/`, `tests/{Project}.IntegrationTests/` y `.github/workflows/ci.yml`, y que `docs/`, `ai/`, `standards/` y `AGENTS.md` siguen en su lugar. Borrar `.github/workflows/kit-checks.yml` (es la CI del kit, no la del proyecto).
@@ -102,7 +102,7 @@ Seguir el plan de `PROJECT_STATUS.md` con `ai/implementation-phases.md`:
 ## Paso 9 — Cierre de la inicialización
 Al terminar la fase 1 (y cada fase posterior), resumen al usuario:
 - Perfil y capacidades activas.
-- Qué se creó y cómo correrlo: `dotnet run --project src/{Project}.Api`, `/scalar` y, con seguridad, el admin del seed (contraseña en user-secrets).
+- Qué se creó y cómo correrlo: `dotnet run --project src/{Project}.Api`, la documentación (`/scalar` o `/swagger`, según `ApiDocs`) y, con seguridad, el admin del seed (contraseña en user-secrets).
 - Siguiente fase del plan y preguntas abiertas.
 
 ---

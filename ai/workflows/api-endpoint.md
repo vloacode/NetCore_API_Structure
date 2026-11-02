@@ -22,7 +22,7 @@ Agregar o modificar un endpoint sobre una entidad existente respetando el contra
 4. **Validador** para el request nuevo.
 5. **Controller**: acción delgada que solo llama al service y usa `HandleResult` / `HandleCreated`. `[ProducesResponseType<T>]` para que OpenAPI genere los tipos exactos. `[HasPermission]` `[SEC]`.
 6. **Permiso nuevo** `[SEC]`: agregarlo en `Permissions.cs` y en `docs/07`.
-7. **Compilar** y probar en `/scalar`.
+7. **Compilar** y probar en la pantalla de documentación (`/scalar` o `/swagger`, según `ApiDocs` del perfil).
 8. **Tests**: éxito, validación, error de negocio, 404 y permisos `[SEC]`.
 9. **Documentar** (`docs-sync`).
 

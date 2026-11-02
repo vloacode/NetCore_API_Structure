@@ -14,7 +14,7 @@ Este archivo es la **entrada universal**. Lo leen Claude Code, Cursor, Copilot, 
 - .NET en su **versión LTS vigente** (por defecto .NET 10; `TargetFramework` del perfil, política en `standards/16-framework-versions.md`). ASP.NET Core Web API con **Controllers**, C# con `Nullable` habilitado.
 - EF Core (misma versión mayor que .NET) con **SQL Server o PostgreSQL** (`Database` del perfil), migraciones con `dotnet-ef`.
 - Repository + Unit of Work sobre EF Core, Specification pattern. Configuración en `Program.cs` + `Extensions/` (una extensión por área).
-- FluentValidation, ProblemDetails (RFC 9457), OpenAPI (`Microsoft.AspNetCore.OpenApi`) + Scalar, OpenTelemetry.
+- FluentValidation, ProblemDetails (RFC 9457), OpenAPI (`Microsoft.AspNetCore.OpenApi`) + Scalar o Swagger UI (`ApiDocs` del perfil), OpenTelemetry.
 - Con seguridad (`Security = enabled`): ASP.NET Core Identity **local** + JWT propio + refresh tokens. Sin proveedores externos.
 - Pruebas: xUnit. Contenedores: Docker. Despliegue opcional: Azure (App Service / Container Apps) o IIS.
 - **Llaves:** `Id` y FK siempre `EntityKey` (el tipo de `PrimaryKey` del perfil: Guid, int o long, igual en todas las tablas). Nunca `int`/`long`/`Guid` a mano para un Id.

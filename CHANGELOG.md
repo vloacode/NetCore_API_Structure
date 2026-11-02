@@ -5,6 +5,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - **MINOR**: standards, flujos o roles nuevos compatibles.
 - **PATCH**: correcciones de texto o de ejemplos.
 
+## [Sin publicar]
+### Añadido
+- **Documentación interactiva a elegir: Scalar (por defecto) o Swagger UI.** Plantilla: `dotnet new kitapi --docs scalar|swagger`; asistente: pregunta nueva y `--docs`. Con Swagger se usa solo el paquete `Swashbuckle.AspNetCore.SwaggerUI` en `/swagger`: el documento lo sigue generando `Microsoft.AspNetCore.OpenApi` (`/openapi/v1.json`). Queda en el Perfil (`ApiDocs`) y las guías para la IA lo tienen en cuenta.
+
 ## [4.0.0] - 2026-10-20
 ### Añadido
 - **Llave primaria elegible: `Guid` (por defecto), `int` o `long`** para **todas** las tablas (usuarios, roles y entidades) y, por lo tanto, para todas las relaciones:

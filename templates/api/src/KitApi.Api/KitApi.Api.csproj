@@ -13,7 +13,11 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+<!--#if (docsSwagger) -->
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+<!--#else -->
     <PackageReference Include="Scalar.AspNetCore" />
+<!--#endif -->
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />

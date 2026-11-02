@@ -8,7 +8,7 @@ En un **proyecto** creado con el kit no existe `templates/`: el código equivale
 
 **No se editan por proyecto.** Lo propio de cada proyecto vive en `docs/`. Si un proyecto necesita apartarse de un standard, se registra un ADR en `docs/decisions/`.
 
-Stack fijo: **.NET LTS vigente (hoy 10) · ASP.NET Core con Controllers · EF Core (Repository + Unit of Work) + SQL Server o PostgreSQL · FluentValidation · OpenAPI + Scalar · OpenTelemetry**. Con seguridad, además: **Identity local + JWT + refresh tokens**. Sin MediatR ni AutoMapper.
+Stack fijo: **.NET LTS vigente (hoy 10) · ASP.NET Core con Controllers · EF Core (Repository + Unit of Work) + SQL Server o PostgreSQL · FluentValidation · OpenAPI + Scalar o Swagger UI · OpenTelemetry**. Con seguridad, además: **Identity local + JWT + refresh tokens**. Sin MediatR ni AutoMapper.
 
 ## Antes de leer
 1. Lee el **Perfil del proyecto** en `docs/00-MASTER_CONTEXT.md` y la fase actual en `docs/ai/PROJECT_STATUS.md`.

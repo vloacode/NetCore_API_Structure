@@ -6,6 +6,7 @@ Uso:
       (pública + PostgreSQL + API key + email SMTP, sin analytics). En cada una: kit-entity (4 entidades: sin opciones, padre + código + activo, solo código, activo + padre),
       migración InitialCreate, dotnet format --verify-no-changes y build Release (analizadores, warnings como errores).
       Cada combo usa un tipo de llave primaria distinto (guid / int / long) para cubrir los tres; --key fuerza uno.
+      Las pantallas de documentación (Scalar y Swagger UI) también se reparten entre los combos.
   python scripts/verify/verify-template.py --profiles public --databases postgresql
   python scripts/verify/verify-template.py --framework net11.0
   python scripts/verify/verify-template.py --run-tests
@@ -111,13 +112,13 @@ public sealed class VerifyParentSeeder(IServiceProvider services, IConfiguration
         encoding="utf-8")
 
 
-def build(name, profile, database, analytics, apikey, framework, with_entities=True, email="log", key="guid"):
+def build(name, profile, database, analytics, apikey, framework, with_entities=True, email="log", key="guid", docs="scalar"):
     folder = WORK / name
     if folder.exists():
         shutil.rmtree(folder)
     folder.mkdir(parents=True)
     options = ["--security", str(profile == "secure").lower(), "--database", database,
-               "--analytics", str(analytics).lower(), "--apikey", str(apikey).lower(), "--email", email, "--framework", framework, "--key", key]
+               "--analytics", str(analytics).lower(), "--apikey", str(apikey).lower(), "--email", email, "--framework", framework, "--key", key, "--docs", docs]
     dotnet_new(["kitapi", "-n", APP, "-o", APP, *options], folder)
     root = folder / APP
     api = root / "src" / f"{APP}.Api"
@@ -138,7 +139,7 @@ def build(name, profile, database, analytics, apikey, framework, with_entities=T
     run(["dotnet", "format", str(root / f"{APP}.slnx")], root, check=False)
     run(["dotnet", "format", str(root / f"{APP}.slnx"), "--verify-no-changes"], root)
     run(["dotnet", "build", "-c", "Release", "-nologo"], root)
-    print(f"  generado (llave {key}) + kit-entity + migración + format + build Release (API + tests): OK")
+    print(f"  generado (llave {key}, documentación {docs}) + kit-entity + migración + format + build Release (API + tests): OK")
     return root
 
 
@@ -230,6 +231,7 @@ def main():
     # Cada tipo de llave primaria pasa por Identity (perfil secure) y por entidades con FK en algún combo.
     keys = {"secure-sqlserver": "int", "secure-postgresql": "guid", "public-sqlserver": "long",
             "public-postgresql": "int", "minimal-public-apikey": "long"}
+    swagger = {"secure-postgresql", "public-sqlserver"}   # el resto usa Scalar; así ambas pantallas pasan por los dos perfiles y motores
 
     failures = []
     for name, profile, database, analytics, apikey in combos:
@@ -238,7 +240,8 @@ def main():
         print(f"== {label}")
         try:
             root = build(name, profile, database, analytics, apikey, args.framework,
-                         email="smtp" if name.startswith("minimal") else "log", key=key)
+                         email="smtp" if name.startswith("minimal") else "log", key=key,
+                         docs="swagger" if name in swagger else "scalar")
             if args.run_tests:
                 run_tests(root)
             base = smoke_bases.get(database)
